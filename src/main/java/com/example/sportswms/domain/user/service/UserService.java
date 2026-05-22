@@ -3,6 +3,7 @@ package com.example.sportswms.domain.user.service;
 import com.example.sportswms.domain.user.dto.SignUpRequestDTO;
 import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
+import com.example.sportswms.domain.user.entity.UserStatus;
 import com.example.sportswms.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -19,7 +20,7 @@ public class UserService implements UserDetailsService {
 
     public void signup(SignUpRequestDTO dto) {
         String loginId = dto.getLoginId();
-        String password = dto.getPassword();
+        String password = passwordEncoder.encode(dto.getPassword());
         String name = dto.getName();
         String email = dto.getEmail();
         String phoneNum = dto.getPhoneNum();
@@ -27,13 +28,13 @@ public class UserService implements UserDetailsService {
 
         User user = new User();
         user.setLoginId(loginId);
-        user.setPassword(passwordEncoder.encode(password));
+        user.setPassword(password);
         user.setName(name);
         user.setEmail(email);
         user.setPhoneNum(phoneNum);
         user.setAddress(address);
         user.setRole(Role.ROLE_GENERAL_MANAGER);
-
+        user.setStatus(UserStatus.APPROVED);
         userRepository.save(user);
     }
 

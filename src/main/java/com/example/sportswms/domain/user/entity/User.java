@@ -31,4 +31,8 @@ public class User {
     private String phoneNum;
 
     private String address;
+
+    @Enumerated(EnumType.STRING) // 💡 중요: DB에는 오디널(0,1,2)이 아닌 "PENDING", "APPROVED" 문자열 자체로 저장하라는 뜻입니다.
+    @Column(name = "status")
+    private UserStatus status;
 }
