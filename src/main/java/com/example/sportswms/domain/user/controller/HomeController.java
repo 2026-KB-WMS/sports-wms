@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.user.controller;
 
-import com.example.sportswms.domain.user.service.CustomUserDetails;
+import com.example.sportswms.global.security.CustomUserDetails;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
