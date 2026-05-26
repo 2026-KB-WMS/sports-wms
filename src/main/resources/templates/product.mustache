@@ -1,0 +1,47 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Product Page</title>
+</head>
+<body>
+<h1>product page</h1>
+<hr>
+
+<table border="1">
+    <thead>
+    <tr>
+        <th>카테고리</th>
+        <th>브랜드</th>
+        <th>상품명</th>
+        <th>SKU 코드</th>
+        <th>옵션</th>
+        <th>시스템 등록 가격</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{#skus}}
+        <tr>
+            <td>{{product.category.name}}</td>
+            <td>{{product.brand}}</td>
+            <td>{{product.name}}</td>
+            <td><strong>{{skuCode}}</strong></td>
+            <td>
+                {{#optionSKUMappings}}
+                    [{{optionValue.optionGroup.name}} : {{optionValue.name}}]
+                {{/optionSKUMappings}}
+            </td>
+            <td>{{product.price}}원</td>
+        </tr>
+    {{/skus}}
+
+    {{^skus}}
+        <tr>
+            <td colspan="6" style="text-align: center;">현재 시스템에 등록된 물류 SKU 마스터 데이터가 없습니다.</td>
+        </tr>
+    {{/skus}}
+    </tbody>
+</table>
+
+</body>
+</html>
