@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -23,9 +26,12 @@ public class ProductSKU {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(nullable = false)
     private String name;
 
     @Column(name = "sku_code", nullable = false)
     private String skuCode;
+
+    // 이 SKU가 가질 옵션 매핑 내역을 리스트로 품고, cascade를 걸어줍니다.
+    @OneToMany(mappedBy = "productSKU", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OptionSKUMapping> optionSKUMappings = new ArrayList<>();
 }
