@@ -43,8 +43,8 @@ public class ProductSKU {
     public static ProductSKU of(ProductCreateRequestDTO dto, Product product) {
         return new ProductSKU(
                 product,
-                dto.getSkuName(),
-                dto.getSkuCode()
+                dto.skuName(),
+                dto.skuCode()
         );
     }
 

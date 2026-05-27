@@ -39,9 +39,9 @@ public class Product {
 
     public static Product of(ProductCreateRequestDTO dto, Category category) {
         return new Product(
-                dto.getProductName(),
-                dto.getBrand(),
-                dto.getPrice(),
+                dto.productName(),
+                dto.brand(),
+                dto.price(),
                 category
         );
     }
