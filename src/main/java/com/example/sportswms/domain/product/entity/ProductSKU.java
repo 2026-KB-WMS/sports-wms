@@ -1,19 +1,17 @@
 package com.example.sportswms.domain.product.entity;
 
+import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "ProductSKU")
 public class ProductSKU {
 
@@ -26,6 +24,7 @@ public class ProductSKU {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    @Column(nullable = false)
     private String name;
 
     @Column(name = "sku_code", nullable = false)
@@ -34,4 +33,29 @@ public class ProductSKU {
     // 이 SKU가 가질 옵션 매핑 내역을 리스트로 품고, cascade를 걸어줍니다.
     @OneToMany(mappedBy = "productSKU", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OptionSKUMapping> optionSKUMappings = new ArrayList<>();
+
+    private ProductSKU(Product product, String name, String skuCode) {
+        this.product = product;
+        this.name = name;
+        this.skuCode = skuCode;
+    }
+
+    public static ProductSKU of(ProductCreateRequestDTO dto, Product product) {
+        return new ProductSKU(
+                product,
+                dto.getSkuName(),
+                dto.getSkuCode()
+        );
+    }
+
+    public void addOptionValue(OptionValue optionValue) {
+        OptionSKUMapping mapping = OptionSKUMapping.of(this, optionValue);
+        this.optionSKUMappings.add(mapping);
+    }
+
+    public void addOptionValues(List<OptionValue> optionValues) {
+        for (OptionValue optionValue : optionValues) {
+            this.addOptionValue(optionValue);
+        }
+    }
 }

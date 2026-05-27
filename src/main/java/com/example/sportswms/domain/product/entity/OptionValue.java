@@ -1,12 +1,13 @@
 package com.example.sportswms.domain.product.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name="OptionValue")
 public class OptionValue {
 
@@ -21,4 +22,13 @@ public class OptionValue {
 
     @Column(nullable = false)
     private String name;
+
+    private OptionValue(String name, OptionGroup group) {
+        this.name = name;
+        this.optionGroup = group;
+    }
+
+    public static OptionValue of(String name, OptionGroup group) {
+        return new OptionValue(name, group);
+    }
 }

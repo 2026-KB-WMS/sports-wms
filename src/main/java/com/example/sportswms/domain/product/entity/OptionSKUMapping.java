@@ -1,12 +1,13 @@
 package com.example.sportswms.domain.product.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name="OptionSKUMapping")
 public class OptionSKUMapping {
 
@@ -22,4 +23,13 @@ public class OptionSKUMapping {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "value_id", nullable = false)
     private OptionValue optionValue;
+
+    private OptionSKUMapping(ProductSKU productSKU, OptionValue optionValue) {
+        this.productSKU = productSKU;
+        this.optionValue = optionValue;
+    }
+
+    public static OptionSKUMapping of(ProductSKU productSKU, OptionValue optionValue) {
+        return new OptionSKUMapping(productSKU, optionValue);
+    }
 }

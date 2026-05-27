@@ -6,6 +6,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface OptionGroupRepository extends JpaRepository<OptionGroup, Long> {
-    Optional<OptionGroup> findById(String Id);
-
 }
