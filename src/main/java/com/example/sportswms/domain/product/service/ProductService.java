@@ -1,10 +1,7 @@
 package com.example.sportswms.domain.product.service;
 
 import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
-import com.example.sportswms.domain.product.entity.Category;
-import com.example.sportswms.domain.product.entity.OptionValue;
-import com.example.sportswms.domain.product.entity.Product;
-import com.example.sportswms.domain.product.entity.ProductSKU;
+import com.example.sportswms.domain.product.entity.*;
 import com.example.sportswms.domain.product.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,12 +16,20 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final ProductSKURepository productSKURepository;
     private final OptionValueRepository optionValueRepository;
+    private final OptionGroupRepository optionGroupRepository;
 
     @Transactional(readOnly = true)
     public List<ProductSKU> getAllSKUs() {
         return productSKURepository.findAll();
     }
 
+    public List<Category> getAllCategories() {
+        return categoryRepository.findAll();
+    }
+
+    public List<OptionGroup> getAllOptionGroups() {
+        return optionGroupRepository.findAll();
+    }
     @Transactional
     public void createProduct(ProductCreateRequestDTO dto) {
 
