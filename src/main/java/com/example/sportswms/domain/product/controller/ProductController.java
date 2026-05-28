@@ -27,10 +27,10 @@ public class ProductController {
     @GetMapping("/product")
     public String productPage(Model model) {
         List<ProductSKU> skus = productService.getAllSKUs();
-        model.addAttribute("skus", skus);
+        List<Category> categories = productService.getAllCategories();
+        List<OptionGroup> optionGroups = productService.getAllOptionGroups();
 
-        List<Category> categories = categoryRepository.findAll();
-        List<OptionGroup> optionGroups = optionGroupRepository.findAll();
+        model.addAttribute("skus", skus);
         model.addAttribute("categories", categories);
         model.addAttribute("optionGroups", optionGroups);
 
