@@ -23,16 +23,18 @@ public class ProductService {
         return productSKURepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public List<OptionGroup> getAllOptionGroups() {
         return optionGroupRepository.findAll();
     }
+
     @Transactional
     public void createProduct(ProductCreateRequestDTO dto) {
-
         Category category = categoryRepository.findById(dto.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리 ID입니다."));
         Product product = Product.of(dto, category);

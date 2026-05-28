@@ -21,8 +21,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductController {
     private final ProductService productService;
-    private final CategoryRepository categoryRepository;
-    private final OptionGroupRepository optionGroupRepository;
 
     @GetMapping("/product")
     public String productPage(Model model) {
