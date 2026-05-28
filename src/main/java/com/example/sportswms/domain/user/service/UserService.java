@@ -17,22 +17,8 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     public void signup(SignUpRequestDTO dto) {
-        String loginId = dto.getLoginId();
-        String password = passwordEncoder.encode(dto.getPassword());
-        String name = dto.getName();
-        String email = dto.getEmail();
-        String phoneNum = dto.getPhoneNum();
-        String address = dto.getAddress();
-
-        User user = new User();
-        user.setLoginId(loginId);
-        user.setPassword(password);
-        user.setName(name);
-        user.setEmail(email);
-        user.setPhoneNum(phoneNum);
-        user.setAddress(address);
-        user.setRole(Role.ROLE_GENERAL_MANAGER);
-        user.setStatus(UserStatus.APPROVED);
+        String encodedPassword = passwordEncoder.encode(dto.password());
+        User user = User.from(dto, encodedPassword);
         userRepository.save(user);
     }
 }

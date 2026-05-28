@@ -1,14 +1,16 @@
 package com.example.sportswms.domain.product.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
-@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name="CategoryOptionMapping")
 public class CategoryOptionMapping {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "mapping_id")
@@ -21,4 +23,13 @@ public class CategoryOptionMapping {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id", nullable = false)
     private OptionGroup optionGroup;
+
+    private CategoryOptionMapping(Category category, OptionGroup group) {
+        this.category = category;
+        this.optionGroup = group;
+    }
+
+    public static CategoryOptionMapping of(Category category, OptionGroup group) {
+        return new CategoryOptionMapping(category, group);
+    }
 }

@@ -1,16 +1,14 @@
 package com.example.sportswms.domain.product.entity;
 
+import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "Product")
 public class Product {
 
@@ -31,4 +29,20 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    private Product(String name, String brand, int price, Category category) {
+        this.name = name;
+        this.brand = brand;
+        this.price = price;
+        this.category = category;
+    }
+
+    public static Product of(ProductCreateRequestDTO dto, Category category) {
+        return new Product(
+                dto.productName(),
+                dto.brand(),
+                dto.price(),
+                category
+        );
+    }
 }
