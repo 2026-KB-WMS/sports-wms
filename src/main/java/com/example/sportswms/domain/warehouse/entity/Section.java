@@ -34,7 +34,7 @@ public class Section {
     @Column(name = "section_type", nullable = false)
     private SectionType sectionType;
 
-    @Column(name = "section_code", nullable = false)
+    @Column(name = "section_code", nullable = false, unique = true)
     String sectionCode;
 
     private Section(

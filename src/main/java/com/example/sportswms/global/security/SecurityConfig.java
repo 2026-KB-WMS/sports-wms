@@ -44,6 +44,7 @@ public class SecurityConfig {
                         .requestMatchers("/signup").permitAll()
                         .requestMatchers("/login").permitAll()
                         .requestMatchers("/product").permitAll()
+                        .requestMatchers("/warehouse/**").permitAll()
                         .anyRequest().denyAll()
                 );
 
