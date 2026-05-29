@@ -6,18 +6,22 @@ import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class WarehouseService {
 
     private final WarehouseRepository warehouseRepository;
     private final SectionRepository sectionRepository;
+
+    public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
+    public List<Section> getAllSections() { return sectionRepository.findAll(); }
 
     @Transactional
     public void createWarehouse(WarehouseCreateRequestDTO dto) {
@@ -31,13 +35,5 @@ public class WarehouseService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 창고 ID입니다."));
         Section section = Section.of(dto, warehouse);
         sectionRepository.save(section);
-    }
-
-    public List<Warehouse> getAllWarehouses() {
-        return warehouseRepository.findAll();
-    }
-
-    public List<Section> getAllSections() {
-        return sectionRepository.findAll();
     }
 }

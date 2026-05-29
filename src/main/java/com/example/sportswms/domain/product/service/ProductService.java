@@ -11,6 +11,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -18,20 +19,11 @@ public class ProductService {
     private final OptionValueRepository optionValueRepository;
     private final OptionGroupRepository optionGroupRepository;
 
-    @Transactional(readOnly = true)
     public List<ProductSKU> getAllSKUs() {
         return productSKURepository.findAll();
     }
-
-    @Transactional(readOnly = true)
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<OptionGroup> getAllOptionGroups() {
-        return optionGroupRepository.findAll();
-    }
+    public List<Category> getAllCategories() { return categoryRepository.findAll(); }
+    public List<OptionGroup> getAllOptionGroups() { return optionGroupRepository.findAll(); }
 
     @Transactional
     public void createProduct(ProductCreateRequestDTO dto) {
