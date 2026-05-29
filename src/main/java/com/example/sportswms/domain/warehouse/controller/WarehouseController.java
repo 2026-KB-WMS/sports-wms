@@ -31,12 +31,12 @@ public class WarehouseController {
         model.addAttribute("sectionTypes", SectionType.values());
 
         // 폼 바인딩을 위한 빈 객체 추가 (오류 발생 후에도 데이터를 유지하기 위함)
-        if (!model.containsAttribute("warehouseCreateRequestDTO")) {
-            model.addAttribute("warehouseCreateRequestDTO", new WarehouseCreateRequestDTO("", "", ""));
-        }
-        if (!model.containsAttribute("sectionCreateRequestDTO")) {
-            model.addAttribute("sectionCreateRequestDTO", new SectionCreateRequestDTO(null, "", 0, null, ""));
-        }
+//        if (!model.containsAttribute("warehouseCreateRequestDTO")) {
+//            model.addAttribute("warehouseCreateRequestDTO", new WarehouseCreateRequestDTO("", "", "", 0));
+//        }
+//        if (!model.containsAttribute("sectionCreateRequestDTO")) {
+//            model.addAttribute("sectionCreateRequestDTO", new SectionCreateRequestDTO(null, "", 0, null, ""));
+//        }
 
         return "warehouse";
     }

@@ -32,6 +32,7 @@
                 <tr>
                     <th>ID</th>
                     <th>창고명</th>
+                    <th>창고 코드</th>
                     <th>주소</th>
                 </tr>
             </thead>
@@ -40,6 +41,7 @@
                     <tr>
                         <td>{{id}}</td>
                         <td>{{name}}</td>
+                        <td>{{warehouseCode}}</td>
                         <td>{{address}}</td>
                     </tr>
                 {{/warehouses}}
@@ -86,15 +88,19 @@
         <form action="/warehouse" method="post">
             <div class="form-group">
                 <label for="warehouseName">창고명:</label>
-                <input type="text" id="warehouseName" name="name" value="{{warehouseCreateRequestDTO.name}}" required>
+                <input type="text" id="warehouseName" name="name" required>
             </div>
             <div class="form-group">
                 <label for="warehouseCode">창고 코드:</label>
-                <input type="text" id="warehouseCode" name="warehouseCode" value="{{warehouseCreateRequestDTO.warehouseCode}}" required>
+                <input type="text" id="warehouseCode" name="warehouseCode" required>
             </div>
             <div class="form-group">
                 <label for="warehouseAddress">주소:</label>
-                <input type="text" id="warehouseAddress" name="address" value="{{warehouseCreateRequestDTO.address}}" required>
+                <input type="text" id="warehouseAddress" name="address" required>
+            </div>
+            <div class="form-group">
+                <label for="totalCapacity">최대 수용량:</label>
+                <input type="number" id="totalCapacity" name="totalCapacity" min="1" required>
             </div>
             <button type="submit">창고 등록</button>
         </form>
@@ -112,11 +118,11 @@
             </div>
             <div class="form-group">
                 <label for="sectionName">구역명:</label>
-                <input type="text" id="sectionName" name="name" value="{{sectionCreateRequestDTO.name}}" required>
+                <input type="text" id="sectionName" name="name" required>
             </div>
             <div class="form-group">
                 <label for="sectionCode">구역 코드:</label>
-                <input type="text" id="sectionCode" name="sectionCode" value="{{sectionCreateRequestDTO.sectionCode}}" required>
+                <input type="text" id="sectionCode" name="sectionCode" required>
             </div>
             <div class="form-group">
                 <label for="sectionType">구역 타입:</label>
@@ -129,7 +135,7 @@
             </div>
             <div class="form-group">
                 <label for="totalCapacity">최대 수용량:</label>
-                <input type="number" id="totalCapacity" name="totalCapacity" value="{{sectionCreateRequestDTO.totalCapacity}}" min="1" required>
+                <input type="number" id="totalCapacity" name="totalCapacity" min="1" required>
             </div>
             <button type="submit">구역 등록</button>
         </form>
