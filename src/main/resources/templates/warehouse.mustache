@@ -1,0 +1,146 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Warehouse Management</title>
+    <style>
+        body { font-family: sans-serif; }
+        .container { display: flex; gap: 40px; }
+        .warehouse-list, .forms { width: 50%; }
+        .warehouse { border: 1px solid #ccc; border-radius: 5px; margin-bottom: 15px; padding: 10px; }
+        .warehouse h3 { margin-top: 0; }
+        .section { border: 1px solid #e0e0e0; border-radius: 3px; margin-left: 20px; margin-top: 10px; padding: 8px; }
+        .forms form { border: 1px solid #ccc; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .error { color: red; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;}
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<h1>warehouse page</h1>
+<hr>
+
+<div class="container">
+    <div class="warehouse-list">
+        <h2>창고 목록</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>창고명</th>
+                    <th>창고 코드</th>
+                    <th>주소</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#warehouses}}
+                    <tr>
+                        <td>{{id}}</td>
+                        <td>{{name}}</td>
+                        <td>{{warehouseCode}}</td>
+                        <td>{{address}}</td>
+                    </tr>
+                {{/warehouses}}
+                {{^warehouses}}
+                    <tr>
+                        <td colspan="3" style="text-align: center;">등록된 창고가 없습니다.</td>
+                    </tr>
+                {{/warehouses}}
+            </tbody>
+        </table>
+
+        <h2>구역 목록</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>소속 창고</th>
+                    <th>구역명</th>
+                    <th>구역 코드</th>
+                    <th>구역 타입</th>
+                    <th>최대 수용량</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#sections}}
+                    <tr>
+                        <td>{{warehouse.name}}</td>
+                        <td>{{name}}</td>
+                        <td>{{sectionCode}}</td>
+                        <td>{{sectionType.title}}</td>
+                        <td>{{totalCapacity}}</td>
+                    </tr>
+                {{/sections}}
+                {{^sections}}
+                    <tr>
+                        <td colspan="5" style="text-align: center;">등록된 구역이 없습니다.</td>
+                    </tr>
+                {{/sections}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="forms">
+        <h2>신규 창고 등록</h2>
+        <form action="/warehouse" method="post">
+            <div class="form-group">
+                <label for="warehouseName">창고명:</label>
+                <input type="text" id="warehouseName" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="warehouseCode">창고 코드:</label>
+                <input type="text" id="warehouseCode" name="warehouseCode" required>
+            </div>
+            <div class="form-group">
+                <label for="warehouseAddress">주소:</label>
+                <input type="text" id="warehouseAddress" name="address" required>
+            </div>
+            <div class="form-group">
+                <label for="totalCapacity">최대 수용량:</label>
+                <input type="number" id="totalCapacity" name="totalCapacity" min="1" required>
+            </div>
+            <button type="submit">창고 등록</button>
+        </form>
+
+        <h2>신규 구역 등록</h2>
+        <form action="/warehouse/section" method="post">
+            <div class="form-group">
+                <label for="warehouseId">소속 창고:</label>
+                <select id="warehouseId" name="warehouseId" required>
+                    <option value="">창고 선택</option>
+                    {{#warehouses}}
+                        <option value="{{id}}">{{name}}</option>
+                    {{/warehouses}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sectionName">구역명:</label>
+                <input type="text" id="sectionName" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="sectionCode">구역 코드:</label>
+                <input type="text" id="sectionCode" name="sectionCode" required>
+            </div>
+            <div class="form-group">
+                <label for="sectionType">구역 타입:</label>
+                <select id="sectionType" name="sectionType" required>
+                    <option value="">타입 선택</option>
+                    {{#sectionTypes}}
+                        <option value="{{name}}">{{title}}</option>
+                    {{/sectionTypes}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="totalCapacity">최대 수용량:</label>
+                <input type="number" id="totalCapacity" name="totalCapacity" min="1" required>
+            </div>
+            <button type="submit">구역 등록</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

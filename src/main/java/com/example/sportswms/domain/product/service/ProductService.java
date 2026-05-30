@@ -11,6 +11,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -18,21 +19,14 @@ public class ProductService {
     private final OptionValueRepository optionValueRepository;
     private final OptionGroupRepository optionGroupRepository;
 
-    @Transactional(readOnly = true)
     public List<ProductSKU> getAllSKUs() {
         return productSKURepository.findAll();
     }
+    public List<Category> getAllCategories() { return categoryRepository.findAll(); }
+    public List<OptionGroup> getAllOptionGroups() { return optionGroupRepository.findAll(); }
 
-    public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
-    }
-
-    public List<OptionGroup> getAllOptionGroups() {
-        return optionGroupRepository.findAll();
-    }
     @Transactional
     public void createProduct(ProductCreateRequestDTO dto) {
-
         Category category = categoryRepository.findById(dto.categoryId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카테고리 ID입니다."));
         Product product = Product.of(dto, category);
