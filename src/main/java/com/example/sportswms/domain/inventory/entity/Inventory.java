@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "Product")
+@Table(name = "Inventory")
 public class Inventory {
 
     @Id
@@ -26,8 +26,11 @@ public class Inventory {
     @JoinColumn(name = "sku_id", nullable = false)
     private ProductSKU productSKU;
 
-    @Column(nullable = false)
-    private int quantity;
+    @Column(name = "actual_quantity")
+    private int actualQuantity;
+
+    @Column(name = "allocated_quantity")
+    private int allocatedQuantity;
 
     @Enumerated(EnumType.STRING)
     private InventoryStatus status;

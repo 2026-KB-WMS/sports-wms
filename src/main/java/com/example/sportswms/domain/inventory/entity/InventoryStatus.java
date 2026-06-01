@@ -7,9 +7,9 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum InventoryStatus {
 
-    UNASSIGNED("미할당"),
-    ASSIGNED("할당"),
-    DAMAGED("파손됨");
+    UNALLOCATED("미할당"),
+    ALLOCATED("할당"),
+    DEFECTIVE("파손/불량");
 
     private final String description;
 }

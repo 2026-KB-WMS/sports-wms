@@ -30,12 +30,14 @@ public class InventoryTransaction {
     private ProductSKU productSKU;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private TransactionType transactionType;
 
     @Column(nullable = false)
     private int quantity;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private InventoryStatus status;
 
     @Column(name = "before_quantity", nullable = false)
@@ -44,7 +46,6 @@ public class InventoryTransaction {
     @Column(name = "after_quantity", nullable = false)
     private int afterQuantity;
 
-    @Column(nullable = false)
     private String reason;
 
     @Column(name = "created_at", nullable = false, updatable = false)
