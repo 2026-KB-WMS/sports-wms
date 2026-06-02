@@ -27,5 +27,5 @@ public class WarehouseManagement {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "management_type", nullable = false)
-    private ManagementType managementType;
+    private WarehouseManagementType warehouseManagementType;
 }
