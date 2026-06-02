@@ -1,0 +1,89 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventory Management</title>
+    <style>
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;}
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+<h1>Inventory Management</h1>
+<hr>
+
+<h2>재고 현황</h2>
+<table>
+    <thead>
+        <tr>
+            <th>재고 ID</th>
+            <th>소속 창고</th>
+            <th>보관 구역</th>
+            <th>상품 SKU 코드</th>
+            <th>실제 재고 수량</th>
+            <th>할당된 수량</th>
+            <th>상태</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#inventories}}
+        <tr>
+            <td>{{id}}</td>
+            <td>{{section.warehouse.name}}</td>
+            <td>{{section.name}}</td>
+            <td>{{productSKU.skuCode}}</td>
+            <td>{{actualQuantity}}</td>
+            <td>{{allocatedQuantity}}</td>
+            <td>{{status}}</td>
+        </tr>
+        {{/inventories}}
+        {{^inventories}}
+        <tr>
+            <td colspan="7" style="text-align: center;">등록된 재고가 없습니다.</td>
+        </tr>
+        {{/inventories}}
+    </tbody>
+</table>
+
+<h2>재고 변동 기록 (트랜잭션)</h2>
+<table>
+    <thead>
+        <tr>
+            <th>기록 ID</th>
+            <th>발생 일시</th>
+            <th>소속 창고</th>
+            <th>보관 구역</th>
+            <th>상품 SKU 코드</th>
+            <th>트랜잭션 유형</th>
+            <th>수량 변동</th>
+            <th>상태</th>
+            <th>사유</th>
+            <th>담당자 아이디</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#transactions}}
+        <tr>
+            <td>{{id}}</td>
+            <td>{{createdAt}}</td>
+            <td>{{section.warehouse.name}}</td>
+            <td>{{section.name}}</td>
+            <td>{{productSKU.skuCode}}</td>
+            <td>{{transactionType}}</td>
+            <td>{{beforeQuantity}} &rarr; {{afterQuantity}} ({{quantity}})</td>
+            <td>{{status}}</td>
+            <td>{{reason}}</td>
+            <td>{{user.loginId}}</td>
+        </tr>
+        {{/transactions}}
+        {{^transactions}}
+        <tr>
+            <td colspan="10" style="text-align: center;">재고 변동 기록이 없습니다.</td>
+        </tr>
+        {{/transactions}}
+    </tbody>
+</table>
+
+</body>
+</html>
