@@ -3,6 +3,8 @@ package com.example.sportswms.domain.order.service;
 import com.example.sportswms.domain.order.dto.StoreAssignRequestDTO;
 import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.entity.StoreManagement;
+import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
+import com.example.sportswms.domain.order.repository.StockOrderRepository;
 import com.example.sportswms.domain.order.repository.StoreManagementRepository;
 import com.example.sportswms.domain.order.repository.StoreRepository;
 import com.example.sportswms.domain.user.entity.User;
@@ -20,7 +22,8 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final UserRepository userRepository;
     private final StoreManagementRepository storeManagementRepository;
-
+    private final StockOrderRepository stockOrderRepository;
+    private final StockOrderDetailRepository stockOrderDetailRepository;
     public List<Store> getAllStores() { return storeRepository.findAll(); }
 
     @Transactional
