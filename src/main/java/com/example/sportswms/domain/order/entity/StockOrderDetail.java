@@ -21,13 +21,13 @@ public class StockOrderDetail {
     private Store store;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(name = "order_id")
     private StockOrder stockOrder;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sku_id", nullable = false)
     private ProductSKU productSKU;
-    
+
     private String memo;
 
     @Column(nullable = false)
