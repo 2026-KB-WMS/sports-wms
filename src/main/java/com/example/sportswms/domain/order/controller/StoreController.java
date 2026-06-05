@@ -26,11 +26,10 @@ public class StoreController {
 
     @GetMapping
     public String storePage(Model model) {
-        // 기존 데이터 로드
+
         List<Store> stores = storeService.getAllStores();
         model.addAttribute("stores", stores);
 
-        // 지점 담당자 배정을 위한 데이터 로드
         List<User> users = storeService.getAllUsers();
         List<StoreManagement> storeManagements = storeService.getAllStoreManagements();
         model.addAttribute("users", users);
