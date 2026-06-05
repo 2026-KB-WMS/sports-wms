@@ -1,7 +1,6 @@
 package com.example.sportswms.domain.order.entity;
 
 import com.example.sportswms.domain.user.entity.User;
-import com.example.sportswms.domain.warehouse.entity.WarehouseManagementType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

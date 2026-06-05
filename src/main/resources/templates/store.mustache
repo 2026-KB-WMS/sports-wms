@@ -1,0 +1,134 @@
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Store Management</title>
+    <style>
+        body { font-family: sans-serif; }
+        .container { display: flex; gap: 40px; }
+        .list-section, .forms { flex: 1; }
+        .forms form { border: 1px solid #ccc; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 10px; }
+        .form-group label { display: block; margin-bottom: 5px; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .error { color: red; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;}
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<h1>지점 관리</h1>
+<hr>
+
+<div class="container">
+    <div class="list-section">
+        <h2>지점 목록</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>지점명</th>
+                    <th>주소</th>
+                    <th>전화번호</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#stores}}
+                    <tr>
+                        <td>{{id}}</td>
+                        <td>{{name}}</td>
+                        <td>{{address}}</td>
+                        <td>{{callNum}}</td>
+                    </tr>
+                {{/stores}}
+                {{^stores}}
+                    <tr>
+                        <td colspan="4" style="text-align: center;">등록된 지점이 없습니다.</td>
+                    </tr>
+                {{/stores}}
+            </tbody>
+        </table>
+
+        <h2>지점 담당자 배정 현황</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>지점명</th>
+                    <th>담당자 ID</th>
+                    <th>담당자 이름</th>
+                    <th>권한</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#storeManagements}}
+                    <tr>
+                        <td>{{store.name}}</td>
+                        <td>{{user.loginId}}</td>
+                        <td>{{user.name}}</td>
+                        <td>{{storeManagementType.title}}</td>
+                    </tr>
+                {{/storeManagements}}
+                {{^storeManagements}}
+                    <tr>
+                        <td colspan="4" style="text-align: center;">배정된 담당자가 없습니다.</td>
+                    </tr>
+                {{/storeManagements}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="forms">
+        <h2>신규 지점 등록</h2>
+        <form action="/store" method="post">
+            <div class="form-group">
+                <label for="storeName">지점명:</label>
+                <input type="text" id="storeName" name="name" value="{{storeRegisterRequestDTO.name}}" required>
+            </div>
+            <div class="form-group">
+                <label for="storeAddress">주소:</label>
+                <input type="text" id="storeAddress" name="address" value="{{storeRegisterRequestDTO.address}}" required>
+            </div>
+            <div class="form-group">
+                <label for="storeCallNum">전화번호:</label>
+                <input type="text" id="storeCallNum" name="callNum" value="{{storeRegisterRequestDTO.callNum}}" required>
+            </div>
+            <button type="submit">지점 등록</button>
+        </form>
+
+        <h2>지점 담당자 배정</h2>
+        <form action="/store/assign" method="post">
+            <div class="form-group">
+                <label for="storeId">대상 지점:</label>
+                <select id="storeId" name="storeId" required>
+                    <option value="">지점 선택</option>
+                    {{#stores}}
+                        <option value="{{id}}">{{name}}</option>
+                    {{/stores}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="userId">담당할 직원:</label>
+                <select id="userId" name="userId" required>
+                    <option value="">직원 선택</option>
+                    {{#users}}
+                        <option value="{{id}}">{{name}} ({{loginId}})</option>
+                    {{/users}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="managementType">권한:</label>
+                <select id="managementType" name="storeManagementType" required>
+                    <option value="">권한 선택</option>
+                    {{#managementTypes}}
+                        <option value="{{name}}">{{title}}</option>
+                    {{/managementTypes}}
+                </select>
+            </div>
+            <button type="submit">담당자 배정</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

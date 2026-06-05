@@ -7,5 +7,5 @@ import com.example.sportswms.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface StoreManagementRepository extends JpaRepository<StoreManagement, Long> {
-    boolean existsByStoreAndUserAndManagementType(Store store, User user, StoreManagementType managementType);
+    boolean existsByStoreAndUserAndStoreManagementType(Store store, User user, StoreManagementType storeManagementType);
 }
