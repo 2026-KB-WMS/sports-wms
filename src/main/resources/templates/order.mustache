@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Order Management</title>
+    <style>
+        body { font-family: sans-serif; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;}
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .error { color: red; font-size: 0.9em; margin-bottom: 10px; display: none; }
+        .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+<h1>order management</h1>
+<hr>
+
+<h2>신규 발주 신청</h2>
+{{#errorMessage}}
+    <div class="error" style="display:block;">{{errorMessage}}</div>
+{{/errorMessage}}
+
+<form action="/order/submit" method="post" id="orderForm">
+
+    <h3>1. 발주 지점 선택</h3>
+    <div class="form-group">
+        <select id="storeId" name="storeId" required>
+            <option value="">-- 배정된 지점 선택 --</option>
+            {{#stores}}
+                <option value="{{id}}">{{name}} ({{address}})</option>
+            {{/stores}}
+        </select>
+    </div>
+
+    <h3>2. 발주 품목 장바구니</h3>
+    <div class="box">
+        <select id="selectSku">
+            <option value="">-- 상품(SKU) 선택 --</option>
+            {{#products}}
+                <option value="{{id}}">{{skuCode}} ({{name}})</option>
+            {{/products}}
+        </select>
+
+        <input type="number" id="inputQuantity" placeholder="수량" min="1" value="1" style="width: 80px;">
+        <input type="text" id="inputMemo" placeholder="요청 메모 (선택)">
+
+        <button type="button" onclick="addItem()">품목 리스트에 추가 ↓</button>
+    </div>
+
+    <div class="error" id="emptyError">발주할 품목을 최소 한 개 이상 추가해주세요.</div>
+    <table>
+        <thead>
+        <tr>
+            <th>상품명(SKU)</th>
+            <th>수량</th>
+            <th>메모</th>
+            <th style="width: 60px;">관리</th>
+        </tr>
+        </thead>
+        <tbody id="orderListBody">
+        </tbody>
+    </table>
+
+    <button type="button" onclick="submitForm()" style="padding: 10px 20px; font-weight: bold;">본사로 발주 전송하기</button>
+</form>
+
+<hr style="margin: 40px 0;">
+
+<h2>내 지점 발주 내역</h2>
+<table>
+    <thead>
+        <tr>
+            <th>발주 그룹 ID</th>
+            <th>지점명</th>
+            <th>SKU</th>
+            <th>수량</th>
+            <th>메모</th>
+            <th>본사 오더 ID</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#orderDetails}}
+            <tr>
+                <td>{{orderGroupId}}</td>
+                <td>{{store.name}}</td>
+                <td>{{productSKU.skuCode}}</td>
+                <td>{{quantity}}</td>
+                <td>{{memo}}</td>
+                <td>
+                    {{#stockOrder}}
+                        {{id}}
+                    {{/stockOrder}}
+                    {{^stockOrder}}
+                        <span style="color: #888;">(대기중)</span>
+                    {{/stockOrder}}
+                </td>
+            </tr>
+        {{/orderDetails}}
+        {{^orderDetails}}
+            <tr>
+                <td colspan="6" style="text-align: center;">발주 내역이 없습니다.</td>
+            </tr>
+        {{/orderDetails}}
+    </tbody>
+</table>
+
+<script>
+    function addItem() {
+        const skuSelect = document.getElementById("selectSku");
+        const quantityInput = document.getElementById("inputQuantity");
+        const memoInput = document.getElementById("inputMemo");
+
+        const skuId = skuSelect.value;
+        const skuText = skuSelect.options[skuSelect.selectedIndex]?.text;
+        const quantity = quantityInput.value;
+        const memo = memoInput.value;
+
+        if (!skuId) {
+            alert("상품을 선택해주세요.");
+            return;
+        }
+        if (quantity < 1) {
+            alert("수량은 1 이상이어야 합니다.");
+            return;
+        }
+
+        const tbody = document.getElementById("orderListBody");
+        const currentIndex = tbody.querySelectorAll("tr").length;
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>
+                <input type="hidden" name="items[${currentIndex}].skuId" value="${skuId}">
+                ${skuText}
+            </td>
+            <td>
+                <input type="hidden" name="items[${currentIndex}].quantity" value="${quantity}">
+                ${quantity} 개
+            </td>
+            <td>
+                <input type="hidden" name="items[${currentIndex}].memo" value="${memo}">
+                ${memo}
+            </td>
+            <td>
+                <button type="button" onclick="removeItem(this)">삭제</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+
+        skuSelect.value = "";
+        quantityInput.value = "1";
+        memoInput.value = "";
+        document.getElementById("emptyError").style.display = "none";
+    }
+
+    function removeItem(button) {
+        button.closest('tr').remove();
+
+        const rows = document.getElementById("orderListBody").querySelectorAll("tr");
+        rows.forEach((row, index) => {
+            row.querySelector("input[name$='.skuId']").name = "items[" + index + "].skuId";
+            row.querySelector("input[name$='.quantity']").name = "items[" + index + "].quantity";
+            row.querySelector("input[name$='.memo']").name = "items[" + index + "].memo";
+        });
+    }
+
+    function submitForm() {
+        const tbody = document.getElementById("orderListBody");
+        if (tbody.querySelectorAll("tr").length === 0) {
+            document.getElementById("emptyError").style.display = "block";
+            return;
+        }
+        document.getElementById("orderForm").submit();
+    }
+</script>
+</body>
+</html>
