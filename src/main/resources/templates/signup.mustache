@@ -27,6 +27,10 @@
     <input type="text" name="address">
     <br>
     <button type="submit">join</button>
+
+    {{#errorMessage}}
+        {{errorMessage}}
+    {{/errorMessage}}
 </form>
 </body>
 </html>

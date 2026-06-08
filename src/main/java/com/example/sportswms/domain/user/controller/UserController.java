@@ -29,7 +29,7 @@ public class  UserController {
         // DTO 어노테이션 규칙 검증
         if (bindingResult.hasErrors()) {
             model.addAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
-            return "signup"; // 에러를 품고 회원가입 폼 화면으로 복귀
+            return "signup";
         }
 
         try {
