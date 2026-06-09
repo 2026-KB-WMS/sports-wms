@@ -2,8 +2,11 @@ package com.example.sportswms.domain.user.controller;
 
 import com.example.sportswms.domain.user.dto.SignUpRequestDTO;
 import com.example.sportswms.domain.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -21,8 +24,21 @@ public class  UserController {
     }
 
     @PostMapping("/signup")
-    public String signup(SignUpRequestDTO dto) {
-        userService.signup(dto);
-        return "redirect:/";
+    public String signup(@Valid SignUpRequestDTO dto, BindingResult bindingResult, Model model) {
+
+        // DTO 어노테이션 규칙 검증
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "signup";
+        }
+
+        try {
+            userService.signup(dto);
+        } catch (IllegalArgumentException e) { // 아이디, 이메일 중복 검증
+            model.addAttribute("errorMessage", e.getMessage());
+            return "signup";
+        }
+
+        return "redirect:/login";
     }
 }
