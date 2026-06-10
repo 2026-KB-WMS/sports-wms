@@ -1,6 +1,5 @@
 package com.example.sportswms.domain.product.entity;
 
-import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -40,12 +39,8 @@ public class ProductSKU {
         this.skuCode = skuCode;
     }
 
-    public static ProductSKU of(ProductCreateRequestDTO dto, Product product) {
-        return new ProductSKU(
-                product,
-                dto.skuName(),
-                dto.skuCode()
-        );
+    public static ProductSKU of(Product product, String name, String skuCode) {
+        return new ProductSKU(product, name, skuCode);
     }
 
     public void addOptionValue(OptionValue optionValue) {

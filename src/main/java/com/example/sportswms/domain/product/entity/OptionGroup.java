@@ -34,19 +34,13 @@ public class OptionGroup {
         return new OptionGroup(name);
     }
 
-    public void addOptionValue(String valueName) {
+    public void addOptionValue(String valueName, String valueCode) {
         boolean exists = this.optionValues.stream()
                 .anyMatch(v -> v.getName().equals(valueName));
         if (exists) {
             throw new IllegalArgumentException("이미 존재하는 옵션 값입니다: " + valueName);
         }
-        OptionValue newValue = OptionValue.of(valueName, this);
+        OptionValue newValue = OptionValue.of(valueName, valueCode,this);
         this.optionValues.add(newValue);
-    }
-
-    public void addOptionValues(List<String> valueNames) {
-        for (String name : valueNames) {
-            this.addOptionValue(name);
-        }
     }
 }

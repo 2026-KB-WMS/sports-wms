@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Product Page</title>
+    <title>SKU Page</title>
     <style>
         .form-group { margin-bottom: 10px; }
         .error { color: red; font-size: 0.9em; }
@@ -10,46 +10,20 @@
     </style>
 </head>
 <body>
-<h1>Product Management</h1>
+<h1>SKU Management</h1>
 <hr>
 
 <h2>신규 상품 및 SKU 등록</h2>
-<form action="/product" method="post">
+<form action="/sku" method="post">
     <div class="form-group">
-        <label for="categoryId">카테고리:</label>
-        <select id="categoryId" name="categoryId" required>
-            <option value="">카테고리 선택</option>
-            {{#categories}}
+        <label for="productId">상품명:</label>
+        <select id="productId" name="productId" required>
+            <option value="">상품 선택</option>
+            {{#products}}
                 <option value="{{id}}">{{name}}</option>
-            {{/categories}}
+            {{/products}}
         </select>
     </div>
-
-    <div class="form-group">
-        <label for="productName">상품명:</label>
-        <input type="text" id="productName" name="productName" required>
-    </div>
-
-    <div class="form-group">
-        <label for="brand">브랜드명:</label>
-        <input type="text" id="brand" name="brand" required>
-    </div>
-
-    <div class="form-group">
-        <label for="price">가격:</label>
-        <input type="number" id="price" name="price" value="0" min="0" required>
-    </div>
-
-    <div class="form-group">
-        <label for="skuName">SKU 명:</label>
-        <input type="text" id="skuName" name="skuName" required>
-    </div>
-
-    <div class="form-group">
-        <label for="skuCode">SKU 코드:</label>
-        <input type="text" id="skuCode" name="skuCode" required>
-    </div>
-
     <div class="form-group">
         <label>옵션 선택 (최소 1개 이상):</label><br>
         {{#optionGroups}}
@@ -87,7 +61,7 @@
     {{#skus}}
         <tr>
             <td>{{product.category.name}}</td>
-            <td>{{product.brand}}</td>
+            <td>{{product.brand.name}}</td>
             <td>{{product.name}}</td>
             <td>{{name}}</td>
             <td><strong>{{skuCode}}</strong></td>
