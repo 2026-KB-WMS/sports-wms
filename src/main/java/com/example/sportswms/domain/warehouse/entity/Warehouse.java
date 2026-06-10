@@ -18,7 +18,7 @@ public class Warehouse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "warehouse_id")
-    private long id;
+    private Long id;
 
     @Column(name = "warehouse_code", nullable = false, unique = true)
     private String warehouseCode;

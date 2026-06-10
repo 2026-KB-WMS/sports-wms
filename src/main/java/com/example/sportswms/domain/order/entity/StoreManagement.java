@@ -15,7 +15,7 @@ public class StoreManagement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "management_id")
-    private long id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
