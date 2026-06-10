@@ -8,17 +8,13 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name="OptionValue")
-public class OptionValue {
+@Table(name="Brand")
+public class Brand {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "value_id")
+    @Column(name = "brand_id")
     private long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id", nullable = false)
-    private OptionGroup optionGroup;
 
     @Column(nullable = false)
     private String name;
@@ -26,14 +22,8 @@ public class OptionValue {
     @Column(nullable = false)
     private String code;
 
-
-    private OptionValue(String name, String code, OptionGroup group) {
+    private Brand(String name, String code) {
         this.name = name;
         this.code = code;
-        this.optionGroup = group;
-    }
-
-    public static OptionValue of(String name, String code,OptionGroup group) {
-        return new OptionValue(name, code, group);
     }
 }

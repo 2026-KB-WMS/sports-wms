@@ -43,7 +43,7 @@ public class SecurityConfig {
                         // 모든 회원 접근 가능
                         .requestMatchers("/", "/signup", "/login").permitAll()
                         // 본사 관리자 접근 가능
-                        .requestMatchers("/product/**", "/store/**").hasRole("GENERAL_MANAGER")
+                        .requestMatchers("/sku/**", "/store/**").hasRole("GENERAL_MANAGER")
                         // 본사 관리자 및 창고 관리자 접근 가능 (창고, 지점 관리)
                         .requestMatchers("/warehouse/**").hasRole("WAREHOUSE_MANAGER")
                         // 일반 회원 (점주) 접근 가능 (발주)
@@ -53,6 +53,8 @@ public class SecurityConfig {
                         // 그 외의 모든 요청은 로그인 필요
                         .anyRequest().authenticated()
                 );
+
+        // 최종 빌드
         return http.build();
     }
 }
