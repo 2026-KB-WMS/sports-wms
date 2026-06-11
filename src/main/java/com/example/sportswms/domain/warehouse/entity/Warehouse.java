@@ -18,10 +18,7 @@ public class Warehouse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "warehouse_id")
-    private Long id;
-
-    @Column(name = "warehouse_code", nullable = false, unique = true)
-    private String warehouseCode;
+    private long id;
 
     @Column(nullable = false)
     private String name;
@@ -35,25 +32,26 @@ public class Warehouse {
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Section> sections = new ArrayList<>();
 
-    private Warehouse(String warehouseCode, String name, String address, int totalCapacity) {
-        this.warehouseCode = warehouseCode;
+    private Warehouse(String name, String address, int totalCapacity) {
         this.name = name;
         this.address = address;
         this.totalCapacity = totalCapacity;
     }
 
     public static Warehouse from(WarehouseCreateRequestDTO dto) {
+        String fullAddress = "";
+        if (dto.postcode() != null && !dto.postcode().isEmpty()) {
+            fullAddress += "(" + dto.postcode() + ") ";
+        }
+        fullAddress += dto.address();
+        if (dto.detailAddress() != null && !dto.detailAddress().isEmpty()) {
+            fullAddress += ", " + dto.detailAddress();
+        }
+
         return new Warehouse(
-                dto.warehouseCode(),
                 dto.name(),
-                dto.address(),
+                fullAddress,
                 dto.totalCapacity()
         );
-    }
-
-    public int calculateTotalCapacity() {
-        return this.sections.stream()
-                .mapToInt(Section::getTotalCapacity)
-                .sum();
     }
 }

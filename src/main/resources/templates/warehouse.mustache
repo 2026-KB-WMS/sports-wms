@@ -7,13 +7,13 @@
         body { font-family: sans-serif; }
         .container { display: flex; gap: 40px; }
         .warehouse-list, .forms { width: 50%; }
-        .warehouse { border: 1px solid #ccc; border-radius: 5px; margin-bottom: 15px; padding: 10px; }
-        .warehouse h3 { margin-top: 0; }
-        .section { border: 1px solid #e0e0e0; border-radius: 3px; margin-left: 20px; margin-top: 10px; padding: 8px; }
         .forms form { border: 1px solid #ccc; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; margin-bottom: 5px; }
-        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+        .form-group input { width: 100%; padding: 8px; box-sizing: border-box; }
+        .form-group.address-group { display: flex; gap: 10px; align-items: center; }
+        .form-group.address-group input[name="postcode"] { width: 100px; }
+        .form-group.address-group button { padding: 8px 12px; }
         .error { color: red; font-size: 0.9em; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;}
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
@@ -21,7 +21,7 @@
 </head>
 <body>
 
-<h1>warehouse page</h1>
+<h1>창고/구역 관리</h1>
 <hr>
 
 <div class="container">
@@ -32,7 +32,6 @@
                 <tr>
                     <th>ID</th>
                     <th>창고명</th>
-                    <th>창고 코드</th>
                     <th>주소</th>
                 </tr>
             </thead>
@@ -41,7 +40,6 @@
                     <tr>
                         <td>{{id}}</td>
                         <td>{{name}}</td>
-                        <td>{{warehouseCode}}</td>
                         <td>{{address}}</td>
                     </tr>
                 {{/warehouses}}
@@ -88,15 +86,18 @@
         <form action="/warehouse" method="post">
             <div class="form-group">
                 <label for="warehouseName">창고명:</label>
-                <input type="text" id="warehouseName" name="name" required>
+                <input type="text" id="warehouseName" name="name" value="{{warehouseCreateRequestDTO.name}}" required>
+            </div>
+            <div class="form-group address-group">
+                <label for="warehouseName">주소:</label>
+                <input type="text" name="postcode" placeholder="우편번호" value="{{warehouseCreateRequestDTO.postcode}}" readonly>
+                <button type="button" onclick="openDaumPostcode()">주소 검색</button>
             </div>
             <div class="form-group">
-                <label for="warehouseCode">창고 코드:</label>
-                <input type="text" id="warehouseCode" name="warehouseCode" required>
+                <input type="text" name="address" placeholder="주소" value="{{warehouseCreateRequestDTO.address}}" readonly required>
             </div>
             <div class="form-group">
-                <label for="warehouseAddress">주소:</label>
-                <input type="text" id="warehouseAddress" name="address" required>
+                <input type="text" name="detailAddress" placeholder="상세주소" value="{{warehouseCreateRequestDTO.detailAddress}}">
             </div>
             <div class="form-group">
                 <label for="totalCapacity">최대 수용량:</label>
@@ -141,6 +142,26 @@
         </form>
     </div>
 </div>
+
+<!-- 다음 우편번호 서비스 스크립트 -->
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script>
+    function openDaumPostcode() {
+        new daum.Postcode({
+            oncomplete: function(data) {
+                let addr = '';
+                if (data.userSelectedType === 'R') {
+                    addr = data.roadAddress;
+                } else {
+                    addr = data.jibunAddress;
+                }
+                document.querySelector('input[name="postcode"]').value = data.zonecode;
+                document.querySelector('input[name="address"]').value = addr;
+                document.querySelector('input[name="detailAddress"]').focus();
+            }
+        }).open();
+    }
+</script>
 
 </body>
 </html>

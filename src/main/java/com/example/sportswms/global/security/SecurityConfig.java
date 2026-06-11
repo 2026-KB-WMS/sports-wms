@@ -45,7 +45,7 @@ public class SecurityConfig {
                         // 본사 관리자 접근 가능
                         .requestMatchers("/sku/**", "/store/**").hasRole("GENERAL_MANAGER")
                         // 본사 관리자 및 창고 관리자 접근 가능 (창고, 지점 관리)
-                        .requestMatchers("/warehouse/**").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers("/warehouse/**").hasAnyRole("GENERAL_MANAGER","WAREHOUSE_MANAGER")
                         // 일반 회원 (점주) 접근 가능 (발주)
                         .requestMatchers("/order/**").hasRole("USER")
                         // 재고 조회는 로그인한 회원 모두 접근 가능

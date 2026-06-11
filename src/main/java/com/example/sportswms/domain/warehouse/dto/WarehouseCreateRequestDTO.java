@@ -4,15 +4,17 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
 public record WarehouseCreateRequestDTO(
-        @NotBlank(message = "창고 고유 코드는 필수 입력 값입니다.")
-        String warehouseCode,
 
-        @NotBlank(message = "이름은 필수 입력 값입니다.")
+        @NotBlank(message = "{warehouse.name.required}")
         String name,
 
-        @NotBlank(message = "주소는 필수 입력 값입니다.")
-        String address,
+        String postcode, // 우편번호
 
-        @Min(value = 1, message = "최대 수용량은 최소 1개 이상이어야 합니다.")
+        @NotBlank(message = "{warehouse.address.required}")
+        String address, // 주소
+
+        String detailAddress, // 상세주소
+
+        @Min(value = 1, message = "{warehouse.totalCapacity.minimum}")
         int totalCapacity
 ) {}
