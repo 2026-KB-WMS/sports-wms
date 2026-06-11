@@ -27,6 +27,7 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final UserRepository userRepository;
     private final StoreManagementRepository storeManagementRepository;
+    private final StockOrderRepository stockOrderRepository;
     private final StockOrderDetailRepository stockOrderDetailRepository;
     private final ProductSKURepository productSKURepository;
 
@@ -45,6 +46,10 @@ public class StoreService {
             return List.of();
         }
         return stockOrderDetailRepository.findByStoreIn(assignedStores);
+    }
+    
+    public List<StockOrderDetail> getAllOrderDetails() {
+        return stockOrderDetailRepository.findAll();
     }
 
     @Transactional
