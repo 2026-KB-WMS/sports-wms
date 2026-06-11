@@ -27,5 +27,15 @@ public class WarehouseManagement {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "management_type", nullable = false)
-    private WarehouseManagementType warehouseManagementType;
+    private WarehouseManagementType managementType;
+
+    private WarehouseManagement(Warehouse warehouse, User user, WarehouseManagementType managementType) {
+        this.warehouse = warehouse;
+        this.user = user;
+        this.managementType = managementType;
+    }
+
+    public static WarehouseManagement of(Warehouse warehouse, User user, WarehouseManagementType managementType) {
+        return new WarehouseManagement(warehouse, user, managementType);
+    }
 }

@@ -1,8 +1,12 @@
 package com.example.sportswms.domain.warehouse.controller;
 
+import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.dto.SectionCreateRequestDTO;
+import com.example.sportswms.domain.warehouse.dto.WarehouseAssignRequestDTO;
 import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.entity.SectionType;
+import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
+import com.example.sportswms.domain.warehouse.entity.WarehouseManagementType;
 import com.example.sportswms.domain.warehouse.service.WarehouseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +17,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
+
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/warehouse")
@@ -21,7 +27,7 @@ public class WarehouseController {
 
     @GetMapping
     public String warehousePage(Model model) {
-        // GET 요청 시 폼에 필요한 데이터를 항상 로드
+        // 기존 데이터 로드
         if (!model.containsAttribute("warehouses")) {
             model.addAttribute("warehouses", warehouseService.getAllWarehouses());
         }
@@ -30,12 +36,22 @@ public class WarehouseController {
         }
         model.addAttribute("sectionTypes", SectionType.values());
 
-        // 폼 바인딩을 위한 빈 객체 추가 (오류 발생 후에도 데이터를 유지하기 위함)
+        // 관리자 배정을 위한 데이터 로드
+        List<User> users = warehouseService.getAllUsers();
+        List<WarehouseManagement> warehouseManagements = warehouseService.getAllWarehouseManagements();
+        model.addAttribute("users", users);
+        model.addAttribute("warehouseManagements", warehouseManagements);
+        model.addAttribute("managementTypes", WarehouseManagementType.values());
+
+        // 폼 바인딩을 위한 빈 객체 추가
         if (!model.containsAttribute("warehouseCreateRequestDTO")) {
             model.addAttribute("warehouseCreateRequestDTO", new WarehouseCreateRequestDTO("", "", "", "", 0));
         }
         if (!model.containsAttribute("sectionCreateRequestDTO")) {
             model.addAttribute("sectionCreateRequestDTO", new SectionCreateRequestDTO(null, "", 0, null, ""));
+        }
+        if (!model.containsAttribute("warehouseAssignRequestDTO")) {
+            model.addAttribute("warehouseAssignRequestDTO", new WarehouseAssignRequestDTO(null, null, null));
         }
 
         return "warehouse";
@@ -44,9 +60,8 @@ public class WarehouseController {
     @PostMapping
     public String createWarehouse(@Valid WarehouseCreateRequestDTO dto, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
-            // 유효성 검사 실패 시, 입력 데이터와 에러 메시지를 모델에 추가하고 폼 뷰를 다시 렌더링
             model.addAttribute("warehouseCreateRequestDTO", dto);
-            return warehousePage(model); // GET 핸들러를 호출하여 필요한 모든 데이터를 로드
+            return warehousePage(model);
         }
         warehouseService.createWarehouse(dto);
         return "redirect:/warehouse";
@@ -55,11 +70,20 @@ public class WarehouseController {
     @PostMapping("/section")
     public String createSection(@Valid SectionCreateRequestDTO dto, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
-            // 유효성 검사 실패 시, 입력 데이터와 에러 메시지를 모델에 추가하고 폼 뷰를 다시 렌더링
             model.addAttribute("sectionCreateRequestDTO", dto);
-            return warehousePage(model); // GET 핸들러를 호출하여 필요한 모든 데이터를 로드
+            return warehousePage(model);
         }
         warehouseService.createSection(dto);
+        return "redirect:/warehouse";
+    }
+
+    @PostMapping("/assign")
+    public String assignManager(@Valid WarehouseAssignRequestDTO dto, BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("warehouseAssignRequestDTO", dto);
+            return warehousePage(model);
+        }
+        warehouseService.assignWarehouseManager(dto);
         return "redirect:/warehouse";
     }
 }

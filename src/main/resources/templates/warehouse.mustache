@@ -10,7 +10,7 @@
         .forms form { border: 1px solid #ccc; border-radius: 5px; padding: 15px; margin-bottom: 20px; }
         .form-group { margin-bottom: 10px; }
         .form-group label { display: block; margin-bottom: 5px; }
-        .form-group input { width: 100%; padding: 8px; box-sizing: border-box; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
         .form-group.address-group { display: flex; gap: 10px; align-items: center; }
         .form-group.address-group input[name="postcode"] { width: 100px; }
         .form-group.address-group button { padding: 8px 12px; }
@@ -79,6 +79,33 @@
                 {{/sections}}
             </tbody>
         </table>
+
+        <h2>창고 담당자 배정 현황</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>창고명</th>
+                    <th>담당자 ID</th>
+                    <th>담당자 이름</th>
+                    <th>권한</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#warehouseManagements}}
+                    <tr>
+                        <td>{{warehouse.name}}</td>
+                        <td>{{user.loginId}}</td>
+                        <td>{{user.name}}</td>
+                        <td>{{managementType.roleName}}</td>
+                    </tr>
+                {{/warehouseManagements}}
+                {{^warehouseManagements}}
+                    <tr>
+                        <td colspan="4" style="text-align: center;">배정된 담당자가 없습니다.</td>
+                    </tr>
+                {{/warehouseManagements}}
+            </tbody>
+        </table>
     </div>
 
     <div class="forms">
@@ -89,7 +116,6 @@
                 <input type="text" id="warehouseName" name="name" value="{{warehouseCreateRequestDTO.name}}" required>
             </div>
             <div class="form-group address-group">
-                <label for="warehouseName">주소:</label>
                 <input type="text" name="postcode" placeholder="우편번호" value="{{warehouseCreateRequestDTO.postcode}}" readonly>
                 <button type="button" onclick="openDaumPostcode()">주소 검색</button>
             </div>
@@ -98,10 +124,6 @@
             </div>
             <div class="form-group">
                 <input type="text" name="detailAddress" placeholder="상세주소" value="{{warehouseCreateRequestDTO.detailAddress}}">
-            </div>
-            <div class="form-group">
-                <label for="totalCapacity">최대 수용량:</label>
-                <input type="number" id="totalCapacity" name="totalCapacity" min="1" required>
             </div>
             <button type="submit">창고 등록</button>
         </form>
@@ -119,11 +141,11 @@
             </div>
             <div class="form-group">
                 <label for="sectionName">구역명:</label>
-                <input type="text" id="sectionName" name="name" required>
+                <input type="text" id="sectionName" name="name" value="{{sectionCreateRequestDTO.name}}" required>
             </div>
             <div class="form-group">
                 <label for="sectionCode">구역 코드:</label>
-                <input type="text" id="sectionCode" name="sectionCode" required>
+                <input type="text" id="sectionCode" name="sectionCode" value="{{sectionCreateRequestDTO.sectionCode}}" required>
             </div>
             <div class="form-group">
                 <label for="sectionType">구역 타입:</label>
@@ -136,9 +158,41 @@
             </div>
             <div class="form-group">
                 <label for="totalCapacity">최대 수용량:</label>
-                <input type="number" id="totalCapacity" name="totalCapacity" min="1" required>
+                <input type="number" id="totalCapacity" name="totalCapacity" value="{{sectionCreateRequestDTO.totalCapacity}}" min="1" required>
             </div>
             <button type="submit">구역 등록</button>
+        </form>
+
+        <h2>창고 담당자 배정</h2>
+        <form action="/warehouse/assign" method="post">
+            <div class="form-group">
+                <label for="assignWarehouseId">대상 창고:</label>
+                <select id="assignWarehouseId" name="warehouseId" required>
+                    <option value="">창고 선택</option>
+                    {{#warehouses}}
+                        <option value="{{id}}">{{name}}</option>
+                    {{/warehouses}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="assignUserId">담당할 직원 (일반 회원):</label>
+                <select id="assignUserId" name="userId" required>
+                    <option value="">직원 선택</option>
+                    {{#users}}
+                        <option value="{{id}}">{{name}} ({{loginId}})</option>
+                    {{/users}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="managementType">권한:</label>
+                <select id="managementType" name="managementType" required>
+                    <option value="">권한 선택</option>
+                    {{#managementTypes}}
+                        <option value="{{name}}">{{roleName}}</option>
+                    {{/managementTypes}}
+                </select>
+            </div>
+            <button type="submit">담당자 배정</button>
         </form>
     </div>
 </div>
