@@ -19,7 +19,7 @@ public class Warehouse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "warehouse_id")
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -28,10 +28,10 @@ public class Warehouse {
     private String address;
 
     @Column(name = "total_capacity", nullable = false)
-    int totalCapacity;
+    private int totalCapacity;
 
     @Column(name = "current_section_capacity", nullable = false)
-    int currentSectionCapacity;
+    private int currentSectionCapacity;
 
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Section> sections = new ArrayList<>();

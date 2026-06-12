@@ -1,6 +1,7 @@
 package com.example.sportswms.domain.warehouse.controller;
 
 import com.example.sportswms.domain.user.entity.User;
+import com.example.sportswms.domain.user.service.UserService;
 import com.example.sportswms.domain.warehouse.dto.SectionCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.dto.WarehouseAssignRequestDTO;
 import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
@@ -25,6 +26,7 @@ import java.util.List;
 @RequestMapping("/warehouse")
 public class WarehouseController {
     private final WarehouseService warehouseService;
+    private final UserService userService;
 
     @GetMapping
     public String warehousePage(Model model) {
@@ -38,7 +40,7 @@ public class WarehouseController {
         model.addAttribute("sectionTypes", SectionType.values());
 
         // 관리자 배정을 위한 데이터 로드
-        List<User> users = warehouseService.getAllUsers();
+        List<User> users = userService.getAllUsers();
         List<WarehouseManagement> warehouseManagements = warehouseService.getAllWarehouseManagements();
         model.addAttribute("users", users);
         model.addAttribute("warehouseManagements", warehouseManagements);

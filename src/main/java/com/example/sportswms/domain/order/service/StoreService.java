@@ -32,7 +32,6 @@ public class StoreService {
     private final ProductSKURepository productSKURepository;
 
     public List<Store> getAllStores() { return storeRepository.findAll(); }
-    public List<User> getAllUsers() { return userRepository.findAll(); }
     public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }
     public List<Store> getAssignedStoresByUserId(Long userId) {
         return storeManagementRepository.findByUserId(userId).stream()

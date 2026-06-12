@@ -33,7 +33,6 @@ public class WarehouseService {
 
     public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
     public List<Section> getAllSections() { return sectionRepository.findAll(); }
-    public List<User> getAllUsers() { return userRepository.findAll(); }
     public List<WarehouseManagement> getAllWarehouseManagements() { return warehouseManagementRepository.findAll(); }
 
     @Transactional
