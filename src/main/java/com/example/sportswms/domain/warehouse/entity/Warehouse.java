@@ -29,6 +29,9 @@ public class Warehouse {
     @Column(name = "total_capacity", nullable = false)
     int totalCapacity;
 
+    @Column(name = "current_section_capacity", nullable = false)
+    int currentSectionCapacity;
+
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Section> sections = new ArrayList<>();
 
@@ -36,6 +39,7 @@ public class Warehouse {
         this.name = name;
         this.address = address;
         this.totalCapacity = totalCapacity;
+        this.currentSectionCapacity = 0;
     }
 
     public static Warehouse from(WarehouseCreateRequestDTO dto) {
@@ -47,11 +51,18 @@ public class Warehouse {
         if (dto.detailAddress() != null && !dto.detailAddress().isEmpty()) {
             fullAddress += ", " + dto.detailAddress();
         }
-
         return new Warehouse(
                 dto.name(),
                 fullAddress,
                 dto.totalCapacity()
         );
+    }
+
+    public void addSectionCapacity(int capacityToAdd) {
+        int expectedCapacity = this.currentSectionCapacity + capacityToAdd;
+        if (expectedCapacity > this.totalCapacity) {
+            throw new IllegalArgumentException(String.format("구역의 총 수용량(%d)이 창고의 전체 수용량(%d)을 초과할 수 없습니다.", expectedCapacity, this.totalCapacity));
+        }
+        this.currentSectionCapacity = expectedCapacity;
     }
 }

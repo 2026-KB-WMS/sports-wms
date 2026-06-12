@@ -33,6 +33,8 @@
                     <th>ID</th>
                     <th>창고명</th>
                     <th>주소</th>
+                    <th>최대 수용량</th>
+                    <th>현재 수용량</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,11 +43,13 @@
                         <td>{{id}}</td>
                         <td>{{name}}</td>
                         <td>{{address}}</td>
+                        <td>{{totalCapacity}}</td>
+                        <td>{{currentSectionCapacity}}</td>
                     </tr>
                 {{/warehouses}}
                 {{^warehouses}}
                     <tr>
-                        <td colspan="3" style="text-align: center;">등록된 창고가 없습니다.</td>
+                        <td colspan="5" style="text-align: center;">등록된 창고가 없습니다.</td>
                     </tr>
                 {{/warehouses}}
             </tbody>
@@ -125,8 +129,14 @@
             <div class="form-group">
                 <input type="text" name="detailAddress" placeholder="상세주소" value="{{warehouseCreateRequestDTO.detailAddress}}">
             </div>
+            <div class="form-group">
+                <input type="text" name="totalCapacity" placeholder="최대 수용량" value="{{warehouseCreateRequestDTO.totalCapacity}}" min="1000" required>
+            </div>
             <button type="submit">창고 등록</button>
         </form>
+        {{#warehouseCreateError}}
+            {{warehouseCreateError}}
+        {{/warehouseCreateError}}
 
         <h2>신규 구역 등록</h2>
         <form action="/warehouse/section" method="post">
@@ -158,10 +168,13 @@
             </div>
             <div class="form-group">
                 <label for="totalCapacity">최대 수용량:</label>
-                <input type="number" id="totalCapacity" name="totalCapacity" value="{{sectionCreateRequestDTO.totalCapacity}}" min="1" required>
+                <input type="number" id="totalCapacity" name="totalCapacity" value="{{sectionCreateRequestDTO.totalCapacity}}" required>
             </div>
             <button type="submit">구역 등록</button>
         </form>
+        {{#sectionCreateError}}
+            {{sectionCreateError}}
+        {{/sectionCreateError}}
 
         <h2>창고 담당자 배정</h2>
         <form action="/warehouse/assign" method="post">
@@ -194,6 +207,9 @@
             </div>
             <button type="submit">담당자 배정</button>
         </form>
+        {{#warehouseAssignmentError}}
+            {{warehouseAssignmentError}}
+        {{/warehouseAssignmentError}}
     </div>
 </div>
 

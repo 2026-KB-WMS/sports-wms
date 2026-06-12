@@ -61,6 +61,7 @@ public class WarehouseController {
     public String createWarehouse(@Valid WarehouseCreateRequestDTO dto, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("warehouseCreateRequestDTO", dto);
+            model.addAttribute("warehouseCreateError", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return warehousePage(model);
         }
         warehouseService.createWarehouse(dto);
@@ -71,9 +72,18 @@ public class WarehouseController {
     public String createSection(@Valid SectionCreateRequestDTO dto, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("sectionCreateRequestDTO", dto);
+            model.addAttribute("sectionCreateError", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return warehousePage(model);
         }
-        warehouseService.createSection(dto);
+        
+        try {
+            warehouseService.createSection(dto);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("sectionCreateRequestDTO", dto);
+            model.addAttribute("sectionCreateError", e.getMessage());
+            return warehousePage(model);
+        }
+        
         return "redirect:/warehouse";
     }
 
@@ -81,9 +91,18 @@ public class WarehouseController {
     public String assignManager(@Valid WarehouseAssignRequestDTO dto, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) {
             model.addAttribute("warehouseAssignRequestDTO", dto);
+            model.addAttribute("warehouseAssignmentError", bindingResult.getAllErrors().get(0).getDefaultMessage());
             return warehousePage(model);
         }
-        warehouseService.assignWarehouseManager(dto);
+        
+        try {
+            warehouseService.assignWarehouseManager(dto);
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            model.addAttribute("warehouseAssignRequestDTO", dto);
+            model.addAttribute("warehouseAssignmentError", e.getMessage());
+            return warehousePage(model);
+        }
+
         return "redirect:/warehouse";
     }
 }

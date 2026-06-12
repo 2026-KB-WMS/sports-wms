@@ -8,13 +8,13 @@ public record WarehouseCreateRequestDTO(
         @NotBlank(message = "{warehouse.name.required}")
         String name,
 
-        String postcode, // 우편번호
+        String postcode,
 
         @NotBlank(message = "{warehouse.address.required}")
-        String address, // 주소
+        String address,
 
-        String detailAddress, // 상세주소
+        String detailAddress,
 
-        @Min(value = 1, message = "{warehouse.totalCapacity.minimum}")
+        @Min(value = 1000, message = "{warehouse.totalCapacity.minimum}")
         int totalCapacity
 ) {}
