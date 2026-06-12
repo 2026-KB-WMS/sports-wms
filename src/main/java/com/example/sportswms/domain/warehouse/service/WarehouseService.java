@@ -14,11 +14,12 @@ import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Slf4j
 @Service
@@ -46,7 +47,12 @@ public class WarehouseService {
     @Transactional
     public void createSection(SectionCreateRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 창고 ID입니다."));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
+
+        if (sectionRepository.existsByNameAndWarehouse(dto.name(), warehouse)) {
+            throw new IllegalArgumentException(getMessage("section.name.duplicate"));
+        }
+
         warehouse.addSectionCapacity(dto.totalCapacity());
         Section section = Section.of(dto, warehouse);
         sectionRepository.save(section);
@@ -55,10 +61,10 @@ public class WarehouseService {
     @Transactional
     public void assignWarehouseManager(WarehouseAssignRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("management.warehouseId.invalid")));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
 
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("management.userId.invalid")));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("userId.invalid")));
 
         if (warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user)) {
             throw new IllegalStateException(getMessage("management.assignment.duplicate"));
@@ -68,7 +74,4 @@ public class WarehouseService {
         warehouseManagementRepository.save(warehouseManagement);
     }
 
-    private String getMessage(String code, Object... args) {
-        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
-    }
 }

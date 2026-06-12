@@ -1,6 +1,7 @@
 package com.example.sportswms.domain.warehouse.entity;
 
 import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
+import com.example.sportswms.global.util.MessageUtils;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -61,7 +62,7 @@ public class Warehouse {
     public void addSectionCapacity(int capacityToAdd) {
         int expectedCapacity = this.currentSectionCapacity + capacityToAdd;
         if (expectedCapacity > this.totalCapacity) {
-            throw new IllegalArgumentException(String.format("구역의 총 수용량(%d)이 창고의 전체 수용량(%d)을 초과할 수 없습니다.", expectedCapacity, this.totalCapacity));
+            throw new IllegalArgumentException(MessageUtils.getMessage("warehouse.capacity.exceeded", expectedCapacity, this.totalCapacity));
         }
         this.currentSectionCapacity = expectedCapacity;
     }
