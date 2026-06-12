@@ -5,8 +5,6 @@ import com.example.sportswms.domain.product.entity.*;
 import com.example.sportswms.domain.product.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,11 +18,9 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
     private final ProductSKURepository productSKURepository;
     private final OptionValueRepository optionValueRepository;
     private final OptionGroupRepository optionGroupRepository;
-    private final MessageSource messageSource;
 
     public List<ProductSKU> getAllSKUs() {
         return productSKURepository.findAll();
@@ -42,17 +38,9 @@ public class ProductService {
             throw new IllegalArgumentException("선택된 옵션 중 존재하지 않는 옵션이 있습니다.");
         }
 
-        // SKU 이름 생성: 상품명 (옵션명/옵션명/...)
-        String optionNames = optionValues.stream()
-                .map(OptionValue::getName)
-                .collect(Collectors.joining("/"));
-        String skuName = product.getName() + " (" + optionNames + ")";
-
-        // SKU 코드 생성: 상품코드-옵션코드-옵션코드...
-        String optionCodes = optionValues.stream()
-                .map(OptionValue::getCode)
-                .collect(Collectors.joining("-"));
-        String skuCode = product.getCode() + "-" + optionCodes;
+        // SKU 이름 및 코드 생성 함수 호출
+        String skuName = generateSKUName(product, optionValues);
+        String skuCode = generateSKUCode(product, optionValues);
 
         // 생성된 이름과 코드로 ProductSKU 객체 생성
         ProductSKU sku = ProductSKU.of(product, skuName, skuCode);
@@ -60,7 +48,17 @@ public class ProductService {
         productSKURepository.save(sku);
     }
 
-    private String getMessage(String code, Object... args) {
-        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
+    private String generateSKUName(Product product, List<OptionValue> optionValues) {
+        String optionNames = optionValues.stream()
+                .map(OptionValue::getName)
+                .collect(Collectors.joining("/"));
+        return product.getName() + " (" + optionNames + ")";
+    }
+
+    private String generateSKUCode(Product product, List<OptionValue> optionValues) {
+        String optionCodes = optionValues.stream()
+                .map(OptionValue::getCode)
+                .collect(Collectors.joining("-"));
+        return product.getCode() + "-" + optionCodes;
     }
 }

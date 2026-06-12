@@ -48,7 +48,7 @@ public class WarehouseController {
             model.addAttribute("warehouseCreateRequestDTO", new WarehouseCreateRequestDTO("", "", "", "", 0));
         }
         if (!model.containsAttribute("sectionCreateRequestDTO")) {
-            model.addAttribute("sectionCreateRequestDTO", new SectionCreateRequestDTO(null, "", 0, null, ""));
+            model.addAttribute("sectionCreateRequestDTO", new SectionCreateRequestDTO(null, "", 0, null));
         }
         if (!model.containsAttribute("warehouseAssignRequestDTO")) {
             model.addAttribute("warehouseAssignRequestDTO", new WarehouseAssignRequestDTO(null, null, null));

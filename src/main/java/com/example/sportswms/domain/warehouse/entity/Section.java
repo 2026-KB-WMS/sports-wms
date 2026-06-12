@@ -51,13 +51,13 @@ public class Section {
         this.sectionCode = sectionCode;
     }
 
-    public static Section of(SectionCreateRequestDTO dto, Warehouse warehouse) {
+    public static Section of(SectionCreateRequestDTO dto, String sectionCode, Warehouse warehouse) {
         return new Section(
                 warehouse,
                 dto.name(),
                 dto.totalCapacity(),
                 dto.sectionType(),
-                dto.sectionCode()
+                sectionCode
         );
     }
 }

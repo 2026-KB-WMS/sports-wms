@@ -16,8 +16,5 @@ public record SectionCreateRequestDTO(
         int totalCapacity,
 
         @NotNull(message = "{section.type.selected}")
-        SectionType sectionType,
-
-        @NotBlank(message = "{section.code.required}")
-        String sectionCode
+        SectionType sectionType
 ) {}

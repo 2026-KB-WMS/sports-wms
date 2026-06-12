@@ -12,8 +12,6 @@ import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,7 +19,6 @@ import java.util.List;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -31,7 +28,6 @@ public class WarehouseService {
     private final SectionRepository sectionRepository;
     private final UserRepository userRepository;
     private final WarehouseManagementRepository warehouseManagementRepository;
-    private final MessageSource messageSource;
 
     public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
     public List<Section> getAllSections() { return sectionRepository.findAll(); }
@@ -53,9 +49,19 @@ public class WarehouseService {
             throw new IllegalArgumentException(getMessage("section.name.duplicate"));
         }
 
+        // 창고의 수용량 업데이트 및 검증
         warehouse.addSectionCapacity(dto.totalCapacity());
-        Section section = Section.of(dto, warehouse);
+
+        // 구역 코드 생성: 창고id-sectiontype-구역이름
+        String sectionCode = generateSectionCode(warehouse, dto);
+
+        // 구역 생성
+        Section section = Section.of(dto, sectionCode, warehouse);
         sectionRepository.save(section);
+    }
+    
+    private String generateSectionCode(Warehouse warehouse, SectionCreateRequestDTO dto) {
+        return warehouse.getId() + "-" + dto.name() + "-" + dto.sectionType().getCode();
     }
 
     @Transactional
@@ -73,5 +79,4 @@ public class WarehouseService {
         WarehouseManagement warehouseManagement = WarehouseManagement.of(warehouse, user, dto.managementType());
         warehouseManagementRepository.save(warehouseManagement);
     }
-
 }
