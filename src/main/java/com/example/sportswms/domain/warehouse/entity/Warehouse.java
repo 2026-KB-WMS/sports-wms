@@ -66,4 +66,8 @@ public class Warehouse {
         }
         this.currentSectionCapacity = expectedCapacity;
     }
+
+    public void deleteSectionCapacity(int capacityToDelete) {
+        this.currentSectionCapacity = this.currentSectionCapacity - capacityToDelete;
+    }
 }

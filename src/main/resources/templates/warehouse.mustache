@@ -64,6 +64,8 @@
                     <th>구역 코드</th>
                     <th>구역 타입</th>
                     <th>최대 수용량</th>
+                    <th>현재 사용량</th>
+                    <th>작업</th>
                 </tr>
             </thead>
             <tbody>
@@ -74,11 +76,17 @@
                         <td>{{sectionCode}}</td>
                         <td>{{sectionType.title}}</td>
                         <td>{{totalCapacity}}</td>
+                        <td>{{currentUsage}}</td>
+                        <td>
+                            <form action="/warehouse/section/delete/{{id}}" method="post" style="display: inline;">
+                                <button type="submit" {{^isDeletable}}disabled{{/isDeletable}}>삭제</button>
+                            </form>
+                        </td>
                     </tr>
                 {{/sections}}
                 {{^sections}}
                     <tr>
-                        <td colspan="5" style="text-align: center;">등록된 구역이 없습니다.</td>
+                        <td colspan="7" style="text-align: center;">등록된 구역이 없습니다.</td>
                     </tr>
                 {{/sections}}
             </tbody>

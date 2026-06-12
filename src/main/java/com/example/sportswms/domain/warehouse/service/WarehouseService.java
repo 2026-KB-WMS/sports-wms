@@ -12,6 +12,7 @@ import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.List;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -59,9 +61,20 @@ public class WarehouseService {
         Section section = Section.of(dto, sectionCode, warehouse);
         sectionRepository.save(section);
     }
-    
-    private String generateSectionCode(Warehouse warehouse, SectionCreateRequestDTO dto) {
-        return warehouse.getId() + "-" + dto.name() + "-" + dto.sectionType().getCode();
+
+    @Transactional
+    public void deleteSection(Long sectionId) {
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
+
+        if (section.getCurrentUsage() > 0) {
+            throw new IllegalStateException(getMessage("section.delete.inUse"));
+        }
+
+        Warehouse warehouse = section.getWarehouse();
+        warehouse.deleteSectionCapacity(section.getTotalCapacity());
+
+        sectionRepository.delete(section);
     }
 
     @Transactional
@@ -78,5 +91,9 @@ public class WarehouseService {
 
         WarehouseManagement warehouseManagement = WarehouseManagement.of(warehouse, user, dto.managementType());
         warehouseManagementRepository.save(warehouseManagement);
+    }
+
+    private String generateSectionCode(Warehouse warehouse, SectionCreateRequestDTO dto) {
+        return dto.sectionType().getCode() + "-" + dto.name().toUpperCase() + "-" + warehouse.getId();
     }
 }

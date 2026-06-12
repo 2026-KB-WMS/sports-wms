@@ -60,4 +60,8 @@ public class Section {
                 sectionCode
         );
     }
+
+    public boolean isDeletable() {
+        return this.currentUsage == 0;
+    }
 }
