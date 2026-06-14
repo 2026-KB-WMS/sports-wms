@@ -1,8 +1,10 @@
 package com.example.sportswms.domain.order.service;
 
+import com.example.sportswms.domain.order.dto.AssignOrderRequestDTO;
 import com.example.sportswms.domain.order.dto.OrderItemRequestDTO;
 import com.example.sportswms.domain.order.dto.StoreAssignRequestDTO;
 import com.example.sportswms.domain.order.dto.StoreRegisterRequestDTO;
+import com.example.sportswms.domain.order.entity.StockOrder;
 import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.entity.StoreManagement;
@@ -14,11 +16,15 @@ import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.product.repository.ProductSKURepository;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.user.repository.UserRepository;
+import com.example.sportswms.domain.warehouse.entity.Warehouse;
+import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+
+import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +36,7 @@ public class StoreService {
     private final StockOrderRepository stockOrderRepository;
     private final StockOrderDetailRepository stockOrderDetailRepository;
     private final ProductSKURepository productSKURepository;
+    private final WarehouseRepository warehouseRepository;
 
     public List<Store> getAllStores() { return storeRepository.findAll(); }
     public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }
@@ -52,15 +59,40 @@ public class StoreService {
     }
 
     @Transactional
+    public void assignOrdersToWarehouse(AssignOrderRequestDTO dto) {
+        Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouse.invalid")));
+
+        List<StockOrderDetail> detailsToAssign = stockOrderDetailRepository.findAllById(dto.orderDetailIds());
+
+        if (detailsToAssign.isEmpty()) {
+            throw new IllegalArgumentException(getMessage("order.detail.selected"));
+        }
+
+        // 이미 다른 StockOrder에 할당된 요청인지 확인
+        boolean alreadyAssigned = detailsToAssign.stream().anyMatch(detail -> detail.getStockOrder() != null);
+        if (alreadyAssigned) {
+            throw new IllegalStateException(getMessage("order.detail.assigned"));
+        }
+
+        StockOrder stockOrder = StockOrder.create(warehouse);
+        stockOrderRepository.save(stockOrder);
+
+        for (StockOrderDetail detail : detailsToAssign) {
+            detail.assignStockOrder(stockOrder);
+        }
+    }
+
+    @Transactional
     public void createStoreOrderRequest(Long storeId, List<OrderItemRequestDTO> items) {
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지점입니다."));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
 
         String uniqueGroupId = "REQ-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
         List<StockOrderDetail> details = items.stream().map(itemDto -> {
             ProductSKU sku = productSKURepository.findById(itemDto.skuId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품 SKU입니다. ID: " + itemDto.skuId()));
+                    .orElseThrow(() -> new IllegalArgumentException(getMessage("sku.invalid")));
             return StockOrderDetail.from(store, uniqueGroupId, sku, itemDto);
         }).toList();
 
@@ -76,11 +108,11 @@ public class StoreService {
     @Transactional
     public void assignStoreToUser(StoreAssignRequestDTO dto) {
         Store store = storeRepository.findById(dto.storeId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 지점 ID입니다: " + dto.storeId()));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원 ID입니다: " + dto.userId()));
-        if (storeManagementRepository.existsByStoreAndUserAndStoreManagementType(store, user, dto.storeManagementType())) {
-            throw new IllegalStateException("이미 해당 지점에 동일한 권한으로 배정된 회원입니다.");
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("user.invalid")));
+        if (storeManagementRepository.existsByStoreAndUser(store, user)) {
+            throw new IllegalStateException(getMessage("store.user.assigned"));
         }
         StoreManagement storeManagement = StoreManagement.of(store, user, dto.storeManagementType());
         storeManagementRepository.save(storeManagement);

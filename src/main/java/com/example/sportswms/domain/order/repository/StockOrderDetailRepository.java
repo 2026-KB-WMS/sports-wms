@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface StockOrderDetailRepository extends JpaRepository<StockOrderDetail, Long> {
     List<StockOrderDetail> findByStoreIn(List<Store> stores);
+    List<StockOrderDetail> findByOrderGroupId(String orderGroupId);
 }

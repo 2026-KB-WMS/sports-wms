@@ -1,11 +1,13 @@
 package com.example.sportswms.domain.order.controller;
 
+import com.example.sportswms.domain.order.dto.AssignOrderRequestDTO;
 import com.example.sportswms.domain.order.dto.OrderRequestDTO;
 import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.service.StoreService;
 import com.example.sportswms.domain.product.service.ProductService;
 import com.example.sportswms.domain.user.entity.Role;
+import com.example.sportswms.domain.warehouse.service.WarehouseService;
 import com.example.sportswms.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +29,7 @@ import java.util.List;
 public class OrderController {
     private final StoreService storeService;
     private final ProductService productService;
+    private final WarehouseService warehouseService;
 
     @GetMapping
     public String orderPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
@@ -41,6 +45,7 @@ public class OrderController {
                 // 본사 관리자인 경우: 모든 발주 내역 조회
                 List<StockOrderDetail> allOrderDetails = storeService.getAllOrderDetails();
                 model.addAttribute("orderDetails", allOrderDetails);
+                model.addAttribute("warehouses", warehouseService.getAllWarehouses());
                 // 발주 폼은 안 보여주지만 에러 방지를 위해 빈 리스트 전달
                 model.addAttribute("stores", Collections.emptyList());
             } else {
@@ -61,6 +66,25 @@ public class OrderController {
         model.addAttribute("products", productService.getAllSKUs());
 
         return "order";
+    }
+
+    @PostMapping("/assign")
+    public String assignOrder(@Valid AssignOrderRequestDTO requestDto,
+                              BindingResult bindingResult,
+                              RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("errorMessage", bindingResult.getAllErrors().get(0).getDefaultMessage());
+            return "redirect:/order";
+        }
+
+        try {
+            storeService.assignOrdersToWarehouse(requestDto);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/order";
     }
 
     @PostMapping("/submit")

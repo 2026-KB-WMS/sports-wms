@@ -6,7 +6,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,9 +26,19 @@ public class StockOrder {
     @Column(name = "request_time", nullable = false)
     private LocalDateTime requestTime;
 
-    @Column(name = "complete_time", nullable = false)
+    @Column(name = "complete_time")
     private LocalDateTime completeTime;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
+
+    private StockOrder(Warehouse warehouse) {
+        this.warehouse = warehouse;
+        this.requestTime = LocalDateTime.now();
+        this.status = OrderStatus.PENDING;
+    }
+
+    public static StockOrder create(Warehouse warehouse) {
+        return new StockOrder(warehouse);
+    }
 }

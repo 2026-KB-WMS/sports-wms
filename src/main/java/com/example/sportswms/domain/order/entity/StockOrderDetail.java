@@ -52,4 +52,8 @@ public class StockOrderDetail {
             OrderItemRequestDTO dto) {
         return new StockOrderDetail(store, orderGroupId, productSKU, dto.quantity(), dto.memo());
     }
+
+    public void assignStockOrder(StockOrder stockOrder) {
+        this.stockOrder = stockOrder;
+    }
 }
