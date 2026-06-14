@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name="WarehouseMangement")
+@Table(name="WarehouseManagement")
 public class WarehouseManagement {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "management_id")
-    private long id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id", nullable = false)
@@ -27,5 +27,15 @@ public class WarehouseManagement {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "management_type", nullable = false)
-    private WarehouseManagementType warehouseManagementType;
+    private WarehouseManagementType managementType;
+
+    private WarehouseManagement(Warehouse warehouse, User user, WarehouseManagementType managementType) {
+        this.warehouse = warehouse;
+        this.user = user;
+        this.managementType = managementType;
+    }
+
+    public static WarehouseManagement of(Warehouse warehouse, User user, WarehouseManagementType managementType) {
+        return new WarehouseManagement(warehouse, user, managementType);
+    }
 }

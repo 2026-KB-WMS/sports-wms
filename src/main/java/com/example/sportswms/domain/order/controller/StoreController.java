@@ -7,6 +7,7 @@ import com.example.sportswms.domain.order.entity.StoreManagement;
 import com.example.sportswms.domain.order.entity.StoreManagementType;
 import com.example.sportswms.domain.order.service.StoreService;
 import com.example.sportswms.domain.user.entity.User;
+import com.example.sportswms.domain.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -23,6 +24,7 @@ import java.util.List;
 @RequestMapping("/store")
 public class StoreController {
     private final StoreService storeService;
+    private final UserService userService;
 
     @GetMapping
     public String storePage(Model model) {
@@ -30,7 +32,7 @@ public class StoreController {
         List<Store> stores = storeService.getAllStores();
         model.addAttribute("stores", stores);
 
-        List<User> users = storeService.getAllUsers();
+        List<User> users = userService.getAllUsers();
         List<StoreManagement> storeManagements = storeService.getAllStoreManagements();
         model.addAttribute("users", users);
         model.addAttribute("storeManagements", storeManagements);

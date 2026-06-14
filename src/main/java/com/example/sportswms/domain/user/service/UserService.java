@@ -6,10 +6,13 @@ import com.example.sportswms.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Slf4j
 @Service
@@ -19,7 +22,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MessageSource messageSource;
+
+    public List<User> getAllUsers() { return userRepository.findAll(); }
 
     @Transactional
     public void signup(SignUpRequestDTO dto) {
@@ -28,10 +32,6 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(dto.password());
         User user = User.from(dto, encodedPassword);
         userRepository.save(user);
-    }
-
-    private String getMessage(String code, Object... args) {
-        return messageSource.getMessage(code, args, LocaleContextHolder.getLocale());
     }
 
     public void checkDuplicateLoginId(String loginId) {

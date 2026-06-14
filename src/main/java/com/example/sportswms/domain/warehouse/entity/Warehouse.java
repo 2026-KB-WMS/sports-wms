@@ -1,6 +1,7 @@
 package com.example.sportswms.domain.warehouse.entity;
 
 import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
+import com.example.sportswms.global.util.MessageUtils;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -18,10 +19,7 @@ public class Warehouse {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "warehouse_id")
-    private long id;
-
-    @Column(name = "warehouse_code", nullable = false, unique = true)
-    private String warehouseCode;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
@@ -30,30 +28,46 @@ public class Warehouse {
     private String address;
 
     @Column(name = "total_capacity", nullable = false)
-    int totalCapacity;
+    private int totalCapacity;
+
+    @Column(name = "current_section_capacity", nullable = false)
+    private int currentSectionCapacity;
 
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Section> sections = new ArrayList<>();
 
-    private Warehouse(String warehouseCode, String name, String address, int totalCapacity) {
-        this.warehouseCode = warehouseCode;
+    private Warehouse(String name, String address, int totalCapacity) {
         this.name = name;
         this.address = address;
         this.totalCapacity = totalCapacity;
+        this.currentSectionCapacity = 0;
     }
 
     public static Warehouse from(WarehouseCreateRequestDTO dto) {
+        String fullAddress = "";
+        if (dto.postcode() != null && !dto.postcode().isEmpty()) {
+            fullAddress += "(" + dto.postcode() + ") ";
+        }
+        fullAddress += dto.address();
+        if (dto.detailAddress() != null && !dto.detailAddress().isEmpty()) {
+            fullAddress += ", " + dto.detailAddress();
+        }
         return new Warehouse(
-                dto.warehouseCode(),
                 dto.name(),
-                dto.address(),
+                fullAddress,
                 dto.totalCapacity()
         );
     }
 
-    public int calculateTotalCapacity() {
-        return this.sections.stream()
-                .mapToInt(Section::getTotalCapacity)
-                .sum();
+    public void addSectionCapacity(int capacityToAdd) {
+        int expectedCapacity = this.currentSectionCapacity + capacityToAdd;
+        if (expectedCapacity > this.totalCapacity) {
+            throw new IllegalArgumentException(MessageUtils.getMessage("warehouse.capacity.exceeded", expectedCapacity, this.totalCapacity));
+        }
+        this.currentSectionCapacity = expectedCapacity;
+    }
+
+    public void deleteSectionCapacity(int capacityToDelete) {
+        this.currentSectionCapacity = this.currentSectionCapacity - capacityToDelete;
     }
 }

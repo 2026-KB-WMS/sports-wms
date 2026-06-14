@@ -38,20 +38,6 @@ public class SKUController {
 
     @PostMapping("/sku")
     public String createSKU(@Valid SKUCreateRequestDTO dto, BindingResult bindingResult, Model model) {
-//        if (bindingResult.hasErrors()) {
-//            // 유효성 검사 실패 시, 입력 데이터와 오류 메시지를 가지고 다시 폼 페이지로 이동
-//            List<ProductSKU> skus = productService.getAllSKUs();
-//            List<Category> categories = categoryRepository.findAll();
-//            List<OptionGroup> optionGroups = optionGroupRepository.findAll();
-//
-//            model.addAttribute("skus", skus);
-//            model.addAttribute("categories", categories);
-//            model.addAttribute("optionGroups", optionGroups);
-//            model.addAttribute("productCreateRequestDTO", dto);
-//
-//            return "product";
-//        }
-
         productService.createSKU(dto);
         return "redirect:/sku";
     }

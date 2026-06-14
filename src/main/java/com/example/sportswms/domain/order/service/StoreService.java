@@ -27,11 +27,11 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final UserRepository userRepository;
     private final StoreManagementRepository storeManagementRepository;
+    private final StockOrderRepository stockOrderRepository;
     private final StockOrderDetailRepository stockOrderDetailRepository;
     private final ProductSKURepository productSKURepository;
 
     public List<Store> getAllStores() { return storeRepository.findAll(); }
-    public List<User> getAllUsers() { return userRepository.findAll(); }
     public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }
     public List<Store> getAssignedStoresByUserId(Long userId) {
         return storeManagementRepository.findByUserId(userId).stream()
@@ -45,6 +45,10 @@ public class StoreService {
             return List.of();
         }
         return stockOrderDetailRepository.findByStoreIn(assignedStores);
+    }
+    
+    public List<StockOrderDetail> getAllOrderDetails() {
+        return stockOrderDetailRepository.findAll();
     }
 
     @Transactional

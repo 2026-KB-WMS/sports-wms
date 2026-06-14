@@ -15,61 +15,69 @@
     </style>
 </head>
 <body>
-<h1>order management</h1>
+<h1>지점 발주 관리</h1>
 <hr>
 
-<h2>신규 발주 신청</h2>
-{{#errorMessage}}
-    <div class="error" style="display:block;">{{errorMessage}}</div>
-{{/errorMessage}}
+{{^isGeneralManager}}
+    <h2>신규 발주 신청</h2>
+    {{#errorMessage}}
+        <div class="error" style="display:block;">{{errorMessage}}</div>
+    {{/errorMessage}}
 
-<form action="/order/submit" method="post" id="orderForm">
+    <form action="/order/submit" method="post" id="orderForm">
 
-    <h3>1. 발주 지점 선택</h3>
-    <div class="form-group">
-        <select id="storeId" name="storeId" required>
-            <option value="">-- 배정된 지점 선택 --</option>
-            {{#stores}}
-                <option value="{{id}}">{{name}} ({{address}})</option>
-            {{/stores}}
-        </select>
-    </div>
+        <h3>1. 발주 지점 선택</h3>
+        <div class="form-group">
+            <select id="storeId" name="storeId" required>
+                <option value="">-- 배정된 지점 선택 --</option>
+                {{#stores}}
+                    <option value="{{id}}">{{name}} ({{address}})</option>
+                {{/stores}}
+            </select>
+        </div>
 
-    <h3>2. 발주 품목 장바구니</h3>
-    <div class="box">
-        <select id="selectSku">
-            <option value="">-- 상품(SKU) 선택 --</option>
-            {{#products}}
-                <option value="{{id}}">{{skuCode}} ({{name}})</option>
-            {{/products}}
-        </select>
+        <h3>2. 발주 품목 장바구니</h3>
+        <div class="box">
+            <select id="selectSku">
+                <option value="">-- 상품(SKU) 선택 --</option>
+                {{#products}}
+                    <option value="{{id}}">{{skuCode}} ({{name}})</option>
+                {{/products}}
+            </select>
 
-        <input type="number" id="inputQuantity" placeholder="수량" min="1" value="1" style="width: 80px;">
-        <input type="text" id="inputMemo" placeholder="요청 메모 (선택)">
+            <input type="number" id="inputQuantity" placeholder="수량" min="1" value="1" style="width: 80px;">
+            <input type="text" id="inputMemo" placeholder="요청 메모 (선택)">
 
-        <button type="button" onclick="addItem()">품목 리스트에 추가 ↓</button>
-    </div>
+            <button type="button" onclick="addItem()">품목 리스트에 추가 ↓</button>
+        </div>
 
-    <div class="error" id="emptyError">발주할 품목을 최소 한 개 이상 추가해주세요.</div>
-    <table>
-        <thead>
-        <tr>
-            <th>상품명(SKU)</th>
-            <th>수량</th>
-            <th>메모</th>
-            <th style="width: 60px;">관리</th>
-        </tr>
-        </thead>
-        <tbody id="orderListBody">
-        </tbody>
-    </table>
+        <div class="error" id="emptyError">발주할 품목을 최소 한 개 이상 추가해주세요.</div>
+        <table>
+            <thead>
+            <tr>
+                <th>상품명(SKU)</th>
+                <th>수량</th>
+                <th>메모</th>
+                <th style="width: 60px;">관리</th>
+            </tr>
+            </thead>
+            <tbody id="orderListBody">
+            </tbody>
+        </table>
 
-    <button type="button" onclick="submitForm()" style="padding: 10px 20px; font-weight: bold;">본사로 발주 전송하기</button>
-</form>
+        <button type="button" onclick="submitForm()" style="padding: 10px 20px; font-weight: bold;">본사로 발주 전송하기</button>
+    </form>
 
-<hr style="margin: 40px 0;">
+    <hr style="margin: 40px 0;">
+{{/isGeneralManager}}
 
-<h2>내 지점 발주 내역</h2>
+{{#isGeneralManager}}
+    <h2>전체 지점 발주 내역</h2>
+{{/isGeneralManager}}
+{{^isGeneralManager}}
+    <h2>내 지점 발주 내역</h2>
+{{/isGeneralManager}}
+
 <table>
     <thead>
         <tr>

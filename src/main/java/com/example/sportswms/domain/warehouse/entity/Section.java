@@ -15,7 +15,7 @@ public class Section {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "section_id")
-    private long id;
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "warehouse_id", nullable = false)
@@ -51,13 +51,17 @@ public class Section {
         this.sectionCode = sectionCode;
     }
 
-    public static Section of(SectionCreateRequestDTO dto, Warehouse warehouse) {
+    public static Section of(SectionCreateRequestDTO dto, String sectionCode, Warehouse warehouse) {
         return new Section(
                 warehouse,
                 dto.name(),
                 dto.totalCapacity(),
                 dto.sectionType(),
-                dto.sectionCode()
+                sectionCode
         );
+    }
+
+    public boolean isDeletable() {
+        return this.currentUsage == 0;
     }
 }
