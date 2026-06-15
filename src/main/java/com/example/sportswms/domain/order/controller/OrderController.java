@@ -76,7 +76,7 @@ public class OrderController {
             return "redirect:/login";
         }
         
-        List<StockOrder> warehouseOrders = storeService.findMyWarehouseOrders();
+        List<StockOrder> warehouseOrders = storeService.findMyWarehouseOrders(userDetails.getUser());
         model.addAttribute("warehouseOrders", warehouseOrders);
         
         return "warehouse-orders";

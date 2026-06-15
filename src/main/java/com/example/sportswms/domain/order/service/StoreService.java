@@ -21,8 +21,6 @@ import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,17 +42,7 @@ public class StoreService {
     private final WarehouseRepository warehouseRepository;
     private final WarehouseManagementRepository warehouseManagementRepository;
 
-    public List<StockOrder> findMyWarehouseOrders() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-        if (principal instanceof UserDetails) {
-            username = ((UserDetails)principal).getUsername();
-        } else {
-            username = principal.toString();
-        }
-
-        User user = userRepository.findByLoginId(username)
-                .orElseThrow(() -> new IllegalStateException("Could not find user for username: " + username));
+    public List<StockOrder> findMyWarehouseOrders(User user) {
 
         List<WarehouseManagement> warehouseManagements = warehouseManagementRepository.findAllByUser(user);
         List<Warehouse> warehouses = warehouseManagements.stream()
