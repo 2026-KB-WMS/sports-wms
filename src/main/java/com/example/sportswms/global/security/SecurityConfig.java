@@ -16,7 +16,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         // CSRF disable
         http
@@ -42,14 +42,19 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 모든 회원 접근 가능
                         .requestMatchers("/", "/signup", "/login").permitAll()
-                        // 본사 관리자 접근 가능
+                        // 본사 관리자 (GENERAL_MANAGER)
                         .requestMatchers("/sku/**", "/store/**").hasRole("GENERAL_MANAGER")
-                        // 본사 관리자 및 창고 관리자 접근 가능 (창고, 지점 관리)
-                        .requestMatchers("/warehouse/**").hasAnyRole("GENERAL_MANAGER","WAREHOUSE_MANAGER")
-                        // 일반 회원 (점주) 및 본사 관리자 접근 가능 (발주)
+                        .requestMatchers("/order/assign").hasRole("GENERAL_MANAGER")
+                        // 창고 관리자 (WAREHOUSE_MANAGER)
+                        .requestMatchers("/order/warehouse-orders/**").hasRole("WAREHOUSE_MANAGER")
+                        // 본사 관리자 및 창고 관리자
+                        .requestMatchers("/warehouse/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
+                        // 일반 회원 (점주)
+                        .requestMatchers("/order/submit").hasRole("USER")
+                        // 일반 회원 및 본사 관리자
                         .requestMatchers("/order/**").hasAnyRole("USER", "GENERAL_MANAGER")
-                        // 재고 조회는 로그인한 회원 모두 접근 가능
-                        .requestMatchers("/inventory").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER", "USER")
+                        // 로그인한 모든 회원
+                        .requestMatchers("/inventory/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER", "USER")
                         // 그 외의 모든 요청은 로그인 필요
                         .anyRequest().authenticated()
                 );

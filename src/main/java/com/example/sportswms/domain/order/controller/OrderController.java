@@ -2,6 +2,7 @@ package com.example.sportswms.domain.order.controller;
 
 import com.example.sportswms.domain.order.dto.AssignOrderRequestDTO;
 import com.example.sportswms.domain.order.dto.OrderRequestDTO;
+import com.example.sportswms.domain.order.entity.StockOrder;
 import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.service.StoreService;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -66,6 +68,31 @@ public class OrderController {
         model.addAttribute("products", productService.getAllSKUs());
 
         return "order";
+    }
+
+    @GetMapping("/warehouse-orders")
+    public String myWarehouseOrdersPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        
+        List<StockOrder> warehouseOrders = storeService.findMyWarehouseOrders();
+        model.addAttribute("warehouseOrders", warehouseOrders);
+        
+        return "warehouse-orders";
+    }
+
+    @GetMapping("/warehouse-orders/{id}")
+    public String warehouseOrderDetailsPage(@PathVariable("id") Long orderId, Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        
+        List<StockOrderDetail> orderDetails = storeService.findOrderDetailsByStockOrderId(orderId);
+        model.addAttribute("orderDetails", orderDetails);
+        model.addAttribute("orderId", orderId);
+        
+        return "warehouse-order-details";
     }
 
     @PostMapping("/assign")

@@ -17,12 +17,17 @@ import com.example.sportswms.domain.product.repository.ProductSKURepository;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.user.repository.UserRepository;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
+import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
+import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
@@ -37,6 +42,37 @@ public class StoreService {
     private final StockOrderDetailRepository stockOrderDetailRepository;
     private final ProductSKURepository productSKURepository;
     private final WarehouseRepository warehouseRepository;
+    private final WarehouseManagementRepository warehouseManagementRepository;
+
+    public List<StockOrder> findMyWarehouseOrders() {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String username;
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails)principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+
+        User user = userRepository.findByLoginId(username)
+                .orElseThrow(() -> new IllegalStateException("Could not find user for username: " + username));
+
+        List<WarehouseManagement> warehouseManagements = warehouseManagementRepository.findAllByUser(user);
+        List<Warehouse> warehouses = warehouseManagements.stream()
+                .map(WarehouseManagement::getWarehouse)
+                .collect(Collectors.toList());
+
+        if (warehouses.isEmpty()) {
+            return List.of();
+        }
+
+        return stockOrderRepository.findAllByWarehouseIn(warehouses);
+    }
+
+    public List<StockOrderDetail> findOrderDetailsByStockOrderId(Long stockOrderId) {
+        StockOrder stockOrder = stockOrderRepository.findById(stockOrderId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("order.invalid")));
+        return stockOrderDetailRepository.findAllByStockOrder(stockOrder);
+    }
 
     public List<Store> getAllStores() { return storeRepository.findAll(); }
     public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }
