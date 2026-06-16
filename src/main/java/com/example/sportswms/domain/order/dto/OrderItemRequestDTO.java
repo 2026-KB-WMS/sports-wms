@@ -3,10 +3,10 @@ package com.example.sportswms.domain.order.dto;
 import jakarta.validation.constraints.NotNull;
 
 public record OrderItemRequestDTO(
-    @NotNull(message = "상품을 선택해주세요.")
+    @NotNull(message = "{sku.product.selected}")
     Long skuId,
 
-    @NotNull(message = "수량을 입력해주세요.")
+    @NotNull(message = "{order.quantity.required}")
     int quantity,
 
     String memo

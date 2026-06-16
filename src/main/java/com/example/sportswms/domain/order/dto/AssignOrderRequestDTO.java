@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record AssignOrderRequestDTO(
-    @NotNull(message = "{order.store.selected}")
+    @NotNull(message = "{order.warehouse.selected}")
     Long warehouseId,
     
     @NotEmpty(message = "{order.detail.selected}")

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record OrderRequestDTO(
-        @NotNull(message = "지점을 선택해주세요.")
+        @NotNull(message = "{store.selected}")
         Long storeId,
         List<OrderItemRequestDTO> items
 ) {}

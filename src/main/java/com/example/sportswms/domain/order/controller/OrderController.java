@@ -25,6 +25,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.Collections;
 import java.util.List;
 
+import static com.example.sportswms.global.util.MessageUtils.getMessage;
+
 @Controller
 @RequestMapping("/order")
 @RequiredArgsConstructor
@@ -131,12 +133,12 @@ public class OrderController {
         }
 
         if (requestDto.storeId() == null) {
-            bindingResult.reject("emptyStore", "지점을 정해야 합니다.");
+            bindingResult.reject("emptyStore", getMessage("store.selected"));
             return orderPage(model, userDetails);
         }
 
         if (requestDto.items() == null || requestDto.items().isEmpty()) {
-            bindingResult.reject("emptyItems", "발주 품목이 최소 한 개 이상 존재해야 합니다.");
+            bindingResult.reject("emptyItems", getMessage("order.item.required"));
             return orderPage(model, userDetails);
         }
 

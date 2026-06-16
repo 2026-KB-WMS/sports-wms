@@ -11,6 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.example.sportswms.global.util.MessageUtils.getMessage;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,11 +33,11 @@ public class ProductService {
     @Transactional
     public void createSKU(SKUCreateRequestDTO dto) {
         Product product = productRepository.findById(dto.productId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품 ID입니다."));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("product.invalid")));
 
         List<OptionValue> optionValues = optionValueRepository.findAllById(dto.optionValueIds());
         if (optionValues.size() != dto.optionValueIds().size()) {
-            throw new IllegalArgumentException("선택된 옵션 중 존재하지 않는 옵션이 있습니다.");
+            throw new IllegalArgumentException(getMessage("option.invalid"));
         }
 
         // SKU 이름 및 코드 생성 함수 호출

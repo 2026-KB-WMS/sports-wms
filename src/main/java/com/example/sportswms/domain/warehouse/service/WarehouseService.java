@@ -82,7 +82,7 @@ public class WarehouseService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
 
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("userId.invalid")));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("user.invalid")));
 
         if (warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user)) {
             throw new IllegalStateException(getMessage("management.assignment.duplicate"));

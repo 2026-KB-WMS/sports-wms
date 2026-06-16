@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import static com.example.sportswms.global.util.MessageUtils.getMessage;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -36,9 +38,9 @@ public class StoreManagement {
     }
 
     public static StoreManagement of(Store store, User user, StoreManagementType storeManagementType) {
-        if (store == null) throw new IllegalArgumentException("지점 정보는 필수입니다.");
-        if (user == null) throw new IllegalArgumentException("유저 정보는 필수입니다.");
-        if (storeManagementType == null) throw new IllegalArgumentException("관리 타입은 필수입니다.");
+        if (store == null) throw new IllegalArgumentException(getMessage("store.selected"));
+        if (user == null) throw new IllegalArgumentException(getMessage("user.selected"));
+        if (storeManagementType == null) throw new IllegalArgumentException(getMessage("store.managementType.selected"));
 
         return new StoreManagement(store, user, storeManagementType);
     }
