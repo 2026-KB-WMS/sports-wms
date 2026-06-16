@@ -9,6 +9,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface StoreManagementRepository extends JpaRepository<StoreManagement, Long> {
-    boolean existsByStoreAndUserAndStoreManagementType(Store store, User user, StoreManagementType storeManagementType);
+    boolean existsByStoreAndUser(Store store, User user);
     List<StoreManagement> findByUserId(Long userId);
 }

@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>발주 상세 내역</title>
+    <style>
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        a { text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 10px; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<h1>발주 ID: {{orderId}} 상세 내역</h1>
+
+<a href="/order/warehouse-orders">← 목록으로 돌아가기</a>
+
+<table>
+    <thead>
+        <tr>
+            <th>상세 ID</th>
+            <th>요청 지점</th>
+            <th>품목 그룹 ID</th>
+            <th>품목명(SKU)</th>
+            <th>수량</th>
+            <th>메모</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#orderDetails}}
+        <tr>
+            <td>{{id}}</td>
+            <td>{{store.name}}</td>
+            <td>{{orderGroupId}}</td>
+            <td>{{productSKU.name}}</td>
+            <td>{{quantity}}</td>
+            <td>{{memo}}</td>
+        </tr>
+        {{/orderDetails}}
+        {{^orderDetails}}
+        <tr>
+            <td colspan="6" style="text-align: center;">상세 내역이 없습니다.</td>
+        </tr>
+        {{/orderDetails}}
+    </tbody>
+</table>
+
+</body>
+</html>
