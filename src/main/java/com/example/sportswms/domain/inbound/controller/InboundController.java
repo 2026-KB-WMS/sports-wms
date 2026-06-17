@@ -1,0 +1,83 @@
+package com.example.sportswms.domain.inbound.controller;
+
+import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
+import com.example.sportswms.domain.inbound.service.InboundService;
+import com.example.sportswms.domain.product.service.ProductService;
+import com.example.sportswms.domain.user.entity.Role;
+import com.example.sportswms.domain.user.entity.User;
+import com.example.sportswms.domain.warehouse.service.WarehouseService;
+import com.example.sportswms.global.security.CustomUserDetails;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+
+@Controller
+@RequestMapping("/inbound")
+@RequiredArgsConstructor
+public class InboundController {
+    private final InboundService inboundService;
+    private final WarehouseService warehouseService;
+    private final ProductService productService;
+
+    @GetMapping
+    public String inboundPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+        User currentUser = userDetails.getUser();
+
+        model.addAttribute("warehouses", warehouseService.findMyWarehouses(currentUser));
+        model.addAttribute("skus", productService.getAllSKUs());
+
+        if (userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_GENERAL_MANAGER.name()))) {
+            model.addAttribute("inbounds", inboundService.getAllInbounds());
+        } else {
+            model.addAttribute("inbounds", inboundService.findMyWarehousesInbounds(currentUser));
+        }
+
+        if (!model.containsAttribute("inboundRequestDTO")) {
+            model.addAttribute("inboundRequestDTO", new InboundRequestDTO(null, List.of()));
+        }
+        
+        return "inbound";
+    }
+
+    @GetMapping("/{id}")
+    public String inboundDetailPage(@PathVariable Long id, Model model) {
+        model.addAttribute("inboundDetails", inboundService.getInboundDetails(id));
+        model.addAttribute("inboundId", id);
+        return "inbound-details";
+    }
+
+    @PostMapping
+    public String createInbound(@Valid InboundRequestDTO inboundRequestDTO,
+                                BindingResult bindingResult,
+                                RedirectAttributes redirectAttributes) {
+
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.inboundRequestDTO", bindingResult);
+            redirectAttributes.addFlashAttribute("inboundRequestDTO", inboundRequestDTO);
+            return "redirect:/inbound";
+        }
+
+        try {
+            inboundService.createInbound(inboundRequestDTO);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/inbound";
+    }
+}

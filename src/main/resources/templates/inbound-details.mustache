@@ -1,0 +1,51 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>입고 상세 내역</title>
+    <style>
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        a { text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 10px; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<h1>입고 ID: {{inboundId}} 상세 내역</h1>
+
+<a href="/inbound">← 목록으로 돌아가기</a>
+
+<table>
+    <thead>
+        <tr>
+            <th>상세 ID</th>
+            <th>품목명(SKU)</th>
+            <th>수량</th>
+            <th>배정된 구역</th>
+            <th>공급사</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#inboundDetails}}
+        <tr>
+            <td>{{id}}</td>
+            <td>{{productSKU.name}}</td>
+            <td>{{quantity}}</td>
+            <td>{{#section}}{{section.name}}{{/section}}{{^section}}미배정{{/section}}</td>
+            <td>{{#supplier}}{{supplier.name}}{{/supplier}}{{^supplier}}미정{{/supplier}}</td>
+        </tr>
+        {{/inboundDetails}}
+        {{^inboundDetails}}
+        <tr>
+            <td colspan="5" style="text-align: center;">상세 내역이 없습니다.</td>
+        </tr>
+        {{/inboundDetails}}
+    </tbody>
+</table>
+
+</body>
+</html>

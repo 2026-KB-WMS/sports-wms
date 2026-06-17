@@ -13,10 +13,13 @@ import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepo
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
@@ -34,6 +37,12 @@ public class WarehouseService {
     public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
     public List<Section> getAllSections() { return sectionRepository.findAll(); }
     public List<WarehouseManagement> getAllWarehouseManagements() { return warehouseManagementRepository.findAll(); }
+
+    public List<Warehouse> findMyWarehouses(User user) {
+        return warehouseManagementRepository.findAllByUser(user).stream()
+                .map(WarehouseManagement::getWarehouse)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public void createWarehouse(WarehouseCreateRequestDTO dto) {
@@ -61,19 +70,8 @@ public class WarehouseService {
         sectionRepository.save(section);
     }
 
-    @Transactional
-    public void deleteSection(Long sectionId) {
-        Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
-
-        if (section.getCurrentUsage() > 0) {
-            throw new IllegalStateException(getMessage("section.delete.inUse"));
-        }
-
-        Warehouse warehouse = section.getWarehouse();
-        warehouse.deleteSectionCapacity(section.getTotalCapacity());
-
-        sectionRepository.delete(section);
+    private String generateSectionCode(Warehouse warehouse, SectionCreateRequestDTO dto) {
+        return warehouse.getId() + "-" + dto.name() + "-" + dto.sectionType().getCode();
     }
 
     @Transactional
@@ -82,7 +80,7 @@ public class WarehouseService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
 
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("user.invalid")));
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("userId.invalid")));
 
         if (warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user)) {
             throw new IllegalStateException(getMessage("management.assignment.duplicate"));
@@ -92,7 +90,18 @@ public class WarehouseService {
         warehouseManagementRepository.save(warehouseManagement);
     }
 
-    private String generateSectionCode(Warehouse warehouse, SectionCreateRequestDTO dto) {
-        return dto.sectionType().getCode() + "-" + dto.name().toUpperCase() + "-" + warehouse.getId();
+    @Transactional
+    public void deleteSection(Long sectionId) {
+        Section section = sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("section.id.invalid")));
+
+        if (section.getCurrentUsage() > 0) {
+            throw new IllegalStateException(getMessage("section.delete.in.use"));
+        }
+
+        Warehouse warehouse = section.getWarehouse();
+        warehouse.deleteSectionCapacity(section.getTotalCapacity());
+
+        sectionRepository.delete(section);
     }
 }

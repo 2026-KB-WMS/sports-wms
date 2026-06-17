@@ -1,4 +1,4 @@
-﻿package com.example.sportswms.domain.inbound.entity;
+package com.example.sportswms.domain.inbound.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
