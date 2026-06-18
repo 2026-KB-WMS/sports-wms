@@ -37,34 +37,52 @@ public class InboundController {
         }
         User currentUser = userDetails.getUser();
 
-        model.addAttribute("warehouses", warehouseService.findMyWarehouses(currentUser));
-        model.addAttribute("skus", productService.getAllSKUs());
-
-        if (userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_GENERAL_MANAGER.name()))) {
+        if (currentUser.getRole() == Role.ROLE_GENERAL_MANAGER) {
+            // 본사 관리자: 전체 입고 조회만 가능
             model.addAttribute("inbounds", inboundService.getAllInbounds());
         } else {
+            // 창고 관리자: 본인 창고 입고 조회 + 입고 생성 폼 데이터
+            model.addAttribute("isWarehouseManager", true);
             model.addAttribute("inbounds", inboundService.findMyWarehousesInbounds(currentUser));
+            model.addAttribute("warehouses", warehouseService.findMyWarehouses(currentUser));
+            model.addAttribute("skus", productService.getAllSKUs());
+            if (!model.containsAttribute("inboundRequestDTO")) {
+                model.addAttribute("inboundRequestDTO", new InboundRequestDTO(null, List.of()));
+            }
         }
 
-        if (!model.containsAttribute("inboundRequestDTO")) {
-            model.addAttribute("inboundRequestDTO", new InboundRequestDTO(null, List.of()));
-        }
-        
         return "inbound";
     }
 
     @GetMapping("/{id}")
-    public String inboundDetailPage(@PathVariable Long id, Model model) {
-        model.addAttribute("inboundDetails", inboundService.getInboundDetails(id));
-        model.addAttribute("inboundId", id);
+    public String inboundDetailPage(@PathVariable Long id,
+                                    @AuthenticationPrincipal CustomUserDetails userDetails,
+                                    Model model,
+                                    RedirectAttributes redirectAttributes) {
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
+
+        try {
+            model.addAttribute("inboundDetails", inboundService.getInboundDetails(id, userDetails.getUser()));
+            model.addAttribute("inboundId", id);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+            return "redirect:/inbound";
+        }
+
         return "inbound-details";
     }
 
     @PostMapping
     public String createInbound(@Valid InboundRequestDTO inboundRequestDTO,
                                 BindingResult bindingResult,
+                                @AuthenticationPrincipal CustomUserDetails userDetails,
                                 RedirectAttributes redirectAttributes) {
+
+        if (userDetails == null) {
+            return "redirect:/login";
+        }
 
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.inboundRequestDTO", bindingResult);
@@ -73,7 +91,7 @@ public class InboundController {
         }
 
         try {
-            inboundService.createInbound(inboundRequestDTO);
+            inboundService.createInbound(inboundRequestDTO, userDetails.getUser());
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

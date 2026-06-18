@@ -48,7 +48,10 @@ public class SecurityConfig {
                         // 창고 관리자 (WAREHOUSE_MANAGER)
                         .requestMatchers("/order/warehouse-orders/**").hasRole("WAREHOUSE_MANAGER")
                         // 본사 관리자 및 창고 관리자
-                        .requestMatchers("/warehouse/**", "/inbound/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
+                        .requestMatchers("/warehouse/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
+                        // 입고 조회: 본사 관리자 + 창고 관리자 / 입고 생성(POST): 창고 관리자 전용
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/**").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers("/inbound/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
 
                         // 일반 회원 (점주)
                         .requestMatchers("/order/submit").hasRole("USER")

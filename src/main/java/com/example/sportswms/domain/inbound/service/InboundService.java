@@ -7,6 +7,7 @@ import com.example.sportswms.domain.inbound.repository.InboundDetailRepository;
 import com.example.sportswms.domain.inbound.repository.InboundRepository;
 import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.product.repository.ProductSKURepository;
+import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
@@ -42,12 +43,23 @@ public class InboundService {
         return inboundRepository.findAllByWarehouseIn(myWarehouses);
     }
 
-    public List<InboundDetail> getInboundDetails(Long inboundId) { return inboundDetailRepository.findByInboundId(inboundId); }
+    public List<InboundDetail> getInboundDetails(Long inboundId, User user) {
+        Inbound inbound = inboundRepository.findById(inboundId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+
+        if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
+            validateWarehouseAccess(inbound.getWarehouse(), user);
+        }
+
+        return inboundDetailRepository.findByInboundId(inboundId);
+    }
 
     @Transactional
-    public void createInbound(InboundRequestDTO dto) {
+    public void createInbound(InboundRequestDTO dto, User user) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+
+        validateWarehouseAccess(warehouse, user);
 
         Inbound inbound = Inbound.create(warehouse);
         inboundRepository.save(inbound);
@@ -59,5 +71,14 @@ public class InboundService {
         }).collect(Collectors.toList());
 
         inboundDetailRepository.saveAll(details);
+    }
+
+    private void validateWarehouseAccess(Warehouse warehouse, User user) {
+        boolean isMyWarehouse = warehouseService.findMyWarehouses(user).stream()
+                .anyMatch(myWarehouse -> myWarehouse.getId().equals(warehouse.getId()));
+
+        if (!isMyWarehouse) {
+            throw new IllegalArgumentException(getMessage("inbound.warehouse.unauthorized"));
+        }
     }
 }

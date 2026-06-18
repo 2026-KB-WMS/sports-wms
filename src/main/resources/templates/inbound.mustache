@@ -26,6 +26,7 @@
 <h1>입고 관리</h1>
 
 <div class="container">
+    {{#isWarehouseManager}}
     <div class="form-section">
         <h2>신규 입고 요청</h2>
         <form action="/inbound" method="post">
@@ -53,7 +54,7 @@
             {{/errorMessage}}
         </form>
     </div>
-
+    {{/isWarehouseManager}}
     <div class="list-section">
         <h2>입고 요청 내역</h2>
         <table>
