@@ -103,7 +103,13 @@
                 </form>
                 {{/assignable}}
                 {{^assignable}}
-                <span class="assigned">✓ 배정 완료</span>
+                <span class="assigned">✓ {{sectionName}}</span>
+                {{#clearable}}
+                <form action="/inbound/{{inboundId}}/details/{{id}}/section/clear" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm" style="background:#dc3545;color:white;"
+                            onclick="return confirm('구역 배정을 초기화하시겠습니까?')">초기화</button>
+                </form>
+                {{/clearable}}
                 {{/assignable}}
             </td>
             {{/isInspecting}}

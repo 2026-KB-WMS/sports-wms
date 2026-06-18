@@ -58,6 +58,7 @@ public class SecurityConfig {
                         // 검수 시작 / 구역 배정 / 입고 완료: 창고관리자 전용
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/inspect").hasRole("WAREHOUSE_MANAGER")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/details/*/section").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/details/*/section/clear").hasRole("WAREHOUSE_MANAGER")
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/complete").hasRole("WAREHOUSE_MANAGER")
 
                         // 일반 회원 (점주)

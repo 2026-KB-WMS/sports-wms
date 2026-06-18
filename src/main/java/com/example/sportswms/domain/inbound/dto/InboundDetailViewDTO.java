@@ -7,16 +7,22 @@ import java.util.List;
 public record InboundDetailViewDTO(
         Long id, String skuName, int quantity,
         String sectionName, String supplierName,
-        boolean assignable, List<Section> sections
+        boolean assignable,     // 검수 중 && 미배정
+        boolean clearable,      // 검수 중 && 배정 완료 → 초기화 버튼 노출
+        List<Section> sections
 ) {
     public static InboundDetailViewDTO of(InboundDetail detail, boolean isInspecting, List<Section> sections) {
         boolean assigned = detail.getSection() != null;
         boolean assignable = isInspecting && !assigned;
+        boolean clearable = isInspecting && assigned;
+
         return new InboundDetailViewDTO(
                 detail.getId(), detail.getProductSKU().getName(), detail.getQuantity(),
                 assigned ? detail.getSection().getName() : null,
                 detail.getSupplier() != null ? detail.getSupplier().getName() : null,
-                assignable, assignable ? sections : List.of()
+                assignable,
+                clearable,
+                assignable ? sections : List.of()
         );
     }
 }

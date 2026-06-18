@@ -163,6 +163,23 @@ public class InboundController {
         return "redirect:/inbound/" + id;
     }
 
+    /** 창고관리자: 개별 품목 구역 배정 초기화 */
+    @PostMapping("/{inboundId}/details/{detailId}/section/clear")
+    public String clearSection(@PathVariable Long inboundId,
+                               @PathVariable Long detailId,
+                               @AuthenticationPrincipal CustomUserDetails userDetails,
+                               RedirectAttributes redirectAttributes) {
+        if (userDetails == null) return "redirect:/login";
+
+        try {
+            inboundService.clearSection(detailId, userDetails.getUser());
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+
+        return "redirect:/inbound/" + inboundId;
+    }
+
     /** 창고관리자: 개별 품목 구역 배정 */
     @PostMapping("/{inboundId}/details/{detailId}/section")
     public String assignSection(@PathVariable Long inboundId,

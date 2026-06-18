@@ -100,7 +100,28 @@ public class InboundService {
         inbound.startInspection();
     }
 
+    // 창고 관리자가 특정 품목의 구역 배정을 초기화한다 (INSPECTING 상태에서만 가능)
+    @Transactional
+    public void clearSection(Long inboundDetailId, User user) {
+        InboundDetail detail = inboundDetailRepository.findById(inboundDetailId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.detail.invalid")));
+
+        Inbound inbound = detail.getInbound();
+        if (inbound.getStatus() != InboundStatus.INSPECTING) {
+            throw new IllegalArgumentException(getMessage("inbound.status.not.allowed"));
+        }
+
+        validateWarehouseAccess(inbound.getWarehouse(), user);
+
+        if (detail.getSection() == null) {
+            return; // 이미 미배정 상태면 아무것도 하지 않음
+        }
+
+        detail.assignSection(null);
+    }
+
     // 창고 관리자가 입고 상세 품목에 구역을 배정 (INSPECTING 상태)
+    // currentUsage(확정 재고) + 현재 검수 중인 배정 수량 합계로 실시간 잔여 용량을 계산해 초과 배정을 방지한다.
     @Transactional
     public void assignSection(Long inboundDetailId, Long sectionId, User user) {
         InboundDetail detail = inboundDetailRepository.findById(inboundDetailId)
@@ -113,31 +134,46 @@ public class InboundService {
 
         validateWarehouseAccess(inbound.getWarehouse(), user);
 
-        Section section = sectionRepository.findById(sectionId)
+        Section newSection = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
 
-        // 구역이 해당 창고 소속인지 검증
-        if (!section.getWarehouse().getId().equals(inbound.getWarehouse().getId())) {
+        if (!newSection.getWarehouse().getId().equals(inbound.getWarehouse().getId())) {
             throw new IllegalArgumentException(getMessage("inbound.section.unauthorized"));
         }
 
-        detail.assignSection(section);
+        // 해당 구역에 검수 중인 다른 입고들에서 이미 배정된 수량 합계
+        int pendingQuantity = inboundDetailRepository.sumQuantityBySectionAndInboundStatus(
+                newSection, InboundStatus.INSPECTING);
+
+        // 재배정의 경우 현재 품목이 기존에 같은 구역에 배정돼 있으면 중복 합산되므로 제외
+        if (newSection.equals(detail.getSection())) {
+            pendingQuantity -= detail.getQuantity();
+        }
+
+        int effectiveRemaining = newSection.remainingCapacity() - pendingQuantity;
+        if (effectiveRemaining < detail.getQuantity()) {
+            throw new IllegalArgumentException(
+                    getMessage("inbound.section.capacity.exceeded", effectiveRemaining, detail.getQuantity()));
+        }
+
+        detail.assignSection(newSection);
     }
 
     // 모든 품목에 구역이 배정되면 입고 완료 처리 (INSPECTING → COMPLETED)
+    // 입고 완료 확정 시점에 각 구역의 currentUsage를 반영한다.
     @Transactional
     public void completeInbound(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
         validateWarehouseAccess(inbound.getWarehouse(), user);
 
-        boolean hasUnassigned = inboundDetailRepository.findByInboundId(inboundId).stream()
-                .anyMatch(detail -> detail.getSection() == null);
+        List<InboundDetail> details = inboundDetailRepository.findByInboundId(inboundId);
 
-        if (hasUnassigned) {
+        if (details.stream().anyMatch(d -> d.getSection() == null)) {
             throw new IllegalArgumentException(getMessage("inbound.section.unassigned"));
         }
 
+        details.forEach(d -> d.getSection().increaseUsage(d.getQuantity()));
         inbound.complete();
     }
 
