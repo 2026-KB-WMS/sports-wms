@@ -32,6 +32,18 @@ public class Inventory {
     @Column(name = "allocated_quantity")
     private int allocatedQuantity;
 
-    @Enumerated(EnumType.STRING)
-    private InventoryStatus status;
+    private Inventory(Section section, ProductSKU productSKU, int quantity) {
+        this.section = section;
+        this.productSKU = productSKU;
+        this.actualQuantity = quantity;
+        this.allocatedQuantity = 0;
+    }
+
+    public static Inventory create(Section section, ProductSKU productSKU, int quantity) {
+        return new Inventory(section, productSKU, quantity);
+    }
+
+    public void addQuantity(int quantity) {
+        this.actualQuantity += quantity;
+    }
 }

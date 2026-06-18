@@ -1,5 +1,7 @@
 package com.example.sportswms.domain.inbound.service;
 
+import com.example.sportswms.domain.inventory.entity.Inventory;
+import com.example.sportswms.domain.inventory.repository.InventoryRepository;
 import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
 import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundDetail;
@@ -36,6 +38,7 @@ public class InboundService {
     private final ProductSKURepository productSKURepository;
     private final SectionRepository sectionRepository;
     private final WarehouseService warehouseService;
+    private final InventoryRepository inventoryRepository;
 
     public List<Inbound> getAllInbounds() { return inboundRepository.findAll(); }
 
@@ -160,7 +163,7 @@ public class InboundService {
     }
 
     // 모든 품목에 구역이 배정되면 입고 완료 처리 (INSPECTING → COMPLETED)
-    // 입고 완료 확정 시점에 각 구역의 currentUsage를 반영한다.
+    // 입고 완료 확정 시점에 각 구역의 currentUsage 및 재고 테이블을 반영
     @Transactional
     public void completeInbound(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
@@ -173,7 +176,20 @@ public class InboundService {
             throw new IllegalArgumentException(getMessage("inbound.section.unassigned"));
         }
 
-        details.forEach(d -> d.getSection().increaseUsage(d.getQuantity()));
+        details.forEach(d -> {
+            Section section = d.getSection();
+
+            // 구역 currentUsage 업데이트
+            section.increaseUsage(d.getQuantity());
+
+            // 재고 upsert: 해당 구역+SKU 재고가 있으면 수량 추가, 없으면 신규 생성
+            inventoryRepository.findBySectionAndProductSKU(section, d.getProductSKU())
+                    .ifPresentOrElse(
+                            inventory -> inventory.addQuantity(d.getQuantity()),
+                            () -> inventoryRepository.save(Inventory.create(section, d.getProductSKU(), d.getQuantity()))
+                    );
+        });
+
         inbound.complete();
     }
 
