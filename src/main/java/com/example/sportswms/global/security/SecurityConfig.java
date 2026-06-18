@@ -49,9 +49,16 @@ public class SecurityConfig {
                         .requestMatchers("/order/warehouse-orders/**").hasRole("WAREHOUSE_MANAGER")
                         // 본사 관리자 및 창고 관리자
                         .requestMatchers("/warehouse/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
-                        // 입고 조회: 본사 관리자 + 창고 관리자 / 입고 생성(POST): 창고 관리자 전용
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/**").hasRole("WAREHOUSE_MANAGER")
+                        // 입고 조회: 본사관리자 + 창고관리자
                         .requestMatchers("/inbound/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
+                        // 입고 생성: 창고관리자 전용
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound").hasRole("WAREHOUSE_MANAGER")
+                        // 상태 변경 (PENDING→RECEIVED→DELIVERING→DELIVERED): 본사관리자 전용
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/status").hasRole("GENERAL_MANAGER")
+                        // 검수 시작 / 구역 배정 / 입고 완료: 창고관리자 전용
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/inspect").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/details/*/section").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/complete").hasRole("WAREHOUSE_MANAGER")
 
                         // 일반 회원 (점주)
                         .requestMatchers("/order/submit").hasRole("USER")

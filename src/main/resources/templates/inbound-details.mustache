@@ -4,20 +4,65 @@
     <meta charset="UTF-8">
     <title>입고 상세 내역</title>
     <style>
-        body { font-family: sans-serif; }
+        body { font-family: sans-serif; padding: 20px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
         tr:nth-child(even) { background-color: #f9f9f9; }
         a { text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 10px; }
         a:hover { text-decoration: underline; }
+        .status-bar { display: flex; align-items: center; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+        .status-badge { padding: 6px 14px; border-radius: 20px; font-weight: bold;
+                        background-color: #e9ecef; color: #495057; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-sm { padding: 4px 10px; font-size: 0.85em; }
+        .error { color: red; margin: 8px 0; }
+        .assigned { color: #28a745; font-weight: bold; }
+        select { padding: 4px 8px; }
+        .section-form { display: flex; gap: 6px; align-items: center; }
     </style>
 </head>
 <body>
 
 <h1>입고 ID: {{inboundId}} 상세 내역</h1>
-
 <a href="/inbound">← 목록으로 돌아가기</a>
+
+{{#errorMessage}}
+    <p class="error">{{errorMessage}}</p>
+{{/errorMessage}}
+
+<div class="status-bar">
+    <span>현재 상태:</span>
+    <span class="status-badge">{{inbound.status.description}}</span>
+
+    {{! 본사관리자: 다음 상태로 변경 버튼 (PENDING ~ DELIVERING 구간에서만 노출) }}
+    {{#isGeneralManager}}
+        {{#nextStatus}}
+        <form action="/inbound/{{inboundId}}/status" method="post" style="display:inline;">
+            <input type="hidden" name="nextStatus" value="{{nextStatus}}">
+            <button type="submit" class="btn btn-primary">{{nextStatusDescription}}(으)로 변경</button>
+        </form>
+        {{/nextStatus}}
+    {{/isGeneralManager}}
+
+    {{! 창고관리자: 배송 완료 상태면 검수 시작 버튼 }}
+    {{#isWarehouseManager}}
+        {{#canStartInspection}}
+        <form action="/inbound/{{inboundId}}/inspect" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-primary">검수 시작</button>
+        </form>
+        {{/canStartInspection}}
+
+        {{! 검수 중이고 모든 품목 구역 배정 완료 시 입고 완료 버튼 }}
+        {{#canComplete}}
+        <form action="/inbound/{{inboundId}}/complete" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-success">입고 완료</button>
+        </form>
+        {{/canComplete}}
+    {{/isWarehouseManager}}
+</div>
 
 <table>
     <thead>
@@ -27,21 +72,46 @@
             <th>수량</th>
             <th>배정된 구역</th>
             <th>공급사</th>
+            {{#isInspecting}}<th>구역 배정</th>{{/isInspecting}}
         </tr>
     </thead>
     <tbody>
         {{#inboundDetails}}
         <tr>
             <td>{{id}}</td>
-            <td>{{productSKU.name}}</td>
+            <td>{{skuName}}</td>
             <td>{{quantity}}</td>
-            <td>{{#section}}{{section.name}}{{/section}}{{^section}}미배정{{/section}}</td>
-            <td>{{#supplier}}{{supplier.name}}{{/supplier}}{{^supplier}}미정{{/supplier}}</td>
+            <td>
+                {{#sectionName}}<span class="assigned">{{sectionName}}</span>{{/sectionName}}
+                {{^sectionName}}미배정{{/sectionName}}
+            </td>
+            <td>
+                {{#supplierName}}{{supplierName}}{{/supplierName}}
+                {{^supplierName}}미정{{/supplierName}}
+            </td>
+            {{#isInspecting}}
+            <td>
+                {{#assignable}}
+                <form action="/inbound/{{inboundId}}/details/{{id}}/section" method="post" class="section-form">
+                    <select name="sectionId" required>
+                        <option value="">구역 선택</option>
+                        {{#sections}}
+                        <option value="{{id}}">{{name}} ({{sectionCode}})</option>
+                        {{/sections}}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">배정</button>
+                </form>
+                {{/assignable}}
+                {{^assignable}}
+                <span class="assigned">✓ 배정 완료</span>
+                {{/assignable}}
+            </td>
+            {{/isInspecting}}
         </tr>
         {{/inboundDetails}}
         {{^inboundDetails}}
         <tr>
-            <td colspan="5" style="text-align: center;">상세 내역이 없습니다.</td>
+            <td colspan="6" style="text-align: center;">상세 내역이 없습니다.</td>
         </tr>
         {{/inboundDetails}}
     </tbody>

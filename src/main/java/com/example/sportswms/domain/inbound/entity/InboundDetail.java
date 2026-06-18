@@ -46,4 +46,8 @@ public class InboundDetail {
     public static InboundDetail create(Inbound inbound, ProductSKU productSKU, int quantity) {
         return new InboundDetail(inbound, productSKU, quantity);
     }
+
+    public void assignSection(Section section) {
+        this.section = section;
+    }
 }
