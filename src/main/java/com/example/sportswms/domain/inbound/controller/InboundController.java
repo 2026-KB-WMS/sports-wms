@@ -8,7 +8,6 @@ import com.example.sportswms.domain.inbound.service.InboundService;
 import com.example.sportswms.domain.product.service.ProductService;
 import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
-import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.service.WarehouseService;
 import com.example.sportswms.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -61,9 +60,9 @@ public class InboundController {
             Inbound inbound = inboundService.getInbound(id);
             boolean isInspecting = inbound.getStatus() == InboundStatus.INSPECTING;
 
-            // 검수 중인 경우
-            List<Section> sections = isInspecting
-                    ? warehouseService.findSectionsByWarehouse(inbound.getWarehouse())
+            // 검수 중인 경우 구역별 실시간 잔여 수용량 계산
+            List<InboundDetailViewDTO.SectionOptionDTO> sections = isInspecting
+                    ? inboundService.getAssignableSections(inbound.getWarehouse())
                     : List.of();
 
             // InboundDetailViewDTO로 변환해 Mustache 루프 컨텍스트 문제 해결

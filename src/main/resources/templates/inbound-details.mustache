@@ -94,9 +94,9 @@
                 {{#assignable}}
                 <form action="/inbound/{{inboundId}}/details/{{id}}/section" method="post" class="section-form">
                     <select name="sectionId" required>
-                        <option value="">구역 선택</option>
+                        <option value="">구역 선택 (필요 수량: {{quantity}})</option>
                         {{#sections}}
-                        <option value="{{id}}">{{name}} ({{sectionCode}})</option>
+                        <option value="{{id}}">{{name}} ({{sectionCode}}) - 잔여 {{effectiveRemaining}}</option>
                         {{/sections}}
                     </select>
                     <button type="submit" class="btn btn-sm btn-primary">배정</button>

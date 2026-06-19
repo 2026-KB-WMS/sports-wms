@@ -65,7 +65,7 @@ public class Section {
         return this.currentUsage == 0;
     }
 
-    public int remainingCapacity() {
+    public int getRemainingCapacity() {
         return this.totalCapacity - this.currentUsage;
     }
 

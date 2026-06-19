@@ -2,6 +2,7 @@ package com.example.sportswms.domain.inbound.service;
 
 import com.example.sportswms.domain.inventory.entity.Inventory;
 import com.example.sportswms.domain.inventory.repository.InventoryRepository;
+import com.example.sportswms.domain.inbound.dto.InboundDetailViewDTO;
 import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
 import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundDetail;
@@ -64,6 +65,20 @@ public class InboundService {
     public Inbound getInbound(Long inboundId) {
         return inboundRepository.findById(inboundId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+    }
+
+    // 검수 중인 입고에서 구역 배정 드롭다운에 보여줄 구역별 실시간 잔여 수용량을 계산한다.
+    // effectiveRemaining = currentUsage 기준 잔여 - 검수 중인 다른 입고들이 해당 구역에 이미 배정한 수량 합계
+    public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse) {
+        return warehouseService.findSectionsByWarehouse(warehouse).stream()
+                .map(section -> {
+                    int pendingQuantity = inboundDetailRepository.sumQuantityBySectionAndInboundStatus(
+                            section, InboundStatus.INSPECTING);
+                    int effectiveRemaining = section.getRemainingCapacity() - pendingQuantity;
+                    return new InboundDetailViewDTO.SectionOptionDTO(
+                            section.getId(), section.getName(), section.getSectionCode(), effectiveRemaining);
+                })
+                .toList();
     }
 
     @Transactional
@@ -153,7 +168,7 @@ public class InboundService {
             pendingQuantity -= detail.getQuantity();
         }
 
-        int effectiveRemaining = newSection.remainingCapacity() - pendingQuantity;
+        int effectiveRemaining = newSection.getRemainingCapacity() - pendingQuantity;
         if (effectiveRemaining < detail.getQuantity()) {
             throw new IllegalArgumentException(
                     getMessage("inbound.section.capacity.exceeded", effectiveRemaining, detail.getQuantity()));
