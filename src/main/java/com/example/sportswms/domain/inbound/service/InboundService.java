@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
@@ -217,16 +218,20 @@ public class InboundService {
 
             // 재고 upsert: 해당 구역+SKU 재고가 있으면 수량 추가, 없으면 신규 생성
             // beforeQuantity/afterQuantity는 거래 기록에 남기기 위해 추적
-            int beforeQuantity = inventoryRepository.findBySectionAndProductSKU(section, sku)
+            Optional<Inventory> inventoryOpt = inventoryRepository.findBySectionAndProductSKU(section, sku);
+            int beforeQuantity = inventoryOpt
                     .map(Inventory::getActualQuantity)
                     .orElse(0);
+
             int afterQuantity = beforeQuantity + d.getQuantity();
 
-            inventoryRepository.findBySectionAndProductSKU(section, sku)
+            inventoryOpt
                     .ifPresentOrElse(
                             inventory -> inventory.addQuantity(d.getQuantity()),
                             () -> inventoryRepository.save(Inventory.create(section, sku, d.getQuantity()))
                     );
+
+
 
             // 재고 거래 기록 생성: 검수 완료 후 실제 구역으로 적치되는 입고이므로 STACKING_COMPLETE로 기록
             inventoryTransactionRepository.save(InventoryTransaction.of(

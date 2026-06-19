@@ -38,10 +38,6 @@ public class OrderController {
 
     @GetMapping
     public String orderPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        if (userDetails == null) {
-            return "redirect:/login";
-        }
         User currentUser = userDetails.getUser();
 
         boolean isGeneralManager = false;
@@ -73,10 +69,6 @@ public class OrderController {
 
     @GetMapping("/warehouse-orders")
     public String myWarehouseOrdersPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        if (userDetails == null) {
-            return "redirect:/login";
-        }
         User currentUser = userDetails.getUser();
         
         List<StockOrder> warehouseOrders = storeService.findMyWarehouseOrders(currentUser);
@@ -87,10 +79,6 @@ public class OrderController {
 
     @GetMapping("/warehouse-orders/{id}")
     public String warehouseOrderDetailsPage(@PathVariable("id") Long orderId, Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
-            return "redirect:/login";
-        }
-        
         List<StockOrderDetail> orderDetails = storeService.findOrderDetailsByStockOrderId(orderId);
         model.addAttribute("orderDetails", orderDetails);
         model.addAttribute("orderId", orderId);
@@ -122,12 +110,6 @@ public class OrderController {
                               BindingResult bindingResult,
                               Model model,
                               @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        // 본사 관리자는 발주 생성 불가 (안전 장치)
-        if (userDetails != null && userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_GENERAL_MANAGER.name()))) {
-            return "redirect:/order";
-        }
 
         if (bindingResult.hasErrors()) {
             return orderPage(model, userDetails);

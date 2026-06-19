@@ -50,15 +50,19 @@ public class Inbound {
         return new Inbound(warehouse);
     }
 
+     // 본사 관리자 단계에서 현재 상태 다음으로 진행 가능한 상태를 반환 (PENDING → RECEIVED → DELIVERING → DELIVERED)
+    public InboundStatus getNextStatus() {
+        return switch (this.status) {
+            case PENDING    -> InboundStatus.RECEIVED;
+            case RECEIVED   -> InboundStatus.DELIVERING;
+            case DELIVERING -> InboundStatus.DELIVERED;
+            default -> null;
+        };
+    }
+
     // 본사 관리자가 상태를 단계적으로 진행 (PENDING → RECEIVED → DELIVERING → DELIVERED)
     public void advanceStatus(InboundStatus nextStatus) {
-        boolean valid = switch (this.status) {
-            case PENDING    -> nextStatus == InboundStatus.RECEIVED;
-            case RECEIVED   -> nextStatus == InboundStatus.DELIVERING;
-            case DELIVERING -> nextStatus == InboundStatus.DELIVERED;
-            default -> false;
-        };
-        if (!valid) {
+        if (getNextStatus() != nextStatus) {
             throw new IllegalArgumentException(getMessage("inbound.status.invalid"));
         }
         this.status = nextStatus;

@@ -31,7 +31,6 @@ public class InboundController {
 
     @GetMapping
     public String inboundPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) return "redirect:/login";
         User currentUser = userDetails.getUser();
 
         if (currentUser.getRole() == Role.ROLE_GENERAL_MANAGER) {
@@ -54,8 +53,6 @@ public class InboundController {
                                     @AuthenticationPrincipal CustomUserDetails userDetails,
                                     Model model,
                                     RedirectAttributes redirectAttributes) {
-        if (userDetails == null) return "redirect:/login";
-
         try {
             Inbound inbound = inboundService.getInbound(id);
             boolean isInspecting = inbound.getStatus() == InboundStatus.INSPECTING;
@@ -78,12 +75,7 @@ public class InboundController {
             if (userDetails.getUser().getRole() == Role.ROLE_GENERAL_MANAGER) {
                 model.addAttribute("isGeneralManager", true);
                 // 본사 관리자가 진행할 수 있는 다음 상태
-                InboundStatus nextStatus = switch (inbound.getStatus()) {
-                    case PENDING    -> InboundStatus.RECEIVED;
-                    case RECEIVED   -> InboundStatus.DELIVERING;
-                    case DELIVERING -> InboundStatus.DELIVERED;
-                    default -> null;
-                };
+                InboundStatus nextStatus = inbound.getNextStatus();
                 if (nextStatus != null) {
                     model.addAttribute("nextStatus", nextStatus.name());
                     model.addAttribute("nextStatusDescription", nextStatus.getDescription());
@@ -112,8 +104,6 @@ public class InboundController {
                                 BindingResult bindingResult,
                                 @AuthenticationPrincipal CustomUserDetails userDetails,
                                 RedirectAttributes redirectAttributes) {
-        if (userDetails == null) return "redirect:/login";
-
         if (bindingResult.hasErrors()) {
             redirectAttributes.addFlashAttribute("org.springframework.validation.BindingResult.inboundRequestDTO", bindingResult);
             redirectAttributes.addFlashAttribute("inboundRequestDTO", inboundRequestDTO);
@@ -133,10 +123,7 @@ public class InboundController {
     @PostMapping("/{id}/status")
     public String advanceStatus(@PathVariable Long id,
                                 @RequestParam InboundStatus nextStatus,
-                                @AuthenticationPrincipal CustomUserDetails userDetails,
                                 RedirectAttributes redirectAttributes) {
-        if (userDetails == null) return "redirect:/login";
-
         try {
             inboundService.advanceInboundStatus(id, nextStatus);
         } catch (IllegalArgumentException e) {
@@ -151,8 +138,6 @@ public class InboundController {
     public String startInspection(@PathVariable Long id,
                                   @AuthenticationPrincipal CustomUserDetails userDetails,
                                   RedirectAttributes redirectAttributes) {
-        if (userDetails == null) return "redirect:/login";
-
         try {
             inboundService.startInspection(id, userDetails.getUser());
         } catch (IllegalArgumentException e) {
@@ -168,8 +153,6 @@ public class InboundController {
                                @PathVariable Long detailId,
                                @AuthenticationPrincipal CustomUserDetails userDetails,
                                RedirectAttributes redirectAttributes) {
-        if (userDetails == null) return "redirect:/login";
-
         try {
             inboundService.clearSection(detailId, userDetails.getUser());
         } catch (IllegalArgumentException e) {
@@ -186,8 +169,6 @@ public class InboundController {
                                 @RequestParam Long sectionId,
                                 @AuthenticationPrincipal CustomUserDetails userDetails,
                                 RedirectAttributes redirectAttributes) {
-        if (userDetails == null) return "redirect:/login";
-
         try {
             inboundService.assignSection(detailId, sectionId, userDetails.getUser());
         } catch (IllegalArgumentException e) {
@@ -202,8 +183,6 @@ public class InboundController {
     public String completeInbound(@PathVariable Long id,
                                   @AuthenticationPrincipal CustomUserDetails userDetails,
                                   RedirectAttributes redirectAttributes) {
-        if (userDetails == null) return "redirect:/login";
-
         try {
             inboundService.completeInbound(id, userDetails.getUser());
         } catch (IllegalArgumentException e) {
