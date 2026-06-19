@@ -60,11 +60,9 @@ public class InboundService {
     public List<InboundDetail> getInboundDetails(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
-
         if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
             validateWarehouseAccess(inbound.getWarehouse(), user);
         }
-
         return inboundDetailRepository.findByInboundId(inboundId);
     }
 
@@ -73,7 +71,7 @@ public class InboundService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
     }
 
-    // 검수 중인 입고에서 구역 배정 드롭다운에 보여줄 구역별 실시간 잔여 수용량을 계산한다.
+    // 검수 중인 입고에서 구역 배정 드롭다운에 보여줄 구역별 실시간 잔여 수용량을 계산
     // effectiveRemaining = currentUsage 기준 잔여 - 검수 중인 다른 입고들이 해당 구역에 이미 배정한 수량 합계
     public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse) {
         return warehouseService.findSectionsByWarehouse(warehouse).stream()
@@ -128,7 +126,6 @@ public class InboundService {
         inbound.advanceStatus(nextStatus);
     }
 
-
     // 창고 관리자가 배송 완료된 입고를 검수 시작 상태로 전환 (DELIVERED → INSPECTING)
     @Transactional
     public void startInspection(Long inboundId, User user) {
@@ -138,7 +135,7 @@ public class InboundService {
         inbound.startInspection();
     }
 
-    // 창고 관리자가 특정 품목의 구역 배정을 초기화한다 (INSPECTING 상태에서만 가능)
+    // 창고 관리자가 특정 품목의 구역 배정을 초기화 (INSPECTING 상태에서만 가능)
     @Transactional
     public void clearSection(Long inboundDetailId, User user) {
         InboundDetail detail = inboundDetailRepository.findById(inboundDetailId)
@@ -219,7 +216,7 @@ public class InboundService {
             section.increaseUsage(d.getQuantity());
 
             // 재고 upsert: 해당 구역+SKU 재고가 있으면 수량 추가, 없으면 신규 생성
-            // beforeQuantity/afterQuantity는 거래 기록(InventoryTransaction)에 남기기 위해 추적한다.
+            // beforeQuantity/afterQuantity는 거래 기록에 남기기 위해 추적
             int beforeQuantity = inventoryRepository.findBySectionAndProductSKU(section, sku)
                     .map(Inventory::getActualQuantity)
                     .orElse(0);

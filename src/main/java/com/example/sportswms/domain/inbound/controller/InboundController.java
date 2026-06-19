@@ -129,7 +129,7 @@ public class InboundController {
         return "redirect:/inbound";
     }
 
-    /** 본사관리자: PENDING → RECEIVED → DELIVERING → DELIVERED */
+    // 본사 관리자: PENDING → RECEIVED → DELIVERING → DELIVERED
     @PostMapping("/{id}/status")
     public String advanceStatus(@PathVariable Long id,
                                 @RequestParam InboundStatus nextStatus,
@@ -146,7 +146,7 @@ public class InboundController {
         return "redirect:/inbound/" + id;
     }
 
-    /** 창고관리자: DELIVERED → INSPECTING */
+    // 창고 관리자: DELIVERED → INSPECTING
     @PostMapping("/{id}/inspect")
     public String startInspection(@PathVariable Long id,
                                   @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -162,7 +162,7 @@ public class InboundController {
         return "redirect:/inbound/" + id;
     }
 
-    /** 창고관리자: 개별 품목 구역 배정 초기화 */
+    // 창고 관리자: 개별 품목 구역 배정 초기화
     @PostMapping("/{inboundId}/details/{detailId}/section/clear")
     public String clearSection(@PathVariable Long inboundId,
                                @PathVariable Long detailId,
@@ -179,7 +179,7 @@ public class InboundController {
         return "redirect:/inbound/" + inboundId;
     }
 
-    /** 창고관리자: 개별 품목 구역 배정 */
+    // 창고 관리자: 개별 품목 구역 배정
     @PostMapping("/{inboundId}/details/{detailId}/section")
     public String assignSection(@PathVariable Long inboundId,
                                 @PathVariable Long detailId,
@@ -197,7 +197,7 @@ public class InboundController {
         return "redirect:/inbound/" + inboundId;
     }
 
-    /** 창고관리자: 모든 품목 구역 배정 완료 후 입고 완료 */
+    // 창고 관리자: 모든 품목 구역 배정 완료 후 입고 완료
     @PostMapping("/{id}/complete")
     public String completeInbound(@PathVariable Long id,
                                   @AuthenticationPrincipal CustomUserDetails userDetails,
