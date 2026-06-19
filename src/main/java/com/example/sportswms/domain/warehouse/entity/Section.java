@@ -69,7 +69,7 @@ public class Section {
         return this.totalCapacity - this.currentUsage;
     }
 
-    /** 입고 완료 시 currentUsage 증가 */
+    // 입고 완료 시 currentUsage 증가
     public void increaseUsage(int quantity) {
         this.currentUsage += quantity;
     }

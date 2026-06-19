@@ -1,7 +1,11 @@
 package com.example.sportswms.domain.inbound.service;
 
 import com.example.sportswms.domain.inventory.entity.Inventory;
+import com.example.sportswms.domain.inventory.entity.InventoryStatus;
+import com.example.sportswms.domain.inventory.entity.InventoryTransaction;
+import com.example.sportswms.domain.inventory.entity.TransactionType;
 import com.example.sportswms.domain.inventory.repository.InventoryRepository;
+import com.example.sportswms.domain.inventory.repository.InventoryTransactionRepository;
 import com.example.sportswms.domain.inbound.dto.InboundDetailViewDTO;
 import com.example.sportswms.domain.inbound.dto.InboundItemRequestDTO;
 import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
@@ -41,6 +45,7 @@ public class InboundService {
     private final SectionRepository sectionRepository;
     private final WarehouseService warehouseService;
     private final InventoryRepository inventoryRepository;
+    private final InventoryTransactionRepository inventoryTransactionRepository;
 
     public List<Inbound> getAllInbounds() { return inboundRepository.findAll(); }
 
@@ -208,16 +213,32 @@ public class InboundService {
 
         details.forEach(d -> {
             Section section = d.getSection();
+            ProductSKU sku = d.getProductSKU();
 
             // 구역 currentUsage 업데이트
             section.increaseUsage(d.getQuantity());
 
             // 재고 upsert: 해당 구역+SKU 재고가 있으면 수량 추가, 없으면 신규 생성
-            inventoryRepository.findBySectionAndProductSKU(section, d.getProductSKU())
+            // beforeQuantity/afterQuantity는 거래 기록(InventoryTransaction)에 남기기 위해 추적한다.
+            int beforeQuantity = inventoryRepository.findBySectionAndProductSKU(section, sku)
+                    .map(Inventory::getActualQuantity)
+                    .orElse(0);
+            int afterQuantity = beforeQuantity + d.getQuantity();
+
+            inventoryRepository.findBySectionAndProductSKU(section, sku)
                     .ifPresentOrElse(
                             inventory -> inventory.addQuantity(d.getQuantity()),
-                            () -> inventoryRepository.save(Inventory.create(section, d.getProductSKU(), d.getQuantity()))
+                            () -> inventoryRepository.save(Inventory.create(section, sku, d.getQuantity()))
                     );
+
+            // 재고 거래 기록 생성: 검수 완료 후 실제 구역으로 적치되는 입고이므로 STACKING_COMPLETE로 기록
+            inventoryTransactionRepository.save(InventoryTransaction.of(
+                    section, sku, TransactionType.STACKING_COMPLETE,
+                    d.getQuantity(), InventoryStatus.UNALLOCATED,
+                    beforeQuantity, afterQuantity,
+                    "입고 완료 (입고 ID: " + inboundId + ")",
+                    user
+            ));
         });
 
         inbound.complete();
