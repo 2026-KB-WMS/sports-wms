@@ -29,7 +29,7 @@
     {{#isWarehouseManager}}
     <div class="form-section">
         <h2>신규 입고 요청</h2>
-        <form action="/inbound" method="post">
+        <form action="/inbound" method="post" id="inbound-form" onsubmit="return validateNoDuplicateSku()">
             <div class="form-group">
                 <label for="warehouseId">창고 선택</label>
                 <select id="warehouseId" name="warehouseId" required>
@@ -46,6 +46,7 @@
                 <!-- 아이템 행이 여기에 동적으로 추가됩니다. -->
             </div>
             <button type="button" onclick="addItemRow()">품목 추가</button>
+            <p id="duplicate-error" class="error" style="display:none;">동일한 상품(SKU)을 중복해서 선택할 수 없습니다.</p>
             <hr>
 
             <button type="submit">입고 요청 생성</button>
@@ -99,7 +100,7 @@
         let skuOptions = '{{#skus}}<option value="{{id}}">{{name}} ({{product.name}})</option>{{/skus}}';
 
         itemRow.innerHTML = `
-            <select name="items[${itemIndex}].skuId">
+            <select name="items[${itemIndex}].skuId" class="sku-select" onchange="clearDuplicateError()">
                 <option value="">-- 품목(SKU)을 선택하세요 --</option>
                 ${skuOptions}
             </select>
@@ -116,6 +117,29 @@
         if (itemRow) {
             itemRow.remove();
         }
+    }
+
+    function clearDuplicateError() {
+        document.getElementById('duplicate-error').style.display = 'none';
+    }
+
+    // 폼 제출 시 동일한 SKU가 중복 선택되지 않았는지 검증
+    // 비어있는 선택은 서버의 @NotNull 검증이 별도로 처리
+    function validateNoDuplicateSku() {
+        const selects = document.querySelectorAll('#items-container .sku-select');
+        const selectedSkuIds = Array.from(selects)
+            .map(select => select.value)
+            .filter(value => value !== '');
+
+        const hasDuplicate = new Set(selectedSkuIds).size !== selectedSkuIds.length;
+
+        if (hasDuplicate) {
+            document.getElementById('duplicate-error').style.display = 'block';
+            return false;
+        }
+
+        clearDuplicateError();
+        return true;
     }
 
     // 페이지 로드 시 기본으로 하나의 품목 행을 추가

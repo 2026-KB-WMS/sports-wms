@@ -3,6 +3,7 @@ package com.example.sportswms.domain.inbound.service;
 import com.example.sportswms.domain.inventory.entity.Inventory;
 import com.example.sportswms.domain.inventory.repository.InventoryRepository;
 import com.example.sportswms.domain.inbound.dto.InboundDetailViewDTO;
+import com.example.sportswms.domain.inbound.dto.InboundItemRequestDTO;
 import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
 import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundDetail;
@@ -83,6 +84,8 @@ public class InboundService {
 
     @Transactional
     public void createInbound(InboundRequestDTO dto, User user) {
+        validateNoDuplicateSku(dto);
+
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
 
@@ -98,6 +101,18 @@ public class InboundService {
         }).collect(Collectors.toList());
 
         inboundDetailRepository.saveAll(details);
+    }
+
+    // 같은 입고 요청 안에서 동일 SKU가 중복으로 들어오는 것을 방지
+    private void validateNoDuplicateSku(InboundRequestDTO dto) {
+        long distinctSkuCount = dto.items().stream()
+                .map(InboundItemRequestDTO::skuId)
+                .distinct()
+                .count();
+
+        if (distinctSkuCount < dto.items().size()) {
+            throw new IllegalArgumentException(getMessage("inbound.sku.duplicate"));
+        }
     }
 
     // 본사 관리자가 입고 상태를 다음 단계로 진행 (PENDING → RECEIVED → DELIVERING → DELIVERED)
