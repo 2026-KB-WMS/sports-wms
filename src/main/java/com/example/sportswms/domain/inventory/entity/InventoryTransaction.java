@@ -54,4 +54,26 @@ public class InventoryTransaction {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    private InventoryTransaction(Section section, ProductSKU productSKU, TransactionType transactionType,
+                                 int quantity, InventoryStatus status, int beforeQuantity, int afterQuantity,
+                                 String reason, User user) {
+        this.section = section;
+        this.productSKU = productSKU;
+        this.transactionType = transactionType;
+        this.quantity = quantity;
+        this.status = status;
+        this.beforeQuantity = beforeQuantity;
+        this.afterQuantity = afterQuantity;
+        this.reason = reason;
+        this.user = user;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public static InventoryTransaction of(Section section, ProductSKU productSKU, TransactionType transactionType,
+                                          int quantity, InventoryStatus status, int beforeQuantity,
+                                          int afterQuantity, String reason, User user) {
+        return new InventoryTransaction(section, productSKU, transactionType, quantity, status,
+                beforeQuantity, afterQuantity, reason, user);
+    }
 }

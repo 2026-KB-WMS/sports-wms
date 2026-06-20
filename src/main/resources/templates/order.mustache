@@ -42,7 +42,7 @@
                     <option value="{{id}}">{{skuCode}} ({{name}})</option>
                 {{/products}}
             </select>
-            <input type="number" id="inputQuantity" placeholder="수량" min="1" value="1" style="width: 80px;">
+            <input type="number" id="inputQuantity" placeholder="수량" value="1" style="width: 80px;">
             <input type="text" id="inputMemo" placeholder="요청 메모 (선택)">
             <button type="button" onclick="addItem()">품목 리스트에 추가 ↓</button>
         </div>
@@ -145,7 +145,7 @@
         const quantity = quantityInput.value;
         const memo = memoInput.value;
         if (!skuId) { alert("상품을 선택해주세요."); return; }
-        if (quantity < 1) { alert("수량은 1 이상이어야 합니다."); return; }
+        // if (quantity < 1) { alert("수량은 1 이상이어야 합니다."); return; }
         const tbody = document.getElementById("orderListBody");
         const currentIndex = tbody.querySelectorAll("tr").length;
         const tr = document.createElement("tr");

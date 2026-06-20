@@ -23,7 +23,6 @@
             <th>상품 SKU 코드</th>
             <th>실제 재고 수량</th>
             <th>할당된 수량</th>
-            <th>상태</th>
         </tr>
     </thead>
     <tbody>
@@ -35,7 +34,6 @@
             <td>{{productSKU.skuCode}}</td>
             <td>{{actualQuantity}}</td>
             <td>{{allocatedQuantity}}</td>
-            <td>{{status}}</td>
         </tr>
         {{/inventories}}
         {{^inventories}}
@@ -70,7 +68,7 @@
             <td>{{section.warehouse.name}}</td>
             <td>{{section.name}}</td>
             <td>{{productSKU.skuCode}}</td>
-            <td>{{transactionType}}</td>
+            <td>{{transactionType.title}}</td>
             <td>{{beforeQuantity}} &rarr; {{afterQuantity}} ({{quantity}})</td>
             <td>{{status}}</td>
             <td>{{reason}}</td>

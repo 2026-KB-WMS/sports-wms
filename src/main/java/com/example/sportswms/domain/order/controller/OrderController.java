@@ -8,6 +8,7 @@ import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.service.StoreService;
 import com.example.sportswms.domain.product.service.ProductService;
 import com.example.sportswms.domain.user.entity.Role;
+import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.service.WarehouseService;
 import com.example.sportswms.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -37,33 +38,27 @@ public class OrderController {
 
     @GetMapping
     public String orderPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        User currentUser = userDetails.getUser();
 
         boolean isGeneralManager = false;
+        isGeneralManager = userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_GENERAL_MANAGER.name()));
+        model.addAttribute("isGeneralManager", isGeneralManager);
 
-        if (userDetails != null) {
-            isGeneralManager = userDetails.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals(Role.ROLE_GENERAL_MANAGER.name()));
-            model.addAttribute("isGeneralManager", isGeneralManager);
-
-            if (isGeneralManager) {
-                // 본사 관리자인 경우: 모든 발주 내역 조회
-                List<StockOrderDetail> allOrderDetails = storeService.getAllOrderDetails();
-                model.addAttribute("orderDetails", allOrderDetails);
-                model.addAttribute("warehouses", warehouseService.getAllWarehouses());
-                // 발주 폼은 안 보여주지만 에러 방지를 위해 빈 리스트 전달
-                model.addAttribute("stores", Collections.emptyList());
-            } else {
-                // 점주인 경우: 배정받은 지점의 발주 내역만 조회
-                Long currentUserId = userDetails.getUser().getId();
-                List<Store> assignedStores = storeService.getAssignedStoresByUserId(currentUserId);
-                List<StockOrderDetail> orderDetails = storeService.getOrderDetailsForAssignedStores(currentUserId);
-                model.addAttribute("stores", assignedStores);
-                model.addAttribute("orderDetails", orderDetails);
-            }
-        } else {
-            // 로그인하지 않은 경우
+        if (isGeneralManager) {
+            // 본사 관리자인 경우: 모든 발주 내역 조회
+            List<StockOrderDetail> allOrderDetails = storeService.getAllOrderDetails();
+            model.addAttribute("orderDetails", allOrderDetails);
+            model.addAttribute("warehouses", warehouseService.getAllWarehouses());
+            // 발주 폼은 안 보여주지만 에러 방지를 위해 빈 리스트 전달
             model.addAttribute("stores", Collections.emptyList());
-            model.addAttribute("orderDetails", Collections.emptyList());
+        } else {
+            // 점주인 경우: 배정받은 지점의 발주 내역만 조회
+            Long currentUserId = currentUser.getId();
+            List<Store> assignedStores = storeService.getAssignedStoresByUserId(currentUserId);
+            List<StockOrderDetail> orderDetails = storeService.getOrderDetailsForAssignedStores(currentUserId);
+            model.addAttribute("stores", assignedStores);
+            model.addAttribute("orderDetails", orderDetails);
         }
 
         // 발주 폼에 필요한 상품 목록 추가 (점주인 경우에만 렌더링되겠지만, 기본적으로 제공)
@@ -74,11 +69,9 @@ public class OrderController {
 
     @GetMapping("/warehouse-orders")
     public String myWarehouseOrdersPage(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
-            return "redirect:/login";
-        }
+        User currentUser = userDetails.getUser();
         
-        List<StockOrder> warehouseOrders = storeService.findMyWarehouseOrders(userDetails.getUser());
+        List<StockOrder> warehouseOrders = storeService.findMyWarehouseOrders(currentUser);
         model.addAttribute("warehouseOrders", warehouseOrders);
         
         return "warehouse-orders";
@@ -86,10 +79,6 @@ public class OrderController {
 
     @GetMapping("/warehouse-orders/{id}")
     public String warehouseOrderDetailsPage(@PathVariable("id") Long orderId, Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
-        if (userDetails == null) {
-            return "redirect:/login";
-        }
-        
         List<StockOrderDetail> orderDetails = storeService.findOrderDetailsByStockOrderId(orderId);
         model.addAttribute("orderDetails", orderDetails);
         model.addAttribute("orderId", orderId);
@@ -121,12 +110,6 @@ public class OrderController {
                               BindingResult bindingResult,
                               Model model,
                               @AuthenticationPrincipal CustomUserDetails userDetails) {
-
-        // 본사 관리자는 발주 생성 불가 (안전 장치)
-        if (userDetails != null && userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals(Role.ROLE_GENERAL_MANAGER.name()))) {
-            return "redirect:/order";
-        }
 
         if (bindingResult.hasErrors()) {
             return orderPage(model, userDetails);
