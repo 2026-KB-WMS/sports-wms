@@ -1,11 +1,5 @@
 package com.example.sportswms.domain.inbound.service;
 
-import com.example.sportswms.domain.inventory.entity.Inventory;
-import com.example.sportswms.domain.inventory.entity.InventoryStatus;
-import com.example.sportswms.domain.inventory.entity.InventoryTransaction;
-import com.example.sportswms.domain.inventory.entity.TransactionType;
-import com.example.sportswms.domain.inventory.repository.InventoryRepository;
-import com.example.sportswms.domain.inventory.repository.InventoryTransactionRepository;
 import com.example.sportswms.domain.inbound.dto.InboundDetailViewDTO;
 import com.example.sportswms.domain.inbound.dto.InboundItemRequestDTO;
 import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
@@ -14,15 +8,22 @@ import com.example.sportswms.domain.inbound.entity.InboundDetail;
 import com.example.sportswms.domain.inbound.entity.InboundStatus;
 import com.example.sportswms.domain.inbound.repository.InboundDetailRepository;
 import com.example.sportswms.domain.inbound.repository.InboundRepository;
+import com.example.sportswms.domain.inventory.entity.Inventory;
+import com.example.sportswms.domain.inventory.entity.InventoryStatus;
+import com.example.sportswms.domain.inventory.entity.InventoryTransaction;
+import com.example.sportswms.domain.inventory.entity.TransactionType;
+import com.example.sportswms.domain.inventory.repository.InventoryRepository;
+import com.example.sportswms.domain.inventory.repository.InventoryTransactionRepository;
 import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.product.repository.ProductSKURepository;
 import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
+import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
+import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
-import com.example.sportswms.domain.warehouse.service.WarehouseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,14 +45,16 @@ public class InboundService {
     private final WarehouseRepository warehouseRepository;
     private final ProductSKURepository productSKURepository;
     private final SectionRepository sectionRepository;
-    private final WarehouseService warehouseService;
     private final InventoryRepository inventoryRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
+    private final WarehouseManagementRepository warehouseManagementRepository;
 
     public List<Inbound> getAllInbounds() { return inboundRepository.findAll(); }
 
     public List<Inbound> findMyWarehousesInbounds(User user) {
-        List<Warehouse> myWarehouses = warehouseService.findMyWarehouses(user);
+        List<Warehouse> myWarehouses = warehouseManagementRepository.findAllByUser(user).stream()
+                .map(WarehouseManagement::getWarehouse)
+                .collect(Collectors.toList());
         if (myWarehouses.isEmpty()) {
             return List.of();
         }
@@ -75,7 +78,7 @@ public class InboundService {
     // 검수 중인 입고에서 구역 배정 드롭다운에 보여줄 구역별 실시간 잔여 수용량을 계산
     // effectiveRemaining = currentUsage 기준 잔여 - 검수 중인 다른 입고들이 해당 구역에 이미 배정한 수량 합계
     public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse) {
-        return warehouseService.findSectionsByWarehouse(warehouse).stream()
+        return sectionRepository.findAllByWarehouse(warehouse).stream()
                 .map(section -> {
                     int pendingQuantity = inboundDetailRepository.sumQuantityBySectionAndInboundStatus(
                             section, InboundStatus.INSPECTING);
@@ -247,7 +250,8 @@ public class InboundService {
     }
 
     private void validateWarehouseAccess(Warehouse warehouse, User user) {
-        boolean isMyWarehouse = warehouseService.findMyWarehouses(user).stream()
+        boolean isMyWarehouse = warehouseManagementRepository.findAllByUser(user).stream()
+                .map(WarehouseManagement::getWarehouse)
                 .anyMatch(myWarehouse -> myWarehouse.getId().equals(warehouse.getId()));
         if (!isMyWarehouse) {
             throw new IllegalArgumentException(getMessage("inbound.warehouse.unauthorized"));

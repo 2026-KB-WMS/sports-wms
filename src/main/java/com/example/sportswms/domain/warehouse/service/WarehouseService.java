@@ -44,10 +44,6 @@ public class WarehouseService {
                 .collect(Collectors.toList());
     }
 
-    public List<Section> findSectionsByWarehouse(Warehouse warehouse) {
-        return sectionRepository.findAllByWarehouse(warehouse);
-    }
-
     @Transactional
     public void createWarehouse(WarehouseCreateRequestDTO dto) {
         Warehouse warehouse = Warehouse.from(dto);
