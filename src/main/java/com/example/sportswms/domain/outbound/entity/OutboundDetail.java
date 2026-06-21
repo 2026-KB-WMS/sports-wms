@@ -37,4 +37,16 @@ public class OutboundDetail {
 
     @Column(nullable = false)
     private int quantity;
+
+    private OutboundDetail(Outbound outbound, StockOrderDetail stockOrderDetail, ProductSKU productSKU, int quantity) {
+        this.outbound = outbound;
+        this.stockOrderDetail = stockOrderDetail;
+        this.productSKU = productSKU;
+        this.quantity = quantity;
+    }
+
+    // StockOrderDetail의 productSKU/quantity 복사
+    public static OutboundDetail from(Outbound outbound, StockOrderDetail stockOrderDetail) {
+        return new OutboundDetail(outbound, stockOrderDetail, stockOrderDetail.getProductSKU(), stockOrderDetail.getQuantity());
+    }
 }
