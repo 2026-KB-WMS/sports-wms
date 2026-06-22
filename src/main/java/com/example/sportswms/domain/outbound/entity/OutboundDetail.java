@@ -49,4 +49,8 @@ public class OutboundDetail {
     public static OutboundDetail from(Outbound outbound, StockOrderDetail stockOrderDetail) {
         return new OutboundDetail(outbound, stockOrderDetail, stockOrderDetail.getProductSKU(), stockOrderDetail.getQuantity());
     }
+
+    public void assignSection(Section section) {
+        this.section = section;
+    }
 }

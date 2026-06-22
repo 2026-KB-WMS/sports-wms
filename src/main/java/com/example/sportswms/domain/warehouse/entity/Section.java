@@ -73,4 +73,9 @@ public class Section {
     public void increaseUsage(int quantity) {
         this.currentUsage += quantity;
     }
+
+    // 출고 피킹 완료 시 물건이 구역에서 빠져나감
+    public void decreaseUsage(int quantity) {
+        this.currentUsage = Math.max(0, this.currentUsage - quantity);
+    }
 }
