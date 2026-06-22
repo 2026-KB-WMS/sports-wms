@@ -11,6 +11,8 @@ import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.entity.StoreManagement;
 import com.example.sportswms.domain.order.repository.StoreManagementRepository;
+import com.example.sportswms.domain.order.entity.OrderDetailStatus;
+import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
 import com.example.sportswms.domain.outbound.entity.Outbound;
 import com.example.sportswms.domain.outbound.entity.OutboundDetail;
 import com.example.sportswms.domain.outbound.entity.OutboundStatus;
@@ -48,6 +50,7 @@ public class OutboundService {
     private final InventoryTransactionRepository inventoryTransactionRepository;
     private final WarehouseManagementRepository warehouseManagementRepository;
     private final StoreManagementRepository storeManagementRepository;
+    private final StockOrderDetailRepository stockOrderDetailRepository;
 
     public Outbound getOutbound(Long outboundId) {
         return outboundRepository.findById(outboundId)
@@ -81,14 +84,21 @@ public class OutboundService {
 
     public List<OutboundDetail> getOutboundDetails(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
-        List<OutboundDetail> details = outboundDetailRepository.findByOutboundId(outboundId);
-        // 창고 관리자는 본인 창고만, 점주는 본인 지점의 출고만 접근 가능. 본사관리자는 전체 조회 가능.
         if (user.getRole() == Role.ROLE_WAREHOUSE_MANAGER) {
             validateWarehouseAccess(outbound.getWarehouse(), user);
         } else if (user.getRole() == Role.ROLE_USER) {
-            validateStoreAccess(details, user);
+            validateStoreAccess(outbound, user);
         }
-        return details;
+        return outboundDetailRepository.findByOutboundId(outboundId);
+    }
+
+    // 점주: 본인 지점의 특정 출고 상세 조회
+    public List<OutboundDetailViewDTO> getDeliveryDetailViews(Long outboundId, User user) {
+        Outbound outbound = getOutbound(outboundId);
+        validateStoreAccess(outbound, user);
+        return outboundDetailRepository.findByOutboundId(outboundId).stream()
+                .map(OutboundDetailViewDTO::ofForStore)
+                .toList();
     }
 
     // 출고 상세를 화면용 DTO로 변환. ASSIGNED 상태의 창고 관리자에게만 구역 배정 옵션 표시
@@ -122,18 +132,20 @@ public class OutboundService {
     }
 
     /**
-     * 본사관리자가 발주 상세를 창고에 위임(StockOrder)할 때, 동일 트랜잭션에서
+     * 본사 관리자가 발주 상세를 창고에 위임(StockOrder)할 때, 동일 트랜잭션에서
      * 대응하는 출고 요청(Outbound/OutboundDetail)을 함께 생성한다.
      * 지점(Store) 단위로 Outbound를 분리한다.
-     * 이 시점에는 재고를 할당하지 않는다 (창고관리자가 구역 배정 시 할당).
+     * 이 시점에는 재고를 할당하지 않는다 (창고 관리자가 구역 배정 시 할당).
      */
     @Transactional
     public void createOutboundFromStockOrder(Warehouse warehouse, StockOrder stockOrder, List<StockOrderDetail> stockOrderDetails) {
+        // store_id 기준으로 그룹핑, Store 엔티티도 함께 보관
         Map<Long, List<StockOrderDetail>> detailsByStoreId = stockOrderDetails.stream()
                 .collect(Collectors.groupingBy(detail -> detail.getStore().getId()));
 
         detailsByStoreId.forEach((storeId, detailsForStore) -> {
-            Outbound outbound = Outbound.create(warehouse, stockOrder);
+            Store store = detailsForStore.get(0).getStore();
+            Outbound outbound = Outbound.create(warehouse, store, stockOrder);
             outboundRepository.save(outbound);
 
             List<OutboundDetail> outboundDetails = detailsForStore.stream()
@@ -145,7 +157,7 @@ public class OutboundService {
     }
 
     /**
-     * 창고관리자: 출고 상세 품목의 피킹 구역 배정 (ASSIGNED 상태에서만 가능).
+     * 창고 관리자: 출고 상세 품목의 피킹 구역 배정 (ASSIGNED 상태에서만 가능).
      * 해당 구역의 가용 재고(Inventory.allocate)를 함께 확인/예약
      * 재배정인 경우 기존 구역의 할당을 먼저 되돌린다.
      */
@@ -183,7 +195,7 @@ public class OutboundService {
         detail.assignSection(section);
     }
 
-    // 창고관리자: 구역 배정 초기화 (ASSIGNED 상태에서만). 할당 재고도 되돌린다.
+    // 창고 관리자: 구역 배정 초기화 (ASSIGNED 상태에서만). 할당 재고도 되돌린다.
     @Transactional
     public void clearSection(Long outboundDetailId, User user) {
         OutboundDetail detail = outboundDetailRepository.findById(outboundDetailId)
@@ -206,7 +218,7 @@ public class OutboundService {
         detail.assignSection(null);
     }
 
-    // 창고관리자: 모든 품목 구역 배정 완료 후 ASSIGNED → APPROVED
+    // 창고 관리자: 모든 품목 구역 배정 완료 후 ASSIGNED → APPROVED
     @Transactional
     public void approveOutbound(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
@@ -220,7 +232,7 @@ public class OutboundService {
         outbound.approve();
     }
 
-    // 창고관리자/작업자: 피킹 작업 시작 APPROVED → PICKING
+    // 창고 관리자/작업자: 피킹 작업 시작 APPROVED → PICKING
     @Transactional
     public void startPicking(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
@@ -269,19 +281,41 @@ public class OutboundService {
         outbound.completePicking();
     }
 
-    // 포장 완료 후 배송 출발 PACKING → SHIPPED
+    // 포장 완료 후 배송 출발 PACKING → SHIPPED. StockOrderDetail도 DELIVERING으로 변경
     @Transactional
     public void shipOutbound(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
         validateWarehouseAccess(outbound.getWarehouse(), user);
+
+        // 이 Outbound에 묶인 StockOrderDetail들을 DELIVERING으로 변경
+        outboundDetailRepository.findByOutboundId(outboundId).stream()
+                .map(OutboundDetail::getStockOrderDetail)
+                .forEach(detail -> detail.startDelivering());
+
         outbound.ship();
     }
 
-    // 점주: 지점 최종 수령 확인 SHIPPED → DELIVERED (본인 지점의 출고만 가능)
+    // 점주: 배송 페이지에서 Outbound 단위로 수령 완료 처리 (SHIPPED → DELIVERED)
+    // 해당 Outbound의 StockOrderDetail들을 COMPLETED로 변경
+    // StockOrder에 포함된 모든 항목이 완료되면 StockOrder도 완료 처리
     @Transactional
     public void deliverOutbound(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
-        validateStoreAccess(outboundDetailRepository.findByOutboundId(outboundId), user);
+        validateStoreAccess(outbound, user);
+
+        outboundDetailRepository.findByOutboundId(outboundId).stream()
+                .map(OutboundDetail::getStockOrderDetail)
+                .forEach(stockOrderDetail -> {
+                    stockOrderDetail.complete();
+
+                    StockOrder stockOrder = stockOrderDetail.getStockOrder();
+                    boolean hasUncompletedDetail = stockOrderDetailRepository
+                            .existsByStockOrderAndStatusNot(stockOrder, OrderDetailStatus.COMPLETED);
+                    if (!hasUncompletedDetail) {
+                        stockOrder.complete();
+                    }
+                });
+
         outbound.deliver();
     }
 
@@ -294,15 +328,13 @@ public class OutboundService {
         }
     }
 
-    // 출고가 점주 본인이 관리하는 지점의 것인지 검증. Outbound는 지점 단위이므로 상세의 지점으로 판별.
-    private void validateStoreAccess(List<OutboundDetail> details, User user) {
+    // 출고가 점주 본인이 관리하는 지점의 것인지 검증.
+    // Outbound에 store가 직접 있으므로 OutboundDetail을 거칠 필요 X
+    private void validateStoreAccess(Outbound outbound, User user) {
         List<Long> myStoreIds = findMyStores(user).stream()
                 .map(Store::getId)
                 .collect(Collectors.toList());
-        boolean isMyStore = details.stream()
-                .map(detail -> detail.getStockOrderDetail().getStore().getId())
-                .anyMatch(myStoreIds::contains);
-        if (!isMyStore) {
+        if (!myStoreIds.contains(outbound.getStore().getId())) {
             throw new IllegalArgumentException(getMessage("outbound.store.unauthorized"));
         }
     }

@@ -1,6 +1,7 @@
 package com.example.sportswms.domain.outbound.entity;
 
 import com.example.sportswms.domain.order.entity.StockOrder;
+import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -29,6 +30,10 @@ public class Outbound {
     private Warehouse warehouse;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id", nullable = false)
+    private Store store;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private StockOrder stockOrder;
 
@@ -42,16 +47,17 @@ public class Outbound {
     @OneToMany(mappedBy = "outbound", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OutboundDetail> outboundDetails = new ArrayList<>();
 
-    private Outbound(Warehouse warehouse, StockOrder stockOrder) {
+    private Outbound(Warehouse warehouse, Store store, StockOrder stockOrder) {
         this.warehouse = warehouse;
+        this.store = store;
         this.stockOrder = stockOrder;
         this.status = OutboundStatus.ASSIGNED;
     }
 
     // 본사 관리자가 발주 상세를 창고에 위임하는 순간(StockOrder 생성과 동시에) 출고 요청이 생성
     // 창고의 재고 확인/구역 배정 전이므로 ASSIGNED로 시작
-    public static Outbound create(Warehouse warehouse, StockOrder stockOrder) {
-        return new Outbound(warehouse, stockOrder);
+    public static Outbound create(Warehouse warehouse, Store store, StockOrder stockOrder) {
+        return new Outbound(warehouse, store, stockOrder);
     }
 
     // 창고 관리자: 모든 OutboundDetail에 구역(피킹 위치) 배정이 끝나면 ASSIGNED → APPROVED

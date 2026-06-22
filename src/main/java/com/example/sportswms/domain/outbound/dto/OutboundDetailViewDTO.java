@@ -11,6 +11,7 @@ public record OutboundDetailViewDTO(
         boolean clearable,      // ASSIGNED 상태(창고관리자) && 배정 완료 → 초기화 버튼 노출
         List<SectionOptionDTO> sections
 ) {
+    // 창고관리자용: 구역 배정 상태와 드롭다운 포함
     public static OutboundDetailViewDTO of(OutboundDetail detail, boolean isAssigning,
                                            List<SectionOptionDTO> sections) {
         boolean assigned = detail.getSection() != null;
@@ -23,6 +24,14 @@ public record OutboundDetailViewDTO(
                 assignable,
                 clearable,
                 assignable ? sections : List.of()
+        );
+    }
+
+    // 점주용: 구역 배정 정보 불필요, 단순 품목/수량만
+    public static OutboundDetailViewDTO ofForStore(OutboundDetail detail) {
+        return new OutboundDetailViewDTO(
+                detail.getId(), detail.getProductSKU().getName(), detail.getQuantity(),
+                null, false, false, List.of()
         );
     }
 

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>배송 상세</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        h1 { margin-bottom: 4px; }
+        a { text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 16px; }
+        a:hover { text-decoration: underline; }
+        .info-box { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 6px;
+                    padding: 14px 18px; margin-bottom: 20px; display: flex; gap: 32px; flex-wrap: wrap; }
+        .info-box span { font-size: 0.95em; color: #495057; }
+        .info-box strong { color: #212529; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .status-badge { padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: bold; display: inline-block; }
+        .status-SHIPPED   { background: #f0d9ff; color: #4a0072; }
+        .status-DELIVERED { background: #d1e7dd; color: #0a3622; }
+        .status-ASSIGNED  { background: #cfe2ff; color: #084298; }
+        .status-APPROVED  { background: #d1e7dd; color: #0a3622; }
+        .status-PICKING   { background: #fff3cd; color: #664d03; }
+        .status-PACKING   { background: #fff3cd; color: #664d03; }
+        .btn-success { padding: 8px 20px; background-color: #28a745; color: white;
+                       border: none; border-radius: 4px; cursor: pointer; font-size: 0.95em; margin-top: 16px; }
+        .error { color: red; margin: 8px 0; }
+    </style>
+</head>
+<body>
+
+<a href="/delivery">← 배송 목록으로</a>
+
+<h1>배송 상세</h1>
+
+{{#errorMessage}}
+    <p class="error">{{errorMessage}}</p>
+{{/errorMessage}}
+
+<div class="info-box">
+    <span><strong>출발 창고</strong>: {{outbound.warehouse.name}}</span>
+    <span><strong>배송 지점</strong>: {{outbound.store.name}} ({{outbound.store.address}})</span>
+    <span><strong>발주 요청 시간</strong>: {{outbound.stockOrder.requestTime}}</span>
+    <span>
+        <strong>배송 상태</strong>:
+        <span class="status-badge status-{{outbound.status}}">{{outbound.status.description}}</span>
+    </span>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>품목명 (SKU)</th>
+            <th>수량</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#details}}
+        <tr>
+            <td>{{skuName}}</td>
+            <td>{{quantity}}</td>
+        </tr>
+        {{/details}}
+        {{^details}}
+        <tr>
+            <td colspan="2" style="text-align: center;">상세 내역이 없습니다.</td>
+        </tr>
+        {{/details}}
+    </tbody>
+</table>
+
+{{#canDeliver}}
+<form action="/delivery/{{outboundId}}/complete" method="post">
+    <button type="submit" class="btn-success"
+            onclick="return confirm('상품을 모두 수령하셨습니까? 배송 완료로 처리됩니다.')">수령 완료 처리</button>
+</form>
+{{/canDeliver}}
+
+</body>
+</html>

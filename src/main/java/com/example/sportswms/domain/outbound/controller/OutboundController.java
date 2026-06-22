@@ -34,10 +34,6 @@ public class OutboundController {
         if (role == Role.ROLE_WAREHOUSE_MANAGER) {
             model.addAttribute("isWarehouseManager", true);
             model.addAttribute("outbounds", outboundService.findMyWarehousesOutbounds(currentUser));
-        } else if (role == Role.ROLE_USER) {
-            // 점주: 본인이 관리하는 지점의 출고만 조회 (배송 완료 확인)
-            model.addAttribute("isStoreOwner", true);
-            model.addAttribute("outbounds", outboundService.findMyStoreOutbounds(currentUser));
         } else {
             // 본사 관리자: 전체 출고 내역 조회
             model.addAttribute("outbounds", outboundService.getAllOutbounds());
@@ -68,17 +64,12 @@ public class OutboundController {
                 boolean isAssigning = status == OutboundStatus.ASSIGNED;
                 model.addAttribute("isAssigning", isAssigning);
 
-                // 모든 품목 구역 배정 완료 여부 (배정 중 미배정 행이 없으면 승인 가능)
                 boolean allAssigned = !detailViews.isEmpty()
                         && detailViews.stream().noneMatch(OutboundDetailViewDTO::assignable);
                 model.addAttribute("canApprove", isAssigning && allAssigned);
                 model.addAttribute("canStartPicking", status == OutboundStatus.APPROVED);
                 model.addAttribute("canCompletePicking", status == OutboundStatus.PICKING);
                 model.addAttribute("canShip", status == OutboundStatus.PACKING);
-            } else if (currentUser.getRole() == Role.ROLE_USER) {
-                // 점주: 배송 중(SHIPPED)인 출고만 배송 완료 처리 가능
-                model.addAttribute("isStoreOwner", true);
-                model.addAttribute("canDeliver", status == OutboundStatus.SHIPPED);
             }
 
         } catch (IllegalArgumentException e) {
@@ -169,20 +160,6 @@ public class OutboundController {
                                RedirectAttributes redirectAttributes) {
         try {
             outboundService.shipOutbound(id, userDetails.getUser());
-        } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-        }
-
-        return "redirect:/outbound/" + id;
-    }
-
-    // 점주: 배송 받은 후 최종 수령 확인 (SHIPPED → DELIVERED)
-    @PostMapping("/{id}/deliver")
-    public String deliverOutbound(@PathVariable Long id,
-                                  @AuthenticationPrincipal CustomUserDetails userDetails,
-                                  RedirectAttributes redirectAttributes) {
-        try {
-            outboundService.deliverOutbound(id, userDetails.getUser());
         } catch (IllegalArgumentException e) {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }

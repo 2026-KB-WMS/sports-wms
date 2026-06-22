@@ -63,16 +63,6 @@
         </form>
         {{/canShip}}
     {{/isWarehouseManager}}
-
-    {{! 점주: 배송 중인 출고를 최종 수령 확인 }}
-    {{#isStoreOwner}}
-        {{#canDeliver}}
-        <form action="/outbound/{{outboundId}}/deliver" method="post" style="display:inline;">
-            <button type="submit" class="btn btn-success"
-                    onclick="return confirm('상품을 수령하셨습니까? 배송 완료로 처리됩니다.')">배송 완료</button>
-        </form>
-        {{/canDeliver}}
-    {{/isStoreOwner}}
 </div>
 
 <table>

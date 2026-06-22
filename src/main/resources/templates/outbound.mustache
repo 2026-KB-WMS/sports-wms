@@ -19,7 +19,6 @@
 <body>
 
 <h1>출고 관리</h1>
-{{#isStoreOwner}}<p class="hint">배송 중인 출고를 상세 화면에서 배송 완료 처리할 수 있습니다.</p>{{/isStoreOwner}}
 
 {{#errorMessage}}
     <p class="error">{{errorMessage}}</p>
@@ -32,6 +31,7 @@
             <tr>
                 <th>ID</th>
                 <th>창고</th>
+                <th>배송 지점</th>
                 <th>요청 시간</th>
                 <th>상태</th>
                 <th>상세</th>
@@ -42,6 +42,7 @@
             <tr>
                 <td>{{id}}</td>
                 <td>{{warehouse.name}}</td>
+                <td>{{store.name}}</td>
                 <td>{{stockOrder.requestTime}}</td>
                 <td>{{status.description}}</td>
                 <td><a href="/outbound/{{id}}">보기</a></td>
@@ -49,7 +50,7 @@
             {{/outbounds}}
             {{^outbounds}}
             <tr>
-                <td colspan="5" style="text-align: center;">출고 내역이 없습니다.</td>
+                <td colspan="6" style="text-align: center;">출고 내역이 없습니다.</td>
             </tr>
             {{/outbounds}}
         </tbody>

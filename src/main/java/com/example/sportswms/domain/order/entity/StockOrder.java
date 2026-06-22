@@ -41,4 +41,10 @@ public class StockOrder {
     public static StockOrder create(Warehouse warehouse) {
         return new StockOrder(warehouse);
     }
+
+    // StockOrderDetail이 전부 COMPLETED일 때 호출
+    public void complete() {
+        this.status = OrderStatus.COMPLETED;
+        this.completeTime = LocalDateTime.now();
+    }
 }
