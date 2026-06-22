@@ -42,7 +42,7 @@ public class Inventory {
         this.productSKU = productSKU;
         this.actualQuantity = quantity;
         this.allocatedQuantity = 0;
-        this.status = InventoryStatus.UNALLOCATED;
+        this.status = InventoryStatus.NORMAL;
     }
 
     public static Inventory create(Section section, ProductSKU productSKU, int quantity) {
