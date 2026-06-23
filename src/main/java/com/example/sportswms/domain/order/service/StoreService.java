@@ -12,6 +12,7 @@ import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
 import com.example.sportswms.domain.order.repository.StockOrderRepository;
 import com.example.sportswms.domain.order.repository.StoreManagementRepository;
 import com.example.sportswms.domain.order.repository.StoreRepository;
+import com.example.sportswms.domain.outbound.service.OutboundService;
 import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.product.repository.ProductSKURepository;
 import com.example.sportswms.domain.user.entity.User;
@@ -41,6 +42,7 @@ public class StoreService {
     private final ProductSKURepository productSKURepository;
     private final WarehouseRepository warehouseRepository;
     private final WarehouseManagementRepository warehouseManagementRepository;
+    private final OutboundService outboundService;
 
     public List<StockOrder> findMyWarehouseOrders(User user) {
 
@@ -105,6 +107,9 @@ public class StoreService {
         for (StockOrderDetail detail : detailsToAssign) {
             detail.assignStockOrder(stockOrder);
         }
+
+        // 발주가 창고에 위임되는 시점에 대응하는 출고 요청을 함께 생성
+        outboundService.createOutboundFromStockOrder(warehouse, stockOrder, detailsToAssign);
     }
 
     @Transactional

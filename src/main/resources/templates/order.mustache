@@ -12,6 +12,12 @@
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
         .error { color: red; font-size: 0.9em; margin-bottom: 10px; display: block; }
         .box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; }
+        .status-badge { padding: 3px 10px; border-radius: 12px; font-size: 0.85em; font-weight: bold; display: inline-block; }
+        .status-badge.status-PENDING    { background: #e9ecef; color: #6c757d; }
+        .status-badge.status-ASSIGNED   { background: #cfe2ff; color: #084298; }
+        .status-badge.status-DELIVERING { background: #fff3cd; color: #664d03; }
+        .status-badge.status-COMPLETED  { background: #d1e7dd; color: #0a3622; }
+        .status-badge.status-CANCELED   { background: #f8d7da; color: #842029; }
     </style>
 </head>
 <body>
@@ -94,6 +100,7 @@
         <th>SKU</th>
         <th>수량</th>
         <th>메모</th>
+        <th>상태</th>
         <th>본사 오더 ID</th>
     </tr>
     </thead>
@@ -113,18 +120,21 @@
             <td>{{quantity}}</td>
             <td>{{memo}}</td>
             <td>
+                <span class="status-badge status-{{status}}">{{status.description}}</span>
+            </td>
+            <td>
                 {{#stockOrder}}
                     {{id}}
                 {{/stockOrder}}
                 {{^stockOrder}}
-                    <span style="color: #888;">(대기중)</span>
+                    <span style="color: #888;">-</span>
                 {{/stockOrder}}
             </td>
         </tr>
     {{/orderDetails}}
     {{^orderDetails}}
         <tr>
-            <td colspan="{{#isGeneralManager}}7{{/isGeneralManager}}{{^isGeneralManager}}6{{/isGeneralManager}}" style="text-align: center;">발주 내역이 없습니다.</td>
+            <td colspan="{{#isGeneralManager}}8{{/isGeneralManager}}{{^isGeneralManager}}7{{/isGeneralManager}}" style="text-align: center;">발주 내역이 없습니다.</td>
         </tr>
     {{/orderDetails}}
     </tbody>

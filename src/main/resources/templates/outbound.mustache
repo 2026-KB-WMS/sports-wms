@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>출고 관리</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        h1 { margin-bottom: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        a { text-decoration: none; color: #007bff; }
+        a:hover { text-decoration: underline; }
+        .error { color: red; margin: 8px 0; }
+        .hint { color: #6c757d; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<h1>출고 관리</h1>
+
+{{#errorMessage}}
+    <p class="error">{{errorMessage}}</p>
+{{/errorMessage}}
+
+<div class="list-section">
+    <h2>출고 내역</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>창고</th>
+                <th>배송 지점</th>
+                <th>요청 시간</th>
+                <th>상태</th>
+                <th>상세</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#outbounds}}
+            <tr>
+                <td>{{id}}</td>
+                <td>{{warehouse.name}}</td>
+                <td>{{store.name}}</td>
+                <td>{{stockOrder.requestTime}}</td>
+                <td>{{status.description}}</td>
+                <td><a href="/outbound/{{id}}">보기</a></td>
+            </tr>
+            {{/outbounds}}
+            {{^outbounds}}
+            <tr>
+                <td colspan="6" style="text-align: center;">출고 내역이 없습니다.</td>
+            </tr>
+            {{/outbounds}}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>출고 상세 내역</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        a { text-decoration: none; color: #007bff; display: inline-block; margin-bottom: 10px; }
+        a:hover { text-decoration: underline; }
+        .status-bar { display: flex; align-items: center; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+        .status-badge { padding: 6px 14px; border-radius: 20px; font-weight: bold;
+                        background-color: #e9ecef; color: #495057; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-sm { padding: 4px 10px; font-size: 0.85em; }
+        .error { color: red; margin: 8px 0; }
+        .assigned { color: #28a745; font-weight: bold; }
+        select { padding: 4px 8px; }
+        .section-form { display: flex; gap: 6px; align-items: center; }
+    </style>
+</head>
+<body>
+
+<h1>출고 ID: {{outboundId}} 상세 내역</h1>
+<a href="/outbound">← 목록으로 돌아가기</a>
+
+{{#errorMessage}}
+    <p class="error">{{errorMessage}}</p>
+{{/errorMessage}}
+
+<div class="status-bar">
+    <span>현재 상태:</span>
+    <span class="status-badge">{{outbound.status.description}}</span>
+
+    {{! 창고관리자: 작업 단계별 진행 버튼 }}
+    {{#isWarehouseManager}}
+        {{#canApprove}}
+        <form action="/outbound/{{outboundId}}/approve" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-primary">출고 승인</button>
+        </form>
+        {{/canApprove}}
+
+        {{#canStartPicking}}
+        <form action="/outbound/{{outboundId}}/picking/start" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-primary">피킹 시작</button>
+        </form>
+        {{/canStartPicking}}
+
+        {{#canCompletePicking}}
+        <form action="/outbound/{{outboundId}}/picking/complete" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-primary">피킹 완료</button>
+        </form>
+        {{/canCompletePicking}}
+
+        {{#canShip}}
+        <form action="/outbound/{{outboundId}}/ship" method="post" style="display:inline;">
+            <button type="submit" class="btn btn-success">배송 출발</button>
+        </form>
+        {{/canShip}}
+    {{/isWarehouseManager}}
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>상세 ID</th>
+            <th>품목명(SKU)</th>
+            <th>수량</th>
+            <th>배정된 구역</th>
+            {{#isAssigning}}<th>구역 배정</th>{{/isAssigning}}
+        </tr>
+    </thead>
+    <tbody>
+        {{#outboundDetails}}
+        <tr>
+            <td>{{id}}</td>
+            <td>{{skuName}}</td>
+            <td>{{quantity}}</td>
+            <td>
+                {{#sectionName}}<span class="assigned">{{sectionName}}</span>{{/sectionName}}
+                {{^sectionName}}미배정{{/sectionName}}
+            </td>
+            {{#isAssigning}}
+            <td>
+                {{#assignable}}
+                <form action="/outbound/{{outboundId}}/details/{{id}}/section" method="post" class="section-form">
+                    <select name="sectionId" required>
+                        <option value="">구역 선택 (필요 수량: {{quantity}})</option>
+                        {{#sections}}
+                        <option value="{{id}}">{{name}} ({{sectionCode}}) - 가용 {{availableQuantity}}</option>
+                        {{/sections}}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-primary">배정</button>
+                </form>
+                {{/assignable}}
+                {{^assignable}}
+                <span class="assigned">✓ {{sectionName}}</span>
+                {{#clearable}}
+                <form action="/outbound/{{outboundId}}/details/{{id}}/section/clear" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm" style="background:#dc3545;color:white;"
+                            onclick="return confirm('구역 배정을 초기화하시겠습니까?')">초기화</button>
+                </form>
+                {{/clearable}}
+                {{/assignable}}
+            </td>
+            {{/isAssigning}}
+        </tr>
+        {{/outboundDetails}}
+        {{^outboundDetails}}
+        <tr>
+            <td colspan="5" style="text-align: center;">상세 내역이 없습니다.</td>
+        </tr>
+        {{/outboundDetails}}
+    </tbody>
+</table>
+
+</body>
+</html>

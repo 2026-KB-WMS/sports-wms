@@ -60,7 +60,16 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/inbound/*/complete").hasRole("WAREHOUSE_MANAGER")
                         // 입고 조회(GET) : 본사관리자, 창고관리자
                         .requestMatchers("/inbound/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
-
+                        // 출고 작업 (구역 배정/승인/피킹/배송 출발): 창고관리자 전용
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/outbound/*/details/*/section").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/outbound/*/details/*/section/clear").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/outbound/*/approve").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/outbound/*/picking/**").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/outbound/*/ship").hasRole("WAREHOUSE_MANAGER")
+                        // 배송 완료 처리: 점주(USER) 전용 (/delivery)
+                        .requestMatchers("/delivery/**").hasRole("USER")
+                        // 출고 조회/작업: 본사관리자, 창고관리자 전용
+                        .requestMatchers("/outbound/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
                         // 일반 회원 (점주)
                         .requestMatchers("/order/submit").hasRole("USER")
                         // 일반 회원 및 본사 관리자

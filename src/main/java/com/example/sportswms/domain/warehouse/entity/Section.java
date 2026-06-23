@@ -6,6 +6,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import static com.example.sportswms.global.util.MessageUtils.getMessage;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -72,5 +74,14 @@ public class Section {
     // 입고 완료 시 currentUsage 증가
     public void increaseUsage(int quantity) {
         this.currentUsage += quantity;
+    }
+
+    // 출고 피킹 완료 시 물건이 구역에서 빠져나감
+    public void decreaseUsage(int quantity) {
+        if (this.currentUsage < quantity) {
+            throw new IllegalStateException(
+                    getMessage("inventory.section.usage.underflow", this.currentUsage, quantity));
+        }
+        this.currentUsage -= quantity;
     }
 }
