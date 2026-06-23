@@ -9,7 +9,6 @@ import com.example.sportswms.domain.inventory.repository.InventoryTransactionRep
 import com.example.sportswms.domain.order.entity.StockOrder;
 import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
-import com.example.sportswms.domain.order.entity.StoreManagement;
 import com.example.sportswms.domain.order.repository.StoreManagementRepository;
 import com.example.sportswms.domain.order.entity.OrderDetailStatus;
 import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
@@ -24,7 +23,6 @@ import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
-import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import lombok.RequiredArgsConstructor;
@@ -62,24 +60,14 @@ public class OutboundService {
         return outboundRepository.findAll();
     }
 
-    // 창고관리자: 본인이 관리하는 창고들의 출고 내역
+    // 창고 관리자: 본인이 관리하는 창고들의 출고 내역
     public List<Outbound> findMyWarehousesOutbounds(User user) {
-        List<Warehouse> myWarehouses = warehouseManagementRepository.findAllByUser(user).stream()
-                .map(WarehouseManagement::getWarehouse)
-                .collect(Collectors.toList());
-        if (myWarehouses.isEmpty()) {
-            return List.of();
-        }
-        return outboundRepository.findAllByWarehouseIn(myWarehouses);
+        return outboundRepository.findAllByWarehouseManager(user);
     }
 
     // 점주: 본인이 관리하는 지점(Store)의 출고 내역
     public List<Outbound> findMyStoreOutbounds(User user) {
-        List<Store> myStores = findMyStores(user);
-        if (myStores.isEmpty()) {
-            return List.of();
-        }
-        return outboundRepository.findAllByStoreIn(myStores);
+        return outboundRepository.findAllByStoreOwner(user);
     }
 
     public List<OutboundDetail> getOutboundDetails(Long outboundId, User user) {
@@ -133,8 +121,8 @@ public class OutboundService {
 
     /**
      * 본사 관리자가 발주 상세를 창고에 위임(StockOrder)할 때, 동일 트랜잭션에서
-     * 대응하는 출고 요청(Outbound/OutboundDetail)을 함께 생성한다.
-     * 지점(Store) 단위로 Outbound를 분리한다.
+     * 대응하는 출고 요청(Outbound/OutboundDetail)을 함께 생성
+     * 지점(Store) 단위로 Outbound를 분리
      * 이 시점에는 재고를 할당하지 않는다 (창고 관리자가 구역 배정 시 할당).
      */
     @Transactional
@@ -157,7 +145,7 @@ public class OutboundService {
     }
 
     /**
-     * 창고 관리자: 출고 상세 품목의 피킹 구역 배정 (ASSIGNED 상태에서만 가능).
+     * 창고 관리자: 출고 상세 품목의 피킹 구역 배정 (ASSIGNED 상태에서만 가능)
      * 해당 구역의 가용 재고(Inventory.allocate)를 함께 확인/예약
      * 재배정인 경우 기존 구역의 할당을 먼저 되돌린다.
      */
@@ -320,28 +308,16 @@ public class OutboundService {
     }
 
     private void validateWarehouseAccess(Warehouse warehouse, User user) {
-        boolean isMyWarehouse = warehouseManagementRepository.findAllByUser(user).stream()
-                .map(WarehouseManagement::getWarehouse)
-                .anyMatch(myWarehouse -> myWarehouse.getId().equals(warehouse.getId()));
+        boolean isMyWarehouse = warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user);
         if (!isMyWarehouse) {
-            throw new IllegalArgumentException(getMessage("outbound.warehouse.unauthorized"));
+            throw new IllegalArgumentException(getMessage("warehouse.unauthorized"));
         }
     }
 
-    // 출고가 점주 본인이 관리하는 지점의 것인지 검증.
-    // Outbound에 store가 직접 있으므로 OutboundDetail을 거칠 필요 X
     private void validateStoreAccess(Outbound outbound, User user) {
-        List<Long> myStoreIds = findMyStores(user).stream()
-                .map(Store::getId)
-                .collect(Collectors.toList());
-        if (!myStoreIds.contains(outbound.getStore().getId())) {
-            throw new IllegalArgumentException(getMessage("outbound.store.unauthorized"));
+        boolean isMyStore = storeManagementRepository.existsByStoreAndUser(outbound.getStore(), user);
+        if (!isMyStore) {
+            throw new IllegalArgumentException(getMessage("store.unauthorized"));
         }
-    }
-
-    private List<Store> findMyStores(User user) {
-        return storeManagementRepository.findByUserId(user.getId()).stream()
-                .map(StoreManagement::getStore)
-                .collect(Collectors.toList());
     }
 }

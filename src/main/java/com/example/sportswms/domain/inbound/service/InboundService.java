@@ -20,7 +20,6 @@ import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
-import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
@@ -52,13 +51,8 @@ public class InboundService {
     public List<Inbound> getAllInbounds() { return inboundRepository.findAll(); }
 
     public List<Inbound> findMyWarehousesInbounds(User user) {
-        List<Warehouse> myWarehouses = warehouseManagementRepository.findAllByUser(user).stream()
-                .map(WarehouseManagement::getWarehouse)
-                .collect(Collectors.toList());
-        if (myWarehouses.isEmpty()) {
-            return List.of();
-        }
-        return inboundRepository.findAllByWarehouseIn(myWarehouses);
+        List<Inbound> result = inboundRepository.findAllByWarehouseManager(user);
+        return result;
     }
 
     public List<InboundDetail> getInboundDetails(Long inboundId, User user) {
@@ -250,11 +244,8 @@ public class InboundService {
     }
 
     private void validateWarehouseAccess(Warehouse warehouse, User user) {
-        boolean isMyWarehouse = warehouseManagementRepository.findAllByUser(user).stream()
-                .map(WarehouseManagement::getWarehouse)
-                .anyMatch(myWarehouse -> myWarehouse.getId().equals(warehouse.getId()));
-        if (!isMyWarehouse) {
-            throw new IllegalArgumentException(getMessage("inbound.warehouse.unauthorized"));
+        if (!warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user)) {
+            throw new IllegalArgumentException(getMessage("warehouse.unauthorized"));
         }
     }
 }

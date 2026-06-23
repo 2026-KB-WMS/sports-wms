@@ -68,12 +68,21 @@ public class Inventory {
     }
 
     // 출고 구역 배정 취소/변경 시 할당량을 되돌린다.
+    // allocatedQuantity < quantity이면 데이터 불일치 버그이므로 예외 처리
     public void deallocate(int quantity) {
-        this.allocatedQuantity = Math.max(0, this.allocatedQuantity - quantity);
+        if (this.allocatedQuantity < quantity) {
+            throw new IllegalStateException(
+                    getMessage("inventory.deallocate.underflow", this.allocatedQuantity, quantity));
+        }
+        this.allocatedQuantity -= quantity;
     }
 
-    // 피킹 완료 시 실제로 구역에서 물건을 피킹. actualQuantity와 allocatedQuantity를 함께 차감
+    // 피킹 완료 시 실제로 구역에서 물건이 빠져나감. actualQuantity와 allocatedQuantity를 함께 차감
     public void pick(int quantity) {
+        if (this.actualQuantity < quantity || this.allocatedQuantity < quantity) {
+            throw new IllegalStateException(
+                    getMessage("inventory.pick.underflow", quantity, this.actualQuantity, this.allocatedQuantity));
+        }
         this.actualQuantity -= quantity;
         this.allocatedQuantity -= quantity;
     }
