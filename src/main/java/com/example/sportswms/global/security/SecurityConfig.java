@@ -43,7 +43,7 @@ public class SecurityConfig {
                         // 모든 회원 접근 가능
                         .requestMatchers("/", "/signup", "/login").permitAll()
                         // 본사 관리자 (GENERAL_MANAGER)
-                        .requestMatchers("/sku/**", "/store/**").hasRole("GENERAL_MANAGER")
+                        .requestMatchers("/sku/**", "/store/**", "/product/**").hasRole("GENERAL_MANAGER")
                         .requestMatchers("/order/assign").hasRole("GENERAL_MANAGER")
                         // 창고 관리자 (WAREHOUSE_MANAGER)
                         .requestMatchers("/order/warehouse-orders/**").hasRole("WAREHOUSE_MANAGER")
