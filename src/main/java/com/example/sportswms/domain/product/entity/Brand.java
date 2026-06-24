@@ -26,4 +26,8 @@ public class Brand {
         this.name = name;
         this.code = code;
     }
+
+    public static Brand of(String name, String code) {
+        return new Brand(name, code);
+    }
 }

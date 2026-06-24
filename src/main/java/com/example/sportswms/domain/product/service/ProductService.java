@@ -1,5 +1,7 @@
 package com.example.sportswms.domain.product.service;
 
+import com.example.sportswms.domain.product.dto.BrandCreateRequestDTO;
+import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
 import com.example.sportswms.domain.product.dto.SKUCreateRequestDTO;
 import com.example.sportswms.domain.product.entity.*;
 import com.example.sportswms.domain.product.repository.*;
@@ -8,7 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
@@ -21,14 +25,84 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductSKURepository productSKURepository;
+    private final ProductSpecRepository productSpecRepository;
     private final OptionValueRepository optionValueRepository;
     private final OptionGroupRepository optionGroupRepository;
+    private final BrandRepository brandRepository;
+    private final CategoryRepository categoryRepository;
+    private final CategoryOptionMappingRepository categoryOptionMappingRepository;
 
     public List<ProductSKU> getAllSKUs() {
         return productSKURepository.findAll();
     }
-    public List<OptionGroup> getAllOptionGroups() { return optionGroupRepository.findAll(); }
-    public List<Product> getAllProducts() { return productRepository.findAll(); }
+
+    public List<OptionGroup> getAllOptionGroups() {
+        return optionGroupRepository.findAll();
+    }
+
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
+    }
+
+    public List<Brand> getAllBrands() {
+        return brandRepository.findAll();
+    }
+
+    public List<Category> getAllCategories() {
+        return categoryRepository.findAll();
+    }
+
+    /** 카테고리의 SKU 타입 옵션그룹 반환 — SKU 등록 폼 렌더링용 */
+    public List<OptionGroup> getSkuOptionGroupsByProductId(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("product.invalid")));
+        return categoryOptionMappingRepository.findOptionGroupsByCategoryIdAndType(
+                product.getCategory().getId(), CategoryOptionMappingType.SKU);
+    }
+
+    /** 카테고리의 SPEC 타입 옵션그룹 반환 — 상품 등록 폼 렌더링용 */
+    public List<OptionGroup> getSpecOptionGroupsByCategoryId(Long categoryId) {
+        return categoryOptionMappingRepository.findOptionGroupsByCategoryIdAndType(
+                categoryId, CategoryOptionMappingType.SPEC);
+    }
+
+    @Transactional
+    public void createBrand(BrandCreateRequestDTO dto) {
+        brandRepository.save(Brand.of(dto.name(), dto.code()));
+    }
+
+    @Transactional
+    public void createProduct(ProductCreateRequestDTO dto) {
+        Brand brand = brandRepository.findById(dto.brandId())
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("brand.invalid")));
+        Category category = categoryRepository.findById(dto.categoryId())
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("product.category.required")));
+
+        Product product = productRepository.save(Product.of(dto, brand, category));
+
+        // SPEC 옵션값 저장
+        List<Long> specIds = dto.specOptionValueIds() != null ? dto.specOptionValueIds() : Collections.emptyList();
+        if (!specIds.isEmpty()) {
+            List<OptionValue> specValues = optionValueRepository.findAllById(specIds);
+
+            // 카테고리의 SPEC 그룹이 모두 선택됐는지 검증
+            List<OptionGroup> requiredSpecGroups = categoryOptionMappingRepository
+                    .findOptionGroupsByCategoryIdAndType(category.getId(), CategoryOptionMappingType.SPEC);
+            Set<Long> selectedGroupIds = specValues.stream()
+                    .map(v -> v.getOptionGroup().getId())
+                    .collect(Collectors.toSet());
+            boolean allCovered = requiredSpecGroups.stream()
+                    .allMatch(g -> selectedGroupIds.contains(g.getId()));
+            if (!allCovered) {
+                throw new IllegalArgumentException(getMessage("product.spec.incomplete"));
+            }
+
+            List<ProductSpec> specs = specValues.stream()
+                    .map(v -> ProductSpec.of(product, v))
+                    .collect(Collectors.toList());
+            productSpecRepository.saveAll(specs);
+        }
+    }
 
     @Transactional
     public void createSKU(SKUCreateRequestDTO dto) {
@@ -40,11 +114,21 @@ public class ProductService {
             throw new IllegalArgumentException(getMessage("option.invalid"));
         }
 
-        // SKU 이름 및 코드 생성 함수 호출
+        // 카테고리의 SKU 타입 옵션그룹이 모두 선택됐는지 검증
+        List<OptionGroup> requiredSkuGroups = categoryOptionMappingRepository
+                .findOptionGroupsByCategoryIdAndType(product.getCategory().getId(), CategoryOptionMappingType.SKU);
+        Set<Long> selectedGroupIds = optionValues.stream()
+                .map(v -> v.getOptionGroup().getId())
+                .collect(Collectors.toSet());
+        boolean allGroupsCovered = requiredSkuGroups.stream()
+                .allMatch(g -> selectedGroupIds.contains(g.getId()));
+        if (!allGroupsCovered) {
+            throw new IllegalArgumentException(getMessage("sku.option.group.incomplete"));
+        }
+
         String skuName = generateSKUName(product, optionValues);
         String skuCode = generateSKUCode(product, optionValues);
 
-        // 생성된 이름과 코드로 ProductSKU 객체 생성
         ProductSKU sku = ProductSKU.of(product, skuName, skuCode);
         sku.addOptionValues(optionValues);
         productSKURepository.save(sku);

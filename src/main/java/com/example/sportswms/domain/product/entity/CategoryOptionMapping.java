@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name="CategoryOptionMapping")
+@Table(name = "CategoryOptionMapping")
 public class CategoryOptionMapping {
 
     @Id
@@ -24,12 +24,21 @@ public class CategoryOptionMapping {
     @JoinColumn(name = "group_id", nullable = false)
     private OptionGroup optionGroup;
 
-    private CategoryOptionMapping(Category category, OptionGroup group) {
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CategoryOptionMappingType type;
+
+    private CategoryOptionMapping(Category category, OptionGroup group, CategoryOptionMappingType type) {
         this.category = category;
         this.optionGroup = group;
+        this.type = type;
     }
 
-    public static CategoryOptionMapping of(Category category, OptionGroup group) {
-        return new CategoryOptionMapping(category, group);
+    public static CategoryOptionMapping ofSku(Category category, OptionGroup group) {
+        return new CategoryOptionMapping(category, group, CategoryOptionMappingType.SKU);
+    }
+
+    public static CategoryOptionMapping ofSpec(Category category, OptionGroup group) {
+        return new CategoryOptionMapping(category, group, CategoryOptionMappingType.SPEC);
     }
 }
