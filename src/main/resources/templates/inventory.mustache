@@ -5,13 +5,51 @@
     <title>Inventory Management</title>
     <style>
         body { font-family: sans-serif; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px;}
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
         th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .filter-bar { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-group { display: flex; flex-direction: column; gap: 4px; }
+        .filter-group label { font-size: 0.85em; color: #555; }
     </style>
 </head>
 <body>
-<h1>Inventory Management</h1>
+<h1>재고 관리</h1>
 <hr>
+
+{{! 필터 폼 }}
+<form method="get" action="/inventory">
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label for="warehouseId">창고별</label>
+            <select id="warehouseId" name="warehouseId">
+                <option value="">전체 창고</option>
+                {{#warehouses}}
+                    <option value="{{id}}">{{name}}</option>
+                {{/warehouses}}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="sectionId">구역별</label>
+            <select id="sectionId" name="sectionId">
+                <option value="">전체 구역</option>
+                {{#sections}}
+                    <option value="{{id}}">{{warehouse.name}} - {{name}}</option>
+                {{/sections}}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="skuId">SKU별</label>
+            <select id="skuId" name="skuId">
+                <option value="">전체 SKU</option>
+                {{#skus}}
+                    <option value="{{id}}">{{skuCode}}</option>
+                {{/skus}}
+            </select>
+        </div>
+        <button type="submit">조회</button>
+        <a href="/inventory"><button type="button">초기화</button></a>
+    </div>
+</form>
 
 <h2>재고 현황</h2>
 <table>
@@ -21,8 +59,9 @@
             <th>소속 창고</th>
             <th>보관 구역</th>
             <th>상품 SKU 코드</th>
-            <th>실제 재고 수량</th>
-            <th>할당된 수량</th>
+            <th>실재고</th>
+            <th>할당 수량</th>
+            <th>가용 수량</th>
         </tr>
     </thead>
     <tbody>
@@ -34,17 +73,18 @@
             <td>{{productSKU.skuCode}}</td>
             <td>{{actualQuantity}}</td>
             <td>{{allocatedQuantity}}</td>
+            <td>{{availableQuantity}}</td>
         </tr>
         {{/inventories}}
         {{^inventories}}
         <tr>
-            <td colspan="7" style="text-align: center;">등록된 재고가 없습니다.</td>
+            <td colspan="7" style="text-align: center;">조회된 재고가 없습니다.</td>
         </tr>
         {{/inventories}}
     </tbody>
 </table>
 
-<h2>재고 변동 기록 (트랜잭션)</h2>
+<h2>재고 변동 기록</h2>
 <table>
     <thead>
         <tr>
@@ -53,11 +93,11 @@
             <th>소속 창고</th>
             <th>보관 구역</th>
             <th>상품 SKU 코드</th>
-            <th>트랜잭션 유형</th>
+            <th>유형</th>
             <th>수량 변동</th>
             <th>상태</th>
             <th>사유</th>
-            <th>담당자 아이디</th>
+            <th>담당자</th>
         </tr>
     </thead>
     <tbody>
@@ -69,7 +109,7 @@
             <td>{{section.name}}</td>
             <td>{{productSKU.skuCode}}</td>
             <td>{{transactionType.title}}</td>
-            <td>{{beforeQuantity}} &rarr; {{afterQuantity}} ({{quantity}})</td>
+            <td>{{beforeQuantity}} → {{afterQuantity}} ({{quantity}})</td>
             <td>{{status}}</td>
             <td>{{reason}}</td>
             <td>{{user.loginId}}</td>
@@ -77,11 +117,69 @@
         {{/transactions}}
         {{^transactions}}
         <tr>
-            <td colspan="10" style="text-align: center;">재고 변동 기록이 없습니다.</td>
+            <td colspan="10" style="text-align: center;">조회된 변동 기록이 없습니다.</td>
         </tr>
         {{/transactions}}
     </tbody>
 </table>
 
+<script>
+    const warehouseSelect = document.getElementById('warehouseId');
+    const sectionSelect   = document.getElementById('sectionId');
+    const params = new URLSearchParams(window.location.search);
+    const wId = params.get('warehouseId');
+    const sId = params.get('sectionId');
+    const kId = params.get('skuId');
+
+    // 페이지 로드 시 select 복원
+    if (wId) warehouseSelect.value = wId;
+    if (kId) document.getElementById('skuId').value = kId;
+
+    // 창고가 선택된 상태로 로드됐으면 해당 창고 구역만 표시 후 sectionId 복원
+    if (wId) {
+        fetchSections(wId).then(() => {
+            if (sId) sectionSelect.value = sId;
+        });
+    } else if (sId) {
+        sectionSelect.value = sId;
+    }
+
+    warehouseSelect.addEventListener('change', function () {
+        const selectedWarehouseId = this.value;
+        if (selectedWarehouseId) {
+            fetchSections(selectedWarehouseId);
+        } else {
+            resetSections();
+        }
+    });
+
+    function fetchSections(warehouseId) {
+        return fetch('/api/warehouses/' + warehouseId + '/sections')
+            .then(res => res.json())
+            .then(sections => {
+                sectionSelect.innerHTML = '<option value="">전체 구역</option>';
+                sections.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    sectionSelect.appendChild(opt);
+                });
+            });
+    }
+
+    function resetSections() {
+        // 창고 선택 해제 시 전체 구역 목록 복원 (페이지 최초 로드 시 서버가 내려준 목록)
+        const allSections = [
+            {{#sections}}{ id: "{{id}}", name: "{{warehouse.name}} - {{name}}" },{{/sections}}
+        ];
+        sectionSelect.innerHTML = '<option value="">전체 구역</option>';
+        allSections.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            sectionSelect.appendChild(opt);
+        });
+    }
+</script>
 </body>
 </html>
