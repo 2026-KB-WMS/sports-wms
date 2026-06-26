@@ -13,6 +13,8 @@ public interface StockOrderDetailRepository extends JpaRepository<StockOrderDeta
     List<StockOrderDetail> findByStoreIn(List<Store> stores);
 
     // 산하 StockOrderDetail 중 COMPLETED가 아닌 항목이 하나라도 있으면 true
-    // StockOrder 완료 여부 판단에 사용한다.
+    // StockOrder 완료 여부 판단에 사용
     boolean existsByStockOrderAndStatusNot(StockOrder stockOrder, OrderDetailStatus status);
+
+    List<StockOrderDetail> findAllByOrderGroupId(String orderGroupId);
 }

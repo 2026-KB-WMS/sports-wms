@@ -105,6 +105,18 @@ public class OrderController {
         return "redirect:/order";
     }
 
+    @PostMapping("/cancel/{orderGroupId}")
+    public String cancelOrder(@PathVariable String orderGroupId,
+                              @AuthenticationPrincipal CustomUserDetails userDetails,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            storeService.cancelOrder(orderGroupId, userDetails.getUser());
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/order";
+    }
+
     @PostMapping("/submit")
     public String submitOrder(@Valid OrderRequestDTO requestDto,
                               BindingResult bindingResult,

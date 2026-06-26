@@ -77,4 +77,8 @@ public class StockOrderDetail {
     public void cancel() {
         this.status = OrderDetailStatus.CANCELED;
     }
+
+    public boolean isPending() {
+        return this.status == OrderDetailStatus.PENDING;
+    }
 }
