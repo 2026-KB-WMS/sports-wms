@@ -37,7 +37,6 @@
     <span>현재 상태:</span>
     <span class="status-badge">{{inbound.status.description}}</span>
 
-    {{! 본사관리자: 다음 상태로 변경 버튼 (PENDING ~ DELIVERING 구간에서만 노출) }}
     {{#isGeneralManager}}
         {{#nextStatus}}
         <form action="/inbound/{{inboundId}}/status" method="post" style="display:inline;">
@@ -47,7 +46,6 @@
         {{/nextStatus}}
     {{/isGeneralManager}}
 
-    {{! 창고관리자: 배송 완료 상태면 검수 시작 버튼 }}
     {{#isWarehouseManager}}
         {{#canStartInspection}}
         <form action="/inbound/{{inboundId}}/inspect" method="post" style="display:inline;">
@@ -55,7 +53,6 @@
         </form>
         {{/canStartInspection}}
 
-        {{! 검수 중이고 모든 품목 구역 배정 완료 시 입고 완료 버튼 }}
         {{#canComplete}}
         <form action="/inbound/{{inboundId}}/complete" method="post" style="display:inline;">
             <button type="submit" class="btn btn-success">입고 완료</button>
@@ -69,10 +66,17 @@
         <tr>
             <th>상세 ID</th>
             <th>품목명(SKU)</th>
-            <th>수량</th>
-            <th>배정된 구역</th>
+            <th>입고 수량</th>
+            <th>불량 수량</th>
+            <th>정상 수량</th>
+            <th>정상 구역</th>
+            <th>불량 구역</th>
             <th>공급사</th>
-            {{#isInspecting}}<th>구역 배정</th>{{/isInspecting}}
+            {{#isInspecting}}
+                <th>불량 등록</th>
+                <th>정상 구역 배정</th>
+                <th>불량 구역 배정</th>
+            {{/isInspecting}}
         </tr>
     </thead>
     <tbody>
@@ -81,20 +85,48 @@
             <td>{{id}}</td>
             <td>{{skuName}}</td>
             <td>{{quantity}}</td>
+            <td style="color:#dc3545;">{{defectQuantity}}</td>
+            <td style="color:#28a745;">{{normalQuantity}}</td>
             <td>
                 {{#sectionName}}<span class="assigned">{{sectionName}}</span>{{/sectionName}}
                 {{^sectionName}}미배정{{/sectionName}}
+            </td>
+            <td>
+                {{#defectSectionName}}<span style="color:#fd7e14;font-weight:bold;">{{defectSectionName}}</span>{{/defectSectionName}}
+                {{^defectSectionName}}<span style="color:#888;">-</span>{{/defectSectionName}}
             </td>
             <td>
                 {{#supplierName}}{{supplierName}}{{/supplierName}}
                 {{^supplierName}}미정{{/supplierName}}
             </td>
             {{#isInspecting}}
+            {{! 불량 수량 등록 }}
             <td>
+                {{^defectRecorded}}
+                <form action="/inbound/{{inboundId}}/details/{{id}}/defect" method="post" class="section-form">
+                    <input type="number" name="defectQuantity" value="{{defectQuantity}}"
+                           min="0" max="{{quantity}}" style="width:70px;">
+                    <button type="submit" class="btn btn-sm" style="background:#fd7e14;color:white;">등록</button>
+                </form>
+                {{/defectRecorded}}
+                {{#defectRecorded}}
+                <span style="color:#888;">{{defectQuantity}}개 (확정)</span>
+                <form action="/inbound/{{inboundId}}/details/{{id}}/defect/reset" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm" style="background:#6c757d;color:white;"
+                            onclick="return confirm('불량 수량 확정을 초기화하시겠습니까?')">초기화</button>
+                </form>
+                {{/defectRecorded}}
+            </td>
+            {{! 정상 구역 배정 }}
+            <td>
+                {{^defectRecorded}}
+                <span style="color:#aaa;">불량 수량 확정 후 배정 가능</span>
+                {{/defectRecorded}}
+                {{#defectRecorded}}
                 {{#assignable}}
                 <form action="/inbound/{{inboundId}}/details/{{id}}/section" method="post" class="section-form">
                     <select name="sectionId" required>
-                        <option value="">구역 선택 (필요 수량: {{quantity}})</option>
+                        <option value="">구역 선택 (정상 수량: {{normalQuantity}})</option>
                         {{#sections}}
                         <option value="{{id}}">{{name}} ({{sectionCode}}) - 잔여 {{effectiveRemaining}}</option>
                         {{/sections}}
@@ -111,13 +143,36 @@
                 </form>
                 {{/clearable}}
                 {{/assignable}}
+                {{/defectRecorded}}
+            </td>
+            {{! 불량 구역 배정 — 불량 수량이 있을 때만 활성 }}
+            <td>
+                {{#defectAssignable}}
+                <form action="/inbound/{{inboundId}}/details/{{id}}/defect-section" method="post" class="section-form">
+                    <select name="sectionId" required>
+                        <option value="">불량 구역 선택 (불량 수량: {{defectQuantity}})</option>
+                        {{#defectSections}}
+                        <option value="{{id}}">{{name}} ({{sectionCode}}) - 잔여 {{effectiveRemaining}}</option>
+                        {{/defectSections}}
+                    </select>
+                    <button type="submit" class="btn btn-sm" style="background:#fd7e14;color:white;">배정</button>
+                </form>
+                {{/defectAssignable}}
+                {{#defectClearable}}
+                <span style="color:#fd7e14;font-weight:bold;">✓ {{defectSectionName}}</span>
+                <form action="/inbound/{{inboundId}}/details/{{id}}/defect-section/clear" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-sm" style="background:#dc3545;color:white;"
+                            onclick="return confirm('불량 구역 배정을 초기화하시겠습니까?')">초기화</button>
+                </form>
+                {{/defectClearable}}
+                {{^defectAssignable}}{{^defectClearable}}<span style="color:#888;">-</span>{{/defectClearable}}{{/defectAssignable}}
             </td>
             {{/isInspecting}}
         </tr>
         {{/inboundDetails}}
         {{^inboundDetails}}
         <tr>
-            <td colspan="6" style="text-align: center;">상세 내역이 없습니다.</td>
+            <td colspan="11" style="text-align:center;">상세 내역이 없습니다.</td>
         </tr>
         {{/inboundDetails}}
     </tbody>

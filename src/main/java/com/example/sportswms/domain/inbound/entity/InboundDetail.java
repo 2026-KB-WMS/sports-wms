@@ -27,6 +27,10 @@ public class InboundDetail {
     private Section section;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "defect_section_id")
+    private Section defectSection;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sku_id", nullable = false)
     private ProductSKU productSKU;
 
@@ -37,10 +41,17 @@ public class InboundDetail {
     @Column(nullable = false)
     private int quantity;
 
+    @Column(nullable = false)
+    private int defectQuantity = 0;
+
+    @Column(nullable = false)
+    private boolean defectRecorded = false;
+
     private InboundDetail(Inbound inbound, ProductSKU productSKU, int quantity) {
         this.inbound = inbound;
         this.productSKU = productSKU;
         this.quantity = quantity;
+        this.defectQuantity = 0;
     }
 
     public static InboundDetail create(Inbound inbound, ProductSKU productSKU, int quantity) {
@@ -49,5 +60,35 @@ public class InboundDetail {
 
     public void assignSection(Section section) {
         this.section = section;
+    }
+
+    public void assignDefectSection(Section defectSection) {
+        this.defectSection = defectSection;
+    }
+
+    public boolean needsDefectSection() {
+        return this.defectQuantity > 0 && this.defectSection == null;
+    }
+
+    public void recordDefect(int defectQuantity) {
+        if (this.defectRecorded) {
+            throw new IllegalStateException("이미 불량 수량이 확정된 품목입니다.");
+        }
+        if (defectQuantity < 0 || defectQuantity > this.quantity) {
+            throw new IllegalArgumentException("불량 수량은 0 이상 입고 수량 이하여야 합니다.");
+        }
+        this.defectQuantity = defectQuantity;
+        this.defectRecorded = true;
+    }
+
+    public int getNormalQuantity() {
+        return this.quantity - this.defectQuantity;
+    }
+
+    public void resetDefect() {
+        this.defectQuantity  = 0;
+        this.defectRecorded  = false;
+        this.defectSection   = null;
+        this.section         = null;
     }
 }
