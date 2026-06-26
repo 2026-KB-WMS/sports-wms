@@ -102,6 +102,7 @@
         <th>메모</th>
         <th>상태</th>
         <th>본사 오더 ID</th>
+        {{^isGeneralManager}}<th>취소</th>{{/isGeneralManager}}
     </tr>
     </thead>
     <tbody>
@@ -130,6 +131,16 @@
                     <span style="color: #888;">-</span>
                 {{/stockOrder}}
             </td>
+            {{^isGeneralManager}}
+            <td>
+                {{#isPending}}
+                <form action="/order/cancel/{{orderGroupId}}" method="post" style="display:inline;"
+                      onsubmit="return confirm('발주 그룹 {{orderGroupId}} 전체를 취소하시겠습니까?')">
+                    <button type="submit">취소</button>
+                </form>
+                {{/isPending}}
+            </td>
+            {{/isGeneralManager}}
         </tr>
     {{/orderDetails}}
     {{^orderDetails}}

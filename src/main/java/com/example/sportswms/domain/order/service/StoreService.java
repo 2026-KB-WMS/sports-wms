@@ -8,6 +8,7 @@ import com.example.sportswms.domain.order.entity.StockOrder;
 import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.entity.StoreManagement;
+import com.example.sportswms.domain.order.entity.OrderDetailStatus;
 import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
 import com.example.sportswms.domain.order.repository.StockOrderRepository;
 import com.example.sportswms.domain.order.repository.StoreManagementRepository;
@@ -132,6 +133,32 @@ public class StoreService {
     public void registerStore(StoreRegisterRequestDTO dto) {
         Store store = Store.from(dto);
         storeRepository.save(store);
+    }
+
+    @Transactional
+    public void cancelOrder(String orderGroupId, User requestUser) {
+        List<StockOrderDetail> details = stockOrderDetailRepository.findAllByOrderGroupId(orderGroupId);
+
+        if (details.isEmpty()) {
+            throw new IllegalArgumentException(getMessage("order.invalid"));
+        }
+
+        // 본인 발주인지 확인
+        Store store = details.get(0).getStore();
+        boolean isOwner = storeManagementRepository.findByUserId(requestUser.getId()).stream()
+                .anyMatch(sm -> sm.getStore().getId().equals(store.getId()));
+        if (!isOwner) {
+            throw new IllegalStateException(getMessage("order.cancel.unauthorized"));
+        }
+
+        // PENDING 상태인지 확인 (하나라도 PENDING이 아니면 취소 불가)
+        boolean hasNonPending = details.stream()
+                .anyMatch(d -> d.getStatus() != OrderDetailStatus.PENDING);
+        if (hasNonPending) {
+            throw new IllegalStateException(getMessage("order.cancel.not.allowed"));
+        }
+
+        details.forEach(StockOrderDetail::cancel);
     }
 
     @Transactional
