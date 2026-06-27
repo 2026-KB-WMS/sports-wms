@@ -1,5 +1,6 @@
 package com.example.sportswms.global.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,8 +13,9 @@ import java.util.Map;
  * /api/** 컨트롤러에서 발생하는 예외를 전역으로 처리.
  * 컨트롤러에서 try-catch 없이 예외를 그냥 던지면 여기서 잡아 JSON으로 변환.
  */
+@Slf4j
 @RestControllerAdvice(basePackages = "com.example.sportswms.domain")
-public class  GlobalExceptionHandler {
+public class GlobalExceptionHandler {
 
     /** 비즈니스 규칙 위반 (잘못된 요청) → 400 */
     @ExceptionHandler(IllegalArgumentException.class)
@@ -40,7 +42,8 @@ public class  GlobalExceptionHandler {
     /** 그 외 예상치 못한 예외 → 500 */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleException(Exception e) {
+        log.error("Unhandled exception", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "서버 내부 오류가 발생했습니다."));
+                .body(Map.of("message", e.getMessage() != null ? e.getMessage() : "서버 내부 오류가 발생했습니다."));
     }
 }

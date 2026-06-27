@@ -94,6 +94,14 @@ public class OrderApiController {
                         .toList());
     }
 
+    @GetMapping("/stores/managers")
+    public ResponseEntity<List<OrderResponse.StoreManagerDTO>> getAllStoreManagers() {
+        return ResponseEntity.ok(
+                storeService.getAllStoreManagements().stream()
+                        .map(OrderResponse.StoreManagerDTO::from)
+                        .toList());
+    }
+
     @PostMapping("/stores")
     public ResponseEntity<OrderResponse.StoreDTO> registerStore(
             @Valid @RequestBody StoreRegisterRequestDTO dto) {

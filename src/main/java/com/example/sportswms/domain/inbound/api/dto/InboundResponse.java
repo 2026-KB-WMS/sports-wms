@@ -2,6 +2,7 @@ package com.example.sportswms.domain.inbound.api.dto;
 
 import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundDetail;
+import com.example.sportswms.domain.inbound.entity.InboundStatus;
 
 import java.time.LocalDateTime;
 
@@ -13,16 +14,21 @@ public class InboundResponse {
             String warehouseName,
             String status,
             String statusDescription,
+            String nextStatus,
+            String nextStatusDescription,
             LocalDateTime requestTime,
             LocalDateTime completeTime
     ) {
         public static InboundDTO from(Inbound inbound) {
+            InboundStatus next = inbound.getNextStatus();
             return new InboundDTO(
                     inbound.getId(),
                     inbound.getWarehouse().getId(),
                     inbound.getWarehouse().getName(),
                     inbound.getStatus().name(),
                     inbound.getStatus().getDescription(),
+                    next != null ? next.name() : null,
+                    next != null ? next.getDescription() : null,
                     inbound.getRequestTime(),
                     inbound.getCompleteTime()
             );

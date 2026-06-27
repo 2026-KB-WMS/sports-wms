@@ -69,7 +69,7 @@ public class User {
                 dto.name(),
                 dto.phoneNum(),
                 dto.address(),
-                UserStatus.PENDING
+                UserStatus.APPROVED
         );
     }
 }

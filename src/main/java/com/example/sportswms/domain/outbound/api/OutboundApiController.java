@@ -1,6 +1,9 @@
 package com.example.sportswms.domain.outbound.api;
 
 import com.example.sportswms.domain.outbound.api.dto.OutboundResponse;
+import com.example.sportswms.domain.outbound.dto.OutboundDetailViewDTO;
+import com.example.sportswms.domain.outbound.entity.Outbound;
+import com.example.sportswms.domain.outbound.entity.OutboundDetail;
 import com.example.sportswms.domain.outbound.service.OutboundService;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.global.security.CustomUserDetails;
@@ -42,6 +45,19 @@ public class OutboundApiController {
                         .map(OutboundResponse.OutboundDetailDTO::from)
                         .toList();
         return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/{outboundId}/details/{detailId}/assignable-sections")
+    public ResponseEntity<List<OutboundDetailViewDTO.SectionOptionDTO>> getAssignableSections(
+            @PathVariable Long outboundId,
+            @PathVariable Long detailId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Outbound outbound = outboundService.getOutbound(outboundId);
+        OutboundDetail detail = outboundService.getOutboundDetails(outboundId, userDetails.getUser())
+                .stream().filter(d -> d.getId().equals(detailId)).findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("출고 상세를 찾을 수 없습니다."));
+        return ResponseEntity.ok(
+                outboundService.getAssignableSections(outbound.getWarehouse(), detail.getProductSKU()));
     }
 
     @PatchMapping("/{outboundId}/details/{detailId}/section")

@@ -24,6 +24,7 @@ public class WarehouseResponse {
             String name,
             String sectionCode,
             String sectionType,
+            String sectionTypeTitle,
             int totalCapacity,
             int currentUsage,
             int remainingCapacity,
@@ -34,6 +35,7 @@ public class WarehouseResponse {
             return new SectionDTO(
                     s.getId(), s.getName(), s.getSectionCode(),
                     s.getSectionType().name(),
+                    s.getSectionType().getTitle(),
                     s.getTotalCapacity(), s.getCurrentUsage(), s.getRemainingCapacity(),
                     s.getWarehouse().getId(), s.getWarehouse().getName()
             );
@@ -46,7 +48,8 @@ public class WarehouseResponse {
             String warehouseName,
             Long userId,
             String userName,
-            String managementType
+            String managementType,
+            String managementTypeTitle
     ) {
         public static WarehouseManagerDTO from(WarehouseManagement wm) {
             return new WarehouseManagerDTO(
@@ -55,7 +58,8 @@ public class WarehouseResponse {
                     wm.getWarehouse().getName(),
                     wm.getUser().getId(),
                     wm.getUser().getName(),
-                    wm.getManagementType().name()
+                    wm.getManagementType().name(),
+                    wm.getManagementType().getRoleName()
             );
         }
     }

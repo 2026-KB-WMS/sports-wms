@@ -5,10 +5,12 @@ import com.example.sportswms.domain.warehouse.dto.SectionCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.dto.WarehouseAssignRequestDTO;
 import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.service.WarehouseService;
+import com.example.sportswms.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,6 +21,15 @@ import java.util.List;
 public class WarehouseManagementApiController {
 
     private final WarehouseService warehouseService;
+
+    @GetMapping("/my")
+    public ResponseEntity<List<WarehouseResponse.WarehouseDTO>> getMyWarehouses(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                warehouseService.findMyWarehouses(userDetails.getUser()).stream()
+                        .map(WarehouseResponse.WarehouseDTO::from)
+                        .toList());
+    }
 
     @GetMapping
     public ResponseEntity<List<WarehouseResponse.WarehouseDTO>> getAllWarehouses() {
@@ -54,6 +65,14 @@ public class WarehouseManagementApiController {
     public ResponseEntity<Void> deleteSection(@PathVariable Long sectionId) {
         warehouseService.deleteSection(sectionId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/managers")
+    public ResponseEntity<List<WarehouseResponse.WarehouseManagerDTO>> getAllManagers() {
+        return ResponseEntity.ok(
+                warehouseService.getAllWarehouseManagements().stream()
+                        .map(WarehouseResponse.WarehouseManagerDTO::from)
+                        .toList());
     }
 
     @PostMapping("/managers")

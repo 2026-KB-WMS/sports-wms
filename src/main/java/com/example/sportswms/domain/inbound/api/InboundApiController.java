@@ -1,7 +1,9 @@
 package com.example.sportswms.domain.inbound.api;
 
 import com.example.sportswms.domain.inbound.api.dto.InboundResponse;
+import com.example.sportswms.domain.inbound.dto.InboundDetailViewDTO;
 import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
+import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundStatus;
 import com.example.sportswms.domain.inbound.service.InboundService;
 import com.example.sportswms.domain.user.entity.User;
@@ -44,6 +46,22 @@ public class InboundApiController {
                         .map(InboundResponse.InboundDetailDTO::from)
                         .toList();
         return ResponseEntity.ok(data);
+    }
+
+    @GetMapping("/{inboundId}/assignable-sections")
+    public ResponseEntity<List<InboundDetailViewDTO.SectionOptionDTO>> getAssignableSections(
+            @PathVariable Long inboundId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Inbound inbound = inboundService.getInbound(inboundId);
+        return ResponseEntity.ok(inboundService.getAssignableSections(inbound.getWarehouse()));
+    }
+
+    @GetMapping("/{inboundId}/defect-sections")
+    public ResponseEntity<List<InboundDetailViewDTO.SectionOptionDTO>> getDefectSections(
+            @PathVariable Long inboundId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Inbound inbound = inboundService.getInbound(inboundId);
+        return ResponseEntity.ok(inboundService.getDefectSections(inbound.getWarehouse()));
     }
 
     @PostMapping

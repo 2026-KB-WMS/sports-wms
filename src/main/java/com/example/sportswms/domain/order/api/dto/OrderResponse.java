@@ -21,7 +21,8 @@ public class OrderResponse {
             String storeName,
             Long userId,
             String userName,
-            String managementType
+            String managementType,
+            String managementTypeTitle
     ) {
         public static StoreManagerDTO from(StoreManagement sm) {
             return new StoreManagerDTO(
@@ -30,7 +31,8 @@ public class OrderResponse {
                     sm.getStore().getName(),
                     sm.getUser().getId(),
                     sm.getUser().getName(),
-                    sm.getStoreManagementType().name()
+                    sm.getStoreManagementType().name(),
+                    sm.getStoreManagementType().getTitle()
             );
         }
     }
@@ -40,6 +42,7 @@ public class OrderResponse {
             Long warehouseId,
             String warehouseName,
             String status,
+            String statusDescription,
             LocalDateTime requestTime,
             LocalDateTime completeTime
     ) {
@@ -49,6 +52,7 @@ public class OrderResponse {
                     o.getWarehouse().getId(),
                     o.getWarehouse().getName(),
                     o.getStatus().name(),
+                    o.getStatus().getDescription(),
                     o.getRequestTime(),
                     o.getCompleteTime()
             );
@@ -64,7 +68,8 @@ public class OrderResponse {
             String skuName,
             int quantity,
             String memo,
-            String status
+            String status,
+            String statusDescription
     ) {
         public static StockOrderDetailDTO from(StockOrderDetail d) {
             return new StockOrderDetailDTO(
@@ -76,7 +81,8 @@ public class OrderResponse {
                     d.getProductSKU().getName(),
                     d.getQuantity(),
                     d.getMemo(),
-                    d.getStatus().name()
+                    d.getStatus().name(),
+                    d.getStatus().getDescription()
             );
         }
     }

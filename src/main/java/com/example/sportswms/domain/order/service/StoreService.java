@@ -65,8 +65,7 @@ public class StoreService {
     }
 
     public List<Store> getAllStores() { return storeRepository.findAll(); }
-    public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }
-    public List<Store> getAssignedStoresByUserId(Long userId) {
+    public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }    public List<Store> getAssignedStoresByUserId(Long userId) {
         return storeManagementRepository.findByUserId(userId).stream()
                 .map(StoreManagement::getStore)
                 .toList();

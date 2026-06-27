@@ -43,12 +43,18 @@ public class ProductResponse {
             String name,
             String skuCode,
             Long productId,
-            String productName
+            String productName,
+            String brandName,
+            String categoryName,
+            int price
     ) {
         public static SkuDTO from(ProductSKU sku) {
             return new SkuDTO(
                     sku.getId(), sku.getName(), sku.getSkuCode(),
-                    sku.getProduct().getId(), sku.getProduct().getName()
+                    sku.getProduct().getId(), sku.getProduct().getName(),
+                    sku.getProduct().getBrand().getName(),
+                    sku.getProduct().getCategory().getName(),
+                    sku.getProduct().getPrice()
             );
         }
     }
