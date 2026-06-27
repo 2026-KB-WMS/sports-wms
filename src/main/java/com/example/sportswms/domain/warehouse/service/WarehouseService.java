@@ -45,13 +45,13 @@ public class WarehouseService {
     }
 
     @Transactional
-    public void createWarehouse(WarehouseCreateRequestDTO dto) {
+    public Warehouse createWarehouse(WarehouseCreateRequestDTO dto) {
         Warehouse warehouse = Warehouse.from(dto);
-        warehouseRepository.save(warehouse);
+        return warehouseRepository.save(warehouse);
     }
 
     @Transactional
-    public void createSection(SectionCreateRequestDTO dto) {
+    public Section createSection(SectionCreateRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
 
@@ -59,15 +59,10 @@ public class WarehouseService {
             throw new IllegalArgumentException(getMessage("section.name.duplicate"));
         }
 
-        // 창고의 수용량 업데이트 및 검증
         warehouse.addSectionCapacity(dto.totalCapacity());
-
-        // 구역 코드 생성: 창고id-sectiontype-구역이름
         String sectionCode = generateSectionCode(warehouse, dto);
-
-        // 구역 생성
         Section section = Section.of(dto, sectionCode, warehouse);
-        sectionRepository.save(section);
+        return sectionRepository.save(section);
     }
 
     private String generateSectionCode(Warehouse warehouse, SectionCreateRequestDTO dto) {
@@ -75,19 +70,16 @@ public class WarehouseService {
     }
 
     @Transactional
-    public void assignWarehouseManager(WarehouseAssignRequestDTO dto) {
+    public WarehouseManagement assignWarehouseManager(WarehouseAssignRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
-
         User user = userRepository.findById(dto.userId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("userId.invalid")));
-
         if (warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user)) {
             throw new IllegalStateException(getMessage("management.assignment.duplicate"));
         }
-
         WarehouseManagement warehouseManagement = WarehouseManagement.of(warehouse, user, dto.managementType());
-        warehouseManagementRepository.save(warehouseManagement);
+        return warehouseManagementRepository.save(warehouseManagement);
     }
 
     @Transactional

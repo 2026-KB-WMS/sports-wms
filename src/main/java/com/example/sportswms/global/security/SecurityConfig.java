@@ -42,6 +42,39 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 모든 회원 접근 가능
                         .requestMatchers("/", "/signup", "/login").permitAll()
+
+                        // ── REST API (/api/**) ──────────────────────────────
+                        // 본사 관리자 전용 API
+                        .requestMatchers("/api/products/**", "/api/categories/**").hasRole("GENERAL_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders/assign").hasRole("GENERAL_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders/stores/**").hasRole("GENERAL_MANAGER")
+                        .requestMatchers("/api/orders/details").hasRole("GENERAL_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/inbounds/*/status").hasRole("GENERAL_MANAGER")
+                        // 창고 관리자 전용 API
+                        .requestMatchers("/api/warehouses/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/inbounds").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/inbounds/*/inspect").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/inbounds/*/details/*/section").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/inbounds/*/details/*/section").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/inbounds/*/complete").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers("/api/orders/warehouse/**").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/outbounds/*/details/*/section").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/outbounds/*/details/*/section").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/outbounds/*/approve").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/outbounds/*/picking/**").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/outbounds/*/ship").hasRole("WAREHOUSE_MANAGER")
+                        // 점주 전용 API
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/orders").hasRole("USER")
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/orders/*").hasRole("USER")
+                        .requestMatchers("/api/orders/my").hasRole("USER")
+                        .requestMatchers(org.springframework.http.HttpMethod.PATCH, "/api/outbounds/*/deliver").hasRole("USER")
+                        // 공통 조회 API
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/inbounds/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/outbounds/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER", "USER")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/inventory/**").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER", "USER")
+                        .requestMatchers("/api/orders/stores").hasAnyRole("GENERAL_MANAGER", "USER")
+
+
                         // 본사 관리자 (GENERAL_MANAGER)
                         .requestMatchers("/sku/**", "/store/**", "/product/**").hasRole("GENERAL_MANAGER")
                         .requestMatchers("/order/assign").hasRole("GENERAL_MANAGER")

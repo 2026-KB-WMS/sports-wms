@@ -5,8 +5,7 @@ import com.example.sportswms.domain.order.dto.OrderItemRequestDTO;
 import com.example.sportswms.domain.order.dto.StoreAssignRequestDTO;
 import com.example.sportswms.domain.order.dto.StoreRegisterRequestDTO;
 import com.example.sportswms.domain.order.entity.StockOrder;
-import com.example.sportswms.domain.order.entity.StockOrderDetail;
-import com.example.sportswms.domain.order.entity.Store;
+import com.example.sportswms.domain.order.entity.StockOrderDetail;import com.example.sportswms.domain.order.entity.Store;
 import com.example.sportswms.domain.order.entity.StoreManagement;
 import com.example.sportswms.domain.order.entity.OrderDetailStatus;
 import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
@@ -86,7 +85,7 @@ public class StoreService {
     }
 
     @Transactional
-    public void assignOrdersToWarehouse(AssignOrderRequestDTO dto) {
+    public StockOrder assignOrdersToWarehouse(AssignOrderRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouse.invalid")));
 
@@ -111,10 +110,11 @@ public class StoreService {
 
         // 발주가 창고에 위임되는 시점에 대응하는 출고 요청을 함께 생성
         outboundService.createOutboundFromStockOrder(warehouse, stockOrder, detailsToAssign);
+        return stockOrder;
     }
 
     @Transactional
-    public void createStoreOrderRequest(Long storeId, List<OrderItemRequestDTO> items) {
+    public List<StockOrderDetail> createStoreOrderRequest(Long storeId, List<OrderItemRequestDTO> items) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
 
@@ -126,13 +126,12 @@ public class StoreService {
             return StockOrderDetail.from(store, uniqueGroupId, sku, itemDto);
         }).toList();
 
-        stockOrderDetailRepository.saveAll(details);
+        return stockOrderDetailRepository.saveAll(details);
     }
 
     @Transactional
-    public void registerStore(StoreRegisterRequestDTO dto) {
-        Store store = Store.from(dto);
-        storeRepository.save(store);
+    public Store registerStore(StoreRegisterRequestDTO dto) {
+        return storeRepository.save(Store.from(dto));
     }
 
     @Transactional
@@ -162,7 +161,7 @@ public class StoreService {
     }
 
     @Transactional
-    public void assignStoreToUser(StoreAssignRequestDTO dto) {
+    public StoreManagement assignStoreToUser(StoreAssignRequestDTO dto) {
         Store store = storeRepository.findById(dto.storeId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
         User user = userRepository.findById(dto.userId())
@@ -171,7 +170,7 @@ public class StoreService {
             throw new IllegalStateException(getMessage("store.user.assigned"));
         }
         StoreManagement storeManagement = StoreManagement.of(store, user, dto.storeManagementType());
-        storeManagementRepository.save(storeManagement);
+        return storeManagementRepository.save(storeManagement);
     }
 
 }

@@ -1,20 +1,16 @@
 package com.example.sportswms.domain.product.controller;
 
-import com.example.sportswms.domain.product.dto.OptionGroupResponseDTO;
 import com.example.sportswms.domain.product.dto.SKUCreateRequestDTO;
 import com.example.sportswms.domain.product.entity.Product;
 import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -32,15 +28,6 @@ public class SKUController {
         model.addAttribute("skus", skus);
         model.addAttribute("products", products);
         return "sku";
-    }
-
-    @ResponseBody
-    @GetMapping("/api/products/{productId}/option-groups")
-    public ResponseEntity<List<OptionGroupResponseDTO>> getOptionGroups(@PathVariable Long productId) {
-        List<OptionGroupResponseDTO> response = productService.getSkuOptionGroupsByProductId(productId).stream()
-                .map(OptionGroupResponseDTO::from)
-                .toList();
-        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/sku")

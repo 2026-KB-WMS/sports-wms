@@ -67,12 +67,12 @@ public class ProductService {
     }
 
     @Transactional
-    public void createBrand(BrandCreateRequestDTO dto) {
-        brandRepository.save(Brand.of(dto.name(), dto.code()));
+    public Brand createBrand(BrandCreateRequestDTO dto) {
+        return brandRepository.save(Brand.of(dto.name(), dto.code()));
     }
 
     @Transactional
-    public void createProduct(ProductCreateRequestDTO dto) {
+    public Product createProduct(ProductCreateRequestDTO dto) {
         Brand brand = brandRepository.findById(dto.brandId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("brand.invalid")));
         Category category = categoryRepository.findById(dto.categoryId())
@@ -80,12 +80,10 @@ public class ProductService {
 
         Product product = productRepository.save(Product.of(dto, brand, category));
 
-        // SPEC 옵션값 저장
         List<Long> specIds = dto.specOptionValueIds() != null ? dto.specOptionValueIds() : Collections.emptyList();
         if (!specIds.isEmpty()) {
             List<OptionValue> specValues = optionValueRepository.findAllById(specIds);
 
-            // 카테고리의 SPEC 그룹이 모두 선택됐는지 검증
             List<OptionGroup> requiredSpecGroups = categoryOptionMappingRepository
                     .findOptionGroupsByCategoryIdAndType(category.getId(), CategoryOptionMappingType.SPEC);
             Set<Long> selectedGroupIds = specValues.stream()
@@ -102,10 +100,12 @@ public class ProductService {
                     .collect(Collectors.toList());
             productSpecRepository.saveAll(specs);
         }
+
+        return product;
     }
 
     @Transactional
-    public void createSKU(SKUCreateRequestDTO dto) {
+    public ProductSKU createSKU(SKUCreateRequestDTO dto) {
         Product product = productRepository.findById(dto.productId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("product.invalid")));
 
@@ -114,7 +114,6 @@ public class ProductService {
             throw new IllegalArgumentException(getMessage("option.invalid"));
         }
 
-        // 카테고리의 SKU 타입 옵션그룹이 모두 선택됐는지 검증
         List<OptionGroup> requiredSkuGroups = categoryOptionMappingRepository
                 .findOptionGroupsByCategoryIdAndType(product.getCategory().getId(), CategoryOptionMappingType.SKU);
         Set<Long> selectedGroupIds = optionValues.stream()
@@ -131,7 +130,7 @@ public class ProductService {
 
         ProductSKU sku = ProductSKU.of(product, skuName, skuCode);
         sku.addOptionValues(optionValues);
-        productSKURepository.save(sku);
+        return productSKURepository.save(sku);
     }
 
     private String generateSKUName(Product product, List<OptionValue> optionValues) {
