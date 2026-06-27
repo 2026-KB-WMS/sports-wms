@@ -56,7 +56,9 @@ public class SecurityConfig {
                                 "/outbound", "/outbound/**",
                                 "/order", "/order/**",
                                 "/product", "/sku", "/store",
-                                "/delivery", "/delivery/**"
+                                "/delivery", "/delivery/**",
+                                // Swagger
+                                "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                         ).permitAll()
 
                         // ── REST API (/api/**) ──────────────────────────────
