@@ -1,11 +1,8 @@
 package com.example.sportswms.domain.outbound.service;
 
-import com.example.sportswms.domain.inventory.entity.Inventory;
-import com.example.sportswms.domain.inventory.entity.InventoryStatus;
-import com.example.sportswms.domain.inventory.entity.InventoryTransaction;
 import com.example.sportswms.domain.inventory.entity.TransactionType;
 import com.example.sportswms.domain.inventory.repository.InventoryRepository;
-import com.example.sportswms.domain.inventory.repository.InventoryTransactionRepository;
+import com.example.sportswms.domain.inventory.service.InventoryService;
 import com.example.sportswms.domain.order.entity.StockOrder;
 import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
@@ -45,7 +42,7 @@ public class OutboundService {
     private final OutboundDetailRepository outboundDetailRepository;
     private final SectionRepository sectionRepository;
     private final InventoryRepository inventoryRepository;
-    private final InventoryTransactionRepository inventoryTransactionRepository;
+    private final InventoryService inventoryService;
     private final WarehouseManagementRepository warehouseManagementRepository;
     private final StoreManagementRepository storeManagementRepository;
     private final StockOrderDetailRepository stockOrderDetailRepository;
@@ -171,14 +168,14 @@ public class OutboundService {
         // 재배정이면 기존 구역의 재고 할당을 먼저 되돌린다.
         if (detail.getSection() != null) {
             inventoryRepository.findBySectionAndProductSKU(detail.getSection(), detail.getProductSKU())
-                    .ifPresent(inventory -> inventory.deallocate(detail.getQuantity()));
+                    .ifPresent(inv -> inv.deallocate(detail.getQuantity()));
         }
 
         // 새 구역의 가용 재고를 확인하고 할당
-        Inventory inventory = inventoryRepository.findBySectionAndProductSKU(section, detail.getProductSKU())
+        inventoryRepository.findBySectionAndProductSKU(section, detail.getProductSKU())
                 .orElseThrow(() -> new IllegalArgumentException(
-                        getMessage("outbound.inventory.insufficient", 0, detail.getQuantity())));
-        inventory.allocate(detail.getQuantity());
+                        getMessage("outbound.inventory.insufficient", 0, detail.getQuantity())))
+                .allocate(detail.getQuantity());
 
         detail.assignSection(section);
     }
@@ -201,7 +198,7 @@ public class OutboundService {
         }
 
         inventoryRepository.findBySectionAndProductSKU(detail.getSection(), detail.getProductSKU())
-                .ifPresent(inventory -> inventory.deallocate(detail.getQuantity()));
+                .ifPresent(inv -> inv.deallocate(detail.getQuantity()));
 
         detail.assignSection(null);
     }
@@ -242,29 +239,9 @@ public class OutboundService {
 
         List<OutboundDetail> details = outboundDetailRepository.findByOutboundId(outboundId);
 
-        details.forEach(d -> {
-            Section section = d.getSection();
-            ProductSKU sku = d.getProductSKU();
-
-            Inventory inventory = inventoryRepository.findBySectionAndProductSKU(section, sku)
-                    .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.inventory.insufficient", 0, d.getQuantity())));
-
-            int beforeQuantity = inventory.getActualQuantity();
-            inventory.pick(d.getQuantity());
-            int afterQuantity = inventory.getActualQuantity();
-
-            // 구역 점유율 감소 (물건이 물리적으로 빠져나감)
-            section.decreaseUsage(d.getQuantity());
-
-            // 재고 거래 기록
-            inventoryTransactionRepository.save(InventoryTransaction.of(
-                    section, sku, TransactionType.SHIPMENT_COMPLETE,
-                    d.getQuantity(), InventoryStatus.ALLOCATED,
-                    beforeQuantity, afterQuantity,
-                    "출고 피킹 완료 (출고 ID: " + outboundId + ")",
-                    user
-            ));
-        });
+        details.forEach(d -> inventoryService.recordInventory(
+                d.getSection(), d.getProductSKU(), TransactionType.SHIPMENT_COMPLETE,
+                -d.getQuantity(), "출고 피킹 완료 (출고 ID: " + outboundId + ")", user));
 
         outbound.completePicking();
     }
@@ -278,7 +255,7 @@ public class OutboundService {
         // 이 Outbound에 묶인 StockOrderDetail들을 DELIVERING으로 변경
         outboundDetailRepository.findByOutboundId(outboundId).stream()
                 .map(OutboundDetail::getStockOrderDetail)
-                .forEach(detail -> detail.startDelivering());
+                .forEach(StockOrderDetail::startDelivering);
 
         outbound.ship();
     }

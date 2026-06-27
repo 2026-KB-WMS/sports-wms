@@ -21,6 +21,9 @@ public enum TransactionType {
     MOVE_OUT("구역 반출", "파손 발견, 로케이션 재배치로 인한 재고 반출", "MINUS"),
     MOVE_IN("구역 반입", "반출된 재고가 목적지에 최종 입고", "PLUS"),
 
+    // 불량 관련 (Defect)
+    DEFECT_INBOUND("불량 입고 등록", "입고 검수 중 불량품이 발견되어 불량 구역으로 격리", "PLUS"),
+
     // 조정 관련 (Adjustment)
     STOCK_ADJUSTMENT_PLUS("재고 조정(증가)", "재고 실사 중 장부보다 실물이 더 많은 것이 발견되어 강제 증량", "PLUS"),
     STOCK_ADJUSTMENT_MINUS("재고 조정(감소)", "재고 실사 중 분실, 도난 등이 확인되어 장부 재고를 강제 감량", "MINUS");
