@@ -63,6 +63,11 @@ public class InboundService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
     }
 
+    public InboundDetail getInboundDetail(Long inboundDetailId) {
+        return inboundDetailRepository.findById(inboundDetailId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.detail.invalid")));
+    }
+
     // 정상품 구역 드롭다운 — DAMAGED_ZONE 제외
     public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse) {
         return sectionRepository.findAllByWarehouse(warehouse).stream()
@@ -87,7 +92,7 @@ public class InboundService {
     }
 
     @Transactional
-    public void createInbound(InboundRequestDTO dto, User user) {
+    public Inbound createInbound(InboundRequestDTO dto, User user) {
         validateNoDuplicateSku(dto);
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
@@ -103,6 +108,7 @@ public class InboundService {
         }).collect(Collectors.toList());
 
         inboundDetailRepository.saveAll(details);
+        return inbound;
     }
 
     private void validateNoDuplicateSku(InboundRequestDTO dto) {
