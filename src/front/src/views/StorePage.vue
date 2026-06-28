@@ -52,8 +52,7 @@
         <div class="form-group"><label>권한</label>
           <select v-model="assignForm.storeManagementType">
             <option value="">권한 선택</option>
-            <option value="OWNER">점주</option>
-            <option value="STORE_MANAGER">매니저</option>
+            <option v-for="t in managementTypes" :key="t.name" :value="t.name">{{ t.title }}</option>
           </select>
         </div>
         <button class="btn btn-primary" @click="assignStore">담당자 배정</button>
@@ -69,18 +68,21 @@ import { http } from '@/api/http'
 const stores = ref([])
 const managers = ref([])
 const users = ref([])
+const managementTypes = ref([])
 const storeError = ref('')
 const assignError = ref('')
 const storeForm = ref({ name: '', address: '', callNum: '' })
 const assignForm = ref({ storeId: '', userId: '', storeManagementType: '' })
 
 async function load() {
-  const [ss, mg] = await Promise.all([
+  const [ss, mg, mt] = await Promise.all([
     http.get('/api/orders/stores'),
     http.get('/api/orders/stores/managers'),
+    http.get('/api/orders/stores/management-types'),
   ])
   stores.value = ss
   managers.value = mg
+  managementTypes.value = mt
   try { users.value = await http.get('/api/users?role=ROLE_USER') } catch { users.value = [] }
 }
 

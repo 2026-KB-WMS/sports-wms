@@ -15,7 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -84,6 +86,14 @@ public class OrderApiController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         storeService.cancelOrder(orderGroupId, userDetails.getUser());
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/stores/management-types")
+    public ResponseEntity<List<Map<String, String>>> getStoreManagementTypes() {
+        return ResponseEntity.ok(
+                Arrays.stream(com.example.sportswms.domain.order.entity.StoreManagementType.values())
+                        .map(t -> Map.of("name", t.name(), "title", t.getTitle()))
+                        .toList());
     }
 
     @GetMapping("/stores")

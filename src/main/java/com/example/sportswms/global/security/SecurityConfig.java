@@ -75,6 +75,7 @@ public class SecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/warehouses/management-types").hasRole("GENERAL_MANAGER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/warehouses/managers").hasRole("GENERAL_MANAGER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/orders/stores/managers").hasRole("GENERAL_MANAGER")
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/orders/stores/management-types").hasRole("GENERAL_MANAGER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/warehouses").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/warehouses/sections").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/warehouses/{warehouseId}/sections").hasAnyRole("GENERAL_MANAGER", "WAREHOUSE_MANAGER")

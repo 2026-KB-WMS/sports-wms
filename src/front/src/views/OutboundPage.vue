@@ -6,7 +6,7 @@
       <tbody>
         <tr v-for="o in outbounds" :key="o.id">
           <td>{{ o.id }}</td><td>{{ o.warehouseName }}</td><td>{{ o.storeName }}</td>
-          <td>{{ formatDate(o.stockOrderId) }}</td>
+          <td>{{ o.completeTime ? formatDate(o.completeTime) : '-' }}</td>
           <td>{{ o.statusDescription }}</td>
           <td><router-link :to="'/outbound/' + o.id">보기</router-link></td>
         </tr>
@@ -21,7 +21,7 @@ import { ref, onMounted } from 'vue'
 import { http } from '@/api/http'
 
 const outbounds = ref([])
-function formatDate(d) { return d ? String(d) : '-' }
+function formatDate(d) { return d ? d.replace('T', ' ').substring(0, 16) : '-' }
 
 onMounted(async () => {
   outbounds.value = await http.get('/api/outbounds')
