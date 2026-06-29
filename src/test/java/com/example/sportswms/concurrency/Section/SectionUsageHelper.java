@@ -1,4 +1,4 @@
-package com.example.sportswms.concurrency;
+package com.example.sportswms.concurrency.Section;
 
 import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;

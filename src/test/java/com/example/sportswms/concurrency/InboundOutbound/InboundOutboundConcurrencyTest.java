@@ -1,4 +1,4 @@
-package com.example.sportswms.concurrency;
+package com.example.sportswms.concurrency.InboundOutbound;
 
 import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundStatus;
