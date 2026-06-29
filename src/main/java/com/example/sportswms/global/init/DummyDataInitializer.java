@@ -31,8 +31,9 @@ import java.util.Random;
 
 @Slf4j
 @Component
-@Order(2) // DataInitializer(카테고리/옵션) 다음에 실행
+@Order(2)
 @RequiredArgsConstructor
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = "wms.init.enabled", havingValue = "true", matchIfMissing = true)
 public class DummyDataInitializer implements ApplicationRunner {
 
     private final UserRepository userRepository;

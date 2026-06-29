@@ -58,6 +58,11 @@ public class Inventory {
         return this.actualQuantity - this.allocatedQuantity;
     }
 
+    /** 테스트 전용 — Race Condition 재현을 위해 검증 없이 allocatedQuantity 증가 */
+    public void addAllocatedQuantity(int quantity) {
+        this.allocatedQuantity += quantity;
+    }
+
     // 창고관리자가 출고 구역(피킹 위치)을 배정할 때 호출. 가용 재고가 부족하면 예외 발생
     public void allocate(int quantity) {
         if (getAvailableQuantity() < quantity) {
