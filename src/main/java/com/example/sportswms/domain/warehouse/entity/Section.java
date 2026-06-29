@@ -39,6 +39,9 @@ public class Section {
     @Column(name = "section_code", nullable = false, unique = true)
     String sectionCode;
 
+    @Version
+    private Long version;
+
     private Section(Warehouse warehouse, String name, int totalCapacity, SectionType sectionType, String sectionCode) {
         this.warehouse = warehouse;
         this.name = name;
