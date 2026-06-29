@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -54,6 +55,13 @@ public class GlobalExceptionHandler {
         String message = e.getBindingResult().getAllErrors().get(0).getDefaultMessage();
         return ResponseEntity.badRequest()
                 .body(Map.of("message", message));
+    }
+
+    /** 낙관적 락 충돌 → 409 Conflict */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> handleOptimisticLock(ObjectOptimisticLockingFailureException e) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("message", MessageUtils.getMessage("validation.optimistic.lock")));
     }
 
     /** 그 외 예상치 못한 예외 → 500 */
