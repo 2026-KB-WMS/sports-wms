@@ -70,7 +70,7 @@ public class OutboundApiController {
         return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 
-    @DeleteMapping("/{outboundId}/details/{detailId}/section")
+    @PatchMapping("/{outboundId}/details/{detailId}/section/clear")
     public ResponseEntity<OutboundResponse.OutboundDTO> clearSection(
             @PathVariable Long outboundId,
             @PathVariable Long detailId,

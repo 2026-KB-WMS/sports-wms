@@ -19,6 +19,7 @@ import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.entity.Section;
+import com.example.sportswms.domain.warehouse.entity.SectionType;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
@@ -107,6 +108,7 @@ public class OutboundService {
     public List<OutboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse, ProductSKU sku) {
         return inventoryRepository.findAllByProductSKUAndSection_Warehouse(sku, warehouse).stream()
                 .filter(inventory -> inventory.getAvailableQuantity() > 0)
+                .filter(inventory -> inventory.getSection().getSectionType() != SectionType.DAMAGED_ZONE)
                 .map(inventory -> {
                     Section section = inventory.getSection();
                     return new OutboundDetailViewDTO.SectionOptionDTO(

@@ -11,4 +11,5 @@ import java.util.List;
 public interface StoreManagementRepository extends JpaRepository<StoreManagement, Long> {
     boolean existsByStoreAndUser(Store store, User user);
     List<StoreManagement> findByUserId(Long userId);
+    List<StoreManagement> findAllByUser(User user);
 }

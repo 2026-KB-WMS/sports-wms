@@ -50,11 +50,20 @@ def staticDir = "$projectDir/src/main/resources/static"
 task installFrontend(type: Exec) {
     workingDir frontendDir
     commandLine 'cmd', '/c', 'npm', 'install'
+    // package.json 변경 시에만 재실행
+    inputs.file "$frontendDir/package.json"
+    inputs.file "$frontendDir/package-lock.json"
+    outputs.dir "$frontendDir/node_modules"
 }
 
 task buildFrontend(type: Exec, dependsOn: installFrontend) {
     workingDir frontendDir
     commandLine 'cmd', '/c', 'npm', 'run', 'build'
+    // src/ 변경 시에만 재실행
+    inputs.dir "$frontendDir/src"
+    inputs.file "$frontendDir/vue.config.js"
+    inputs.file "$frontendDir/babel.config.js"
+    outputs.dir frontendBuildDir
 }
 
 task copyFrontend(type: Copy, dependsOn: buildFrontend) {

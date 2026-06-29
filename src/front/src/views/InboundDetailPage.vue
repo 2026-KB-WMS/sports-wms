@@ -126,6 +126,15 @@ const error = ref('')
 
 const isInspecting = computed(() => inbound.value?.status === 'INSPECTING' && auth.isWarehouseManager)
 
+async function loadSections() {
+  const [as, ds] = await Promise.all([
+    http.get('/api/inbounds/' + inboundId + '/assignable-sections'),
+    http.get('/api/inbounds/' + inboundId + '/defect-sections'),
+  ])
+  assignableSections.value = as
+  defectSections.value = ds
+}
+
 async function loadInbound() {
   const list = await http.get('/api/inbounds')
   inbound.value = list.find(i => i.id == inboundId) || null
@@ -134,6 +143,10 @@ async function loadInbound() {
 async function loadDetails() {
   const ds = await http.get('/api/inbounds/' + inboundId + '/details')
   details.value = ds.map(d => ({ ...d, _defectQty: d.defectQuantity, _sectionId: '', _defectSectionId: '' }))
+
+  if (isInspecting.value) {
+    await loadSections()
+  }
 }
 
 async function advanceStatus() {
@@ -168,7 +181,7 @@ async function recordDefect(d) {
 async function resetDefect(d) {
   if (!confirm('불량 수량 확정을 초기화하시겠습니까?')) return
   try {
-    await http.delete(`/api/inbounds/${inboundId}/details/${d.id}/defect`)
+    await http.patch(`/api/inbounds/${inboundId}/details/${d.id}/defect/reset`)
     await loadDetails()
   } catch (e) { error.value = e.message }
 }
@@ -183,7 +196,7 @@ async function assignSection(d) {
 async function clearSection(d) {
   if (!confirm('구역 배정을 초기화하시겠습니까?')) return
   try {
-    await http.delete(`/api/inbounds/${inboundId}/details/${d.id}/section`)
+    await http.patch(`/api/inbounds/${inboundId}/details/${d.id}/section/clear`)
     await loadDetails()
   } catch (e) { error.value = e.message }
 }
@@ -198,7 +211,7 @@ async function assignDefectSection(d) {
 async function clearDefectSection(d) {
   if (!confirm('불량 구역 배정을 초기화하시겠습니까?')) return
   try {
-    await http.delete(`/api/inbounds/${inboundId}/details/${d.id}/defect-section`)
+    await http.patch(`/api/inbounds/${inboundId}/details/${d.id}/defect-section/clear`)
     await loadDetails()
   } catch (e) { error.value = e.message }
 }
@@ -207,12 +220,7 @@ onMounted(async () => {
   await loadInbound()
   await loadDetails()
   if (inbound.value) {
-    const [as, ds] = await Promise.all([
-      http.get('/api/inbounds/' + inboundId + '/assignable-sections'),
-      http.get('/api/inbounds/' + inboundId + '/defect-sections'),
-    ])
-    assignableSections.value = as
-    defectSections.value = ds
+    await loadSections()
   }
 })
 </script>

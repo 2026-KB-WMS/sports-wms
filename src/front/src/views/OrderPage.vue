@@ -121,7 +121,7 @@ async function load() {
   warehouses.value = ws
 
   if (auth.isUser) {
-    const [ss, sk] = await Promise.all([http.get('/api/orders/stores'), http.get('/api/products/skus')])
+    const [ss, sk] = await Promise.all([http.get('/api/orders/stores/my'), http.get('/api/products/skus')])
     stores.value = ss
     skus.value = sk
   }
