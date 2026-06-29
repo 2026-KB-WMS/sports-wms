@@ -26,19 +26,17 @@ public class Store {
     @Column(name = "call_num", nullable = false)
     private String callNum;
 
-    private Store(String name,
-                  String address,
-                  String callNum) {
+    private Store(String name, String address, String callNum) {
         this.name = name;
         this.address = address;
         this.callNum = callNum;
     }
 
     public static Store from(StoreRegisterRequestDTO dto) {
-        return new Store(
-                dto.name(),
-                dto.address(),
-                dto.callNum()
-        );
+        return new Store(dto.name(), dto.address(), dto.callNum());
+    }
+
+    public static Store ofDummy(String name, String address, String callNum) {
+        return new Store(name, address, callNum);
     }
 }

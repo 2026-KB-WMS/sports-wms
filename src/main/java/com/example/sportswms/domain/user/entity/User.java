@@ -72,4 +72,9 @@ public class User {
                 UserStatus.APPROVED
         );
     }
+
+    public static User ofDummy(String loginId, String encodedPassword, Role role,
+                               String email, String name, String phoneNum, String address, UserStatus status) {
+        return new User(loginId, encodedPassword, role, email, name, phoneNum, address, status);
+    }
 }

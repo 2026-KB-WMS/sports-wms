@@ -52,11 +52,11 @@ public class Warehouse {
         if (dto.detailAddress() != null && !dto.detailAddress().isEmpty()) {
             fullAddress += ", " + dto.detailAddress();
         }
-        return new Warehouse(
-                dto.name(),
-                fullAddress,
-                dto.totalCapacity()
-        );
+        return new Warehouse(dto.name(), fullAddress, dto.totalCapacity());
+    }
+
+    public static Warehouse ofDummy(String name, String address, int totalCapacity) {
+        return new Warehouse(name, address, totalCapacity);
     }
 
     public void addSectionCapacity(int capacityToAdd) {
