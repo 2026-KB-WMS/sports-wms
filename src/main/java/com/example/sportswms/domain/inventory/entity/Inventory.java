@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Entity
@@ -37,6 +36,9 @@ public class Inventory {
     @Enumerated(EnumType.STRING)
     private InventoryStatus status;
 
+    @Version
+    private Long version;
+
     private Inventory(Section section, ProductSKU productSKU, int quantity) {
         this.section = section;
         this.productSKU = productSKU;
@@ -56,11 +58,6 @@ public class Inventory {
     // 가용 재고 = 실재고 - 이미 다른 출고에 할당된 수량
     public int getAvailableQuantity() {
         return this.actualQuantity - this.allocatedQuantity;
-    }
-
-    /** 테스트 전용 — Race Condition 재현을 위해 검증 없이 allocatedQuantity 증가 */
-    public void addAllocatedQuantity(int quantity) {
-        this.allocatedQuantity += quantity;
     }
 
     // 창고관리자가 출고 구역(피킹 위치)을 배정할 때 호출. 가용 재고가 부족하면 예외 발생

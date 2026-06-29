@@ -31,13 +31,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 재고 동시성 테스트.
+ * 낙관적 락(@Version) 동작 검증 테스트.
  *
- * [락 없음] allocateUnsafe: 검증 없이 allocatedQuantity를 무조건 증가
- *   → Race Condition 발생 시 최종값이 THREAD_COUNT보다 작아짐 (일부 업데이트 유실)
+ * 시나리오: 재고 100개에 100개 스레드가 동시에 1개씩 allocate() 시도
  *
- * [락 적용 후] allocate: 낙관적 락으로 충돌 감지
- *   → 충돌한 트랜잭션은 예외 발생, 최종 allocatedQuantity <= actualQuantity 보장
+ * 기대 결과:
+ * - 충돌한 트랜잭션은 OptimisticLockingFailureException으로 실패
+ * - 성공한 트랜잭션 수 == 최종 allocatedQuantity (데이터 정합성 보장)
+ * - 최종 allocatedQuantity <= actualQuantity (재고 초과 없음)
  */
 @SpringBootTest
 @ActiveProfiles("test")
@@ -89,51 +90,8 @@ class InventoryConcurrencyTest {
     }
 
     @Test
-    @DisplayName("[락 없음] 100개 스레드가 동시에 증가 → 일부 업데이트 유실로 최종값이 100 미만이 됨")
-    void concurrentAllocate_withoutLock_shouldLoseUpdates() throws InterruptedException {
-        ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
-        CountDownLatch startGate = new CountDownLatch(1);
-        CountDownLatch endLatch = new CountDownLatch(THREAD_COUNT);
-        AtomicInteger successCount = new AtomicInteger(0);
-        AtomicInteger failCount = new AtomicInteger(0);
-
-        for (int i = 0; i < THREAD_COUNT; i++) {
-            executor.submit(() -> {
-                try {
-                    startGate.await();
-                    allocateHelper.allocateUnsafe(inventoryId);
-                    successCount.incrementAndGet();
-                } catch (Exception e) {
-                    failCount.incrementAndGet();
-                } finally {
-                    endLatch.countDown();
-                }
-            });
-        }
-
-        startGate.countDown();
-        endLatch.await();
-        executor.shutdown();
-
-        Inventory result = inventoryRepository.findById(inventoryId).orElseThrow();
-
-        System.out.println("=== [락 없음] 동시성 테스트 결과 ===");
-        System.out.println("스레드 수: " + THREAD_COUNT);
-        System.out.println("성공: " + successCount.get() + "건 / 실패: " + failCount.get() + "건");
-        System.out.println("기대 allocatedQuantity: " + THREAD_COUNT);
-        System.out.println("실제 allocatedQuantity: " + result.getAllocatedQuantity());
-
-        if (result.getAllocatedQuantity() < THREAD_COUNT) {
-            System.out.println("⚠️  Race Condition(Lost Update) 발생! "
-                    + (THREAD_COUNT - result.getAllocatedQuantity()) + "개 업데이트 유실");
-        } else {
-            System.out.println("Race Condition 미발생 (H2 직렬화로 인해 우연히 충돌 안 남)");
-        }
-    }
-
-    @Test
-    @DisplayName("[락 적용 후] 동시 allocate 시 allocatedQuantity는 실제 재고를 초과하지 않아야 한다")
-    void concurrentAllocate_withLock_shouldNotExceedStock() throws InterruptedException {
+    @DisplayName("낙관적 락 — 100개 스레드 동시 allocate 시 성공 수 == allocatedQuantity (데이터 정합성 보장)")
+    void concurrentAllocate_withOptimisticLock_dataIntegrityGuaranteed() throws InterruptedException {
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
         CountDownLatch startGate = new CountDownLatch(1);
         CountDownLatch endLatch = new CountDownLatch(THREAD_COUNT);
@@ -160,15 +118,25 @@ class InventoryConcurrencyTest {
 
         Inventory result = inventoryRepository.findById(inventoryId).orElseThrow();
 
-        System.out.println("=== [락 적용 후] 동시성 테스트 결과 ===");
-        System.out.println("스레드 수: " + THREAD_COUNT + ", 실제 재고: " + TOTAL_STOCK);
-        System.out.println("성공: " + successCount.get() + "건 / 실패: " + failCount.get() + "건");
+        System.out.println("=== 낙관적 락 동시성 테스트 결과 ===");
+        System.out.println("스레드 수: " + THREAD_COUNT + " / 실제 재고: " + TOTAL_STOCK);
+        System.out.println("성공: " + successCount.get() + "건 / 실패(충돌): " + failCount.get() + "건");
         System.out.println("최종 allocatedQuantity: " + result.getAllocatedQuantity());
 
+        // 핵심 검증 1: 성공 수 == allocatedQuantity (Lost Update 없음)
+        assertThat(result.getAllocatedQuantity())
+                .as("성공한 트랜잭션 수만큼 정확히 할당돼야 한다 (Lost Update 없음)")
+                .isEqualTo(successCount.get());
+
+        // 핵심 검증 2: allocatedQuantity <= actualQuantity (재고 초과 없음)
         assertThat(result.getAllocatedQuantity())
                 .as("할당 수량은 실제 재고를 초과할 수 없다")
                 .isLessThanOrEqualTo(result.getActualQuantity());
 
-        System.out.println("✅ 락 적용 후 데이터 정합성 보장 확인");
+        System.out.println("✅ 데이터 정합성 보장 확인");
+        System.out.println("   → 성공(" + successCount.get() + ") == allocatedQuantity("
+                + result.getAllocatedQuantity() + ")");
+        System.out.println("   → allocatedQuantity(" + result.getAllocatedQuantity()
+                + ") <= actualQuantity(" + result.getActualQuantity() + ")");
     }
 }
