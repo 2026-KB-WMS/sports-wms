@@ -47,6 +47,9 @@ public class Outbound {
     @OneToMany(mappedBy = "outbound", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OutboundDetail> outboundDetails = new ArrayList<>();
 
+    @Version
+    private Long version;
+
     private Outbound(Warehouse warehouse, Store store, StockOrder stockOrder) {
         this.warehouse = warehouse;
         this.store = store;

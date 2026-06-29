@@ -39,12 +39,10 @@ public class Section {
     @Column(name = "section_code", nullable = false, unique = true)
     String sectionCode;
 
-    private Section(
-            Warehouse warehouse,
-            String name,
-            int totalCapacity,
-            SectionType sectionType,
-            String sectionCode) {
+    @Version
+    private Long version;
+
+    private Section(Warehouse warehouse, String name, int totalCapacity, SectionType sectionType, String sectionCode) {
         this.warehouse = warehouse;
         this.name = name;
         this.totalCapacity = totalCapacity;
@@ -54,13 +52,12 @@ public class Section {
     }
 
     public static Section of(SectionCreateRequestDTO dto, String sectionCode, Warehouse warehouse) {
-        return new Section(
-                warehouse,
-                dto.name(),
-                dto.totalCapacity(),
-                dto.sectionType(),
-                sectionCode
-        );
+        return new Section(warehouse, dto.name(), dto.totalCapacity(), dto.sectionType(), sectionCode);
+    }
+
+    public static Section ofDummy(Warehouse warehouse, String name, int totalCapacity,
+                                   SectionType sectionType, String sectionCode) {
+        return new Section(warehouse, name, totalCapacity, sectionType, sectionCode);
     }
 
     public boolean isDeletable() {
@@ -71,12 +68,10 @@ public class Section {
         return this.totalCapacity - this.currentUsage;
     }
 
-    // 입고 완료 시 currentUsage 증가
     public void increaseUsage(int quantity) {
         this.currentUsage += quantity;
     }
 
-    // 출고 피킹 완료 시 물건이 구역에서 빠져나감
     public void decreaseUsage(int quantity) {
         if (this.currentUsage < quantity) {
             throw new IllegalStateException(

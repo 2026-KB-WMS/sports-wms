@@ -100,7 +100,7 @@ public class InboundApiController {
                 inboundService.getInboundDetail(detailId)));
     }
 
-    @DeleteMapping("/{inboundId}/details/{detailId}/defect")
+    @PatchMapping("/{inboundId}/details/{detailId}/defect/reset")
     public ResponseEntity<InboundResponse.InboundDetailDTO> resetDefect(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
@@ -121,7 +121,7 @@ public class InboundApiController {
                 inboundService.getInboundDetail(detailId)));
     }
 
-    @DeleteMapping("/{inboundId}/details/{detailId}/section")
+    @PatchMapping("/{inboundId}/details/{detailId}/section/clear")
     public ResponseEntity<InboundResponse.InboundDetailDTO> clearSection(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
@@ -142,7 +142,7 @@ public class InboundApiController {
                 inboundService.getInboundDetail(detailId)));
     }
 
-    @DeleteMapping("/{inboundId}/details/{detailId}/defect-section")
+    @PatchMapping("/{inboundId}/details/{detailId}/defect-section/clear")
     public ResponseEntity<InboundResponse.InboundDetailDTO> clearDefectSection(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,

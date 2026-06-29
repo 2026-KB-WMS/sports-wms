@@ -111,7 +111,7 @@ async function assignSection(d) {
 }
 async function clearSection(d) {
   if (!confirm('구역 배정을 초기화하시겠습니까?')) return
-  await action(() => http.delete(`/api/outbounds/${outboundId}/details/${d.id}/section`))
+  await action(() => http.patch(`/api/outbounds/${outboundId}/details/${d.id}/section/clear`))
 }
 
 onMounted(async () => {

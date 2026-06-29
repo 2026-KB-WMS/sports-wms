@@ -6,7 +6,6 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Entity
@@ -36,6 +35,9 @@ public class Inventory {
 
     @Enumerated(EnumType.STRING)
     private InventoryStatus status;
+
+    @Version
+    private Long version;
 
     private Inventory(Section section, ProductSKU productSKU, int quantity) {
         this.section = section;

@@ -40,6 +40,9 @@ public class Inbound {
     @OneToMany(mappedBy = "inbound", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<InboundDetail> inboundDetails = new ArrayList<>();
 
+    @Version
+    private Long version;
+
     private Inbound(Warehouse warehouse) {
         this.warehouse = warehouse;
         this.requestTime = LocalDateTime.now();

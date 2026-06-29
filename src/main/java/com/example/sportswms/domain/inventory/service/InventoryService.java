@@ -77,17 +77,32 @@ public class InventoryService {
     }
 
     /**
-     * 재고 신규 생성 + 트랜잭션 기록 (입고 완료 시 해당 구역에 재고가 없는 경우).
+     * 입고 완료 시 재고 기록.
+     * 해당 구역에 동일 SKU 재고가 이미 있으면 수량을 더하고,
+     * 없으면 신규 생성.
      */
     @Transactional
     public void recordNewInventory(Section section, ProductSKU sku, TransactionType transactionType,
                                    int quantity, String reason, User user) {
+        Inventory inventory = inventoryRepository.findBySectionAndProductSKU(section, sku)
+                .orElse(null);
+
+        int before;
+        if (inventory != null) {
+            before = inventory.getActualQuantity();
+            inventory.addQuantity(quantity);
+        } else {
+            before = 0;
+            inventory = Inventory.create(section, sku, quantity);
+            inventoryRepository.save(inventory);
+        }
+
         section.increaseUsage(quantity);
-        inventoryRepository.save(Inventory.create(section, sku, quantity));
+
         inventoryTransactionRepository.save(InventoryTransaction.of(
                 section, sku, transactionType,
                 quantity, InventoryStatus.UNALLOCATED,
-                0, quantity,
+                before, inventory.getActualQuantity(),
                 reason, user
         ));
     }

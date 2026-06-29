@@ -153,7 +153,7 @@ public class InboundService {
         InboundDetail detail = getInspectingDetail(inboundDetailId, user);
 
         if (!detail.isDefectRecorded()) {
-            throw new IllegalStateException("불량 수량 확정 후 정상 구역을 배정할 수 있습니다.");
+            throw new IllegalStateException(getMessage("inbound.defect.assign.after.recorded"));
         }
 
         Section newSection = sectionRepository.findById(sectionId)
@@ -187,14 +187,14 @@ public class InboundService {
         InboundDetail detail = getInspectingDetail(inboundDetailId, user);
 
         if (detail.getDefectQuantity() <= 0) {
-            throw new IllegalArgumentException("불량 수량이 없는 품목에는 불량 구역을 배정할 수 없습니다.");
+            throw new IllegalArgumentException(getMessage("inbound.defect.section.no.defect"));
         }
 
         Section defectSection = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
 
         if (defectSection.getSectionType() != SectionType.DAMAGED_ZONE) {
-            throw new IllegalArgumentException("불량 구역(DAMAGED_ZONE) 타입의 구역만 배정할 수 있습니다.");
+            throw new IllegalArgumentException(getMessage("inbound.defect.section.type.invalid"));
         }
         validateSectionBelongsToWarehouse(defectSection, detail.getInbound().getWarehouse());
 
@@ -233,7 +233,7 @@ public class InboundService {
         }
         // 불량 수량 있는데 불량 구역 미배정 품목 확인
         if (details.stream().anyMatch(InboundDetail::needsDefectSection)) {
-            throw new IllegalArgumentException("불량 수량이 있는 품목에 불량 구역이 배정되지 않았습니다.");
+            throw new IllegalArgumentException(getMessage("inbound.defect.section.unassigned"));
         }
 
         details.forEach(d -> {
@@ -245,13 +245,13 @@ public class InboundService {
             if (normalQty > 0) {
                 inventoryService.recordNewInventory(
                         section, sku, TransactionType.STACKING_COMPLETE,
-                        normalQty, "입고 완료 (입고 ID: " + inboundId + ")", user);
+                        normalQty, getMessage("inbound.transaction.reason.complete", inboundId), user);
             }
 
             if (defectQty > 0) {
                 inventoryService.recordNewInventory(
                         d.getDefectSection(), sku, TransactionType.DEFECT_INBOUND,
-                        defectQty, "불량 입고 (입고 ID: " + inboundId + ")", user);
+                        defectQty, getMessage("inbound.transaction.reason.defect", inboundId), user);
             }
         });
 

@@ -63,9 +63,10 @@ public class OrderApiController {
 
     @PostMapping
     public ResponseEntity<List<OrderResponse.StockOrderDetailDTO>> submitOrder(
-            @Valid @RequestBody OrderRequestDTO dto) {
+            @Valid @RequestBody OrderRequestDTO dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                storeService.createStoreOrderRequest(dto.storeId(), dto.items()).stream()
+                storeService.createStoreOrderRequest(dto.storeId(), dto.items(), userDetails.getUser()).stream()
                         .map(OrderResponse.StockOrderDetailDTO::from)
                         .toList());
     }
@@ -93,6 +94,15 @@ public class OrderApiController {
         return ResponseEntity.ok(
                 Arrays.stream(com.example.sportswms.domain.order.entity.StoreManagementType.values())
                         .map(t -> Map.of("name", t.name(), "title", t.getTitle()))
+                        .toList());
+    }
+
+    @GetMapping("/stores/my")
+    public ResponseEntity<List<OrderResponse.StoreDTO>> getMyStores(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(
+                storeService.getMyStores(userDetails.getUser()).stream()
+                        .map(OrderResponse.StoreDTO::from)
                         .toList());
     }
 

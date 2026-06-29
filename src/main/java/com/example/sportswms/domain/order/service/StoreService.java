@@ -65,6 +65,12 @@ public class StoreService {
     }
 
     public List<Store> getAllStores() { return storeRepository.findAll(); }
+
+    public List<Store> getMyStores(User user) {
+        return storeManagementRepository.findAllByUser(user).stream()
+                .map(sm -> sm.getStore())
+                .toList();
+    }
     public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }    public List<Store> getAssignedStoresByUserId(Long userId) {
         return storeManagementRepository.findByUserId(userId).stream()
                 .map(StoreManagement::getStore)
@@ -113,9 +119,14 @@ public class StoreService {
     }
 
     @Transactional
-    public List<StockOrderDetail> createStoreOrderRequest(Long storeId, List<OrderItemRequestDTO> items) {
+    public List<StockOrderDetail> createStoreOrderRequest(Long storeId, List<OrderItemRequestDTO> items, User user) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
+
+        // 본인에게 배정된 지점인지 검증
+        if (!storeManagementRepository.existsByStoreAndUser(store, user)) {
+            throw new IllegalArgumentException(getMessage("store.unauthorized"));
+        }
 
         String uniqueGroupId = "REQ-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 

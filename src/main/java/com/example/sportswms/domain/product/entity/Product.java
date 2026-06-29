@@ -43,12 +43,10 @@ public class Product {
     }
 
     public static Product of(ProductCreateRequestDTO dto, Brand brand, Category category) {
-        return new Product(
-                dto.name(),
-                dto.code(),
-                brand,
-                dto.price(),
-                category
-        );
+        return new Product(dto.name(), dto.code(), brand, dto.price(), category);
+    }
+
+    public static Product ofDummy(String name, String code, Brand brand, int price, Category category) {
+        return new Product(name, code, brand, price, category);
     }
 }
