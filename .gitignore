@@ -36,3 +36,12 @@ application.properties
 
 ### VS Code ###
 .vscode/
+
+### Vue build output ###
+src/main/resources/static/js/
+src/main/resources/static/css/
+src/main/resources/static/img/
+src/main/resources/static/index.html
+src/main/resources/static/favicon.ico
+src/front/node_modules/
+src/front/dist/
