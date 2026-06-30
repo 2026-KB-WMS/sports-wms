@@ -6,6 +6,15 @@ import com.example.sportswms.domain.inventory.entity.InventoryStatus;
 import com.example.sportswms.domain.inventory.entity.TransactionType;
 import com.example.sportswms.domain.inventory.repository.InventoryRepository;
 import com.example.sportswms.domain.inventory.repository.InventoryTransactionRepository;
+import com.example.sportswms.domain.inbound.entity.Inbound;
+import com.example.sportswms.domain.inbound.entity.InboundDetail;
+import com.example.sportswms.domain.inbound.entity.InboundStatus;
+import com.example.sportswms.domain.inbound.repository.InboundRepository;
+import com.example.sportswms.domain.inbound.repository.InboundDetailRepository;
+import com.example.sportswms.domain.outbound.entity.Outbound;
+import com.example.sportswms.domain.outbound.entity.OutboundDetail;
+import com.example.sportswms.domain.outbound.repository.OutboundRepository;
+import com.example.sportswms.domain.outbound.repository.OutboundDetailRepository;
 import com.example.sportswms.domain.order.entity.*;
 import com.example.sportswms.domain.order.repository.*;
 import com.example.sportswms.domain.product.entity.*;
@@ -51,6 +60,12 @@ public class DummyDataInitializer implements ApplicationRunner {
     private final StoreManagementRepository storeManagementRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
+    private final StockOrderRepository stockOrderRepository;
+    private final StockOrderDetailRepository stockOrderDetailRepository;
+    private final InboundRepository inboundRepository;
+    private final InboundDetailRepository inboundDetailRepository;
+    private final OutboundRepository outboundRepository;
+    private final OutboundDetailRepository outboundDetailRepository;
     private final PasswordEncoder passwordEncoder;
 
     private final Random random = new Random(42);
@@ -79,10 +94,12 @@ public class DummyDataInitializer implements ApplicationRunner {
         List<ProductSKU> skus = createProductsAndSkus(brands);
 
         createInventories(warehouses, skus, admin);
+        createOrdersAndInboundsAndOutbounds(warehouses, stores, skus, admin);
 
         log.info("[DummyDataInitializer] 더미 데이터 삽입 완료. " +
-                "창고: {}, SKU: {}, 재고: {}",
-                warehouses.size(), skus.size(), inventoryRepository.count());
+                "창고: {}, SKU: {}, 재고: {}, 입고: {}, 출고: {}",
+                warehouses.size(), skus.size(), inventoryRepository.count(),
+                inboundRepository.count(), outboundRepository.count());
     }
 
     // ── 회원 ──────────────────────────────────────────────────────────────────
@@ -344,5 +361,53 @@ public class DummyDataInitializer implements ApplicationRunner {
                 }
             }
         }
+    }
+
+    // ── 발주 / 입고 / 출고 ───────────────────────────────────────────────────
+
+    private void createOrdersAndInboundsAndOutbounds(
+            List<Warehouse> warehouses, List<Store> stores, List<ProductSKU> skus, User admin) {
+
+        if (skus.isEmpty() || stores.isEmpty() || warehouses.isEmpty()) return;
+
+        // 발주 20건 생성
+        for (int i = 0; i < 20; i++) {
+            Warehouse warehouse = warehouses.get(i % warehouses.size());
+            Store store = stores.get(i % stores.size());
+
+            // StockOrder 생성
+            StockOrder stockOrder = stockOrderRepository.save(StockOrder.create(warehouse));
+
+            // Outbound 생성
+            Outbound outbound = outboundRepository.save(Outbound.create(warehouse, store, stockOrder));
+
+            // StockOrderDetail + OutboundDetail 2~3개 생성
+            int detailCount = 2 + (i % 2);
+            for (int j = 0; j < detailCount; j++) {
+                ProductSKU sku = skus.get((i + j) % skus.size());
+                String groupId = "REQ-" + String.format("%08d", i + 1);
+                StockOrderDetail orderDetail = stockOrderDetailRepository.save(
+                        StockOrderDetail.ofDummy(store, groupId, sku, 5 + random.nextInt(10)));
+
+                // OutboundDetail 생성 (StockOrderDetail과 연결)
+                outboundDetailRepository.save(OutboundDetail.from(outbound, orderDetail));
+            }
+        }
+
+        // 입고 20건 생성
+        for (int i = 0; i < 20; i++) {
+            Warehouse warehouse = warehouses.get(i % warehouses.size());
+
+            Inbound inbound = inboundRepository.save(Inbound.create(warehouse));
+
+            // InboundDetail 2~3개 생성
+            int detailCount = 2 + (i % 2);
+            for (int j = 0; j < detailCount; j++) {
+                ProductSKU sku = skus.get((i + j) % skus.size());
+                inboundDetailRepository.save(InboundDetail.create(inbound, sku, 10 + random.nextInt(20)));
+            }
+        }
+
+        log.info("[DummyDataInitializer] 발주 20건, 입고 20건, 출고 20건 생성 완료.");
     }
 }

@@ -50,6 +50,10 @@ public class StockOrderDetail {
         this.status = OrderDetailStatus.PENDING;
     }
 
+    public static StockOrderDetail ofDummy(Store store, String orderGroupId, ProductSKU productSKU, int quantity) {
+        return new StockOrderDetail(store, orderGroupId, productSKU, quantity, null);
+    }
+
     public static StockOrderDetail from(
             Store store,
             String orderGroupId,
