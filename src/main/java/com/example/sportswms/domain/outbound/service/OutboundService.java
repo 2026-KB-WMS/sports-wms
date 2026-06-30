@@ -55,7 +55,7 @@ public class OutboundService {
 
     // 본사관리자: 전체 출고 내역
     public List<Outbound> getAllOutbounds() {
-        return outboundRepository.findAll();
+        return outboundRepository.findAllWithWarehouseAndStore();
     }
 
     // 창고 관리자: 본인이 관리하는 창고들의 출고 내역
@@ -75,7 +75,7 @@ public class OutboundService {
         } else if (user.getRole() == Role.ROLE_USER) {
             validateStoreAccess(outbound, user);
         }
-        return outboundDetailRepository.findByOutboundId(outboundId);
+        return outboundDetailRepository.findByOutboundIdWithSku(outboundId);
     }
 
     // 점주: 본인 지점의 특정 출고 상세 조회

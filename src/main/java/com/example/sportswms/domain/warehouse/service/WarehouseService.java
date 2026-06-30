@@ -35,11 +35,11 @@ public class WarehouseService {
     private final WarehouseManagementRepository warehouseManagementRepository;
 
     public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
-    public List<Section> getAllSections() { return sectionRepository.findAll(); }
-    public List<WarehouseManagement> getAllWarehouseManagements() { return warehouseManagementRepository.findAll(); }
+    public List<Section> getAllSections() { return sectionRepository.findAllWithWarehouse(); }
+    public List<WarehouseManagement> getAllWarehouseManagements() { return warehouseManagementRepository.findAllWithWarehouseAndUser(); }
 
     public List<Warehouse> findMyWarehouses(User user) {
-        return warehouseManagementRepository.findAllByUser(user).stream()
+        return warehouseManagementRepository.findAllByUserWithWarehouse(user).stream()
                 .map(WarehouseManagement::getWarehouse)
                 .collect(Collectors.toList());
     }

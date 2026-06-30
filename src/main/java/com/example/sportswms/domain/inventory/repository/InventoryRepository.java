@@ -15,7 +15,8 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
 
     Optional<Inventory> findBySectionAndProductSKU(Section section, ProductSKU productSKU);
 
-    List<Inventory> findAllByProductSKUAndSection_Warehouse(ProductSKU productSKU, Warehouse warehouse);
+    @Query("SELECT i FROM Inventory i JOIN FETCH i.section WHERE i.productSKU = :sku AND i.section.warehouse = :warehouse")
+    List<Inventory> findAllByProductSKUAndSection_Warehouse(@Param("sku") ProductSKU productSKU, @Param("warehouse") Warehouse warehouse);
 
     @Query("""
             SELECT i FROM Inventory i

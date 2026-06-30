@@ -147,7 +147,7 @@ public class DummyDataInitializer implements ApplicationRunner {
 
         List<Warehouse> warehouses = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            Warehouse w = Warehouse.ofDummy(names[i], addresses[i], 10000);
+            Warehouse w = Warehouse.ofDummy(names[i], addresses[i], 20000);
             warehouseRepository.save(w);
 
             // 구역 생성: 각 창고당 보관구역 3개 + 불량구역 1개 + 입출고 완충구역 1개
@@ -160,25 +160,16 @@ public class DummyDataInitializer implements ApplicationRunner {
     private void createSections(Warehouse warehouse) {
         String wCode = "W" + warehouse.getId();
 
-        for (int i = 1; i <= 3; i++) {
-            SectionType type = i <= 2 ? SectionType.RACKET_ZONE : SectionType.APPAREL_SHOES_ZONE;
-            String code = wCode + "-" + type.getCode() + "-" + String.format("%02d", i);
-            Section s = Section.ofDummy(warehouse, type.name() + "-" + i, 1500, type, code);
-            warehouse.addSectionCapacity(1500);
-            sectionRepository.save(s);
+        // 종류별로 3개씩 생성
+        for (SectionType type : SectionType.values()) {
+            for (int i = 1; i <= 3; i++) {
+                String code = wCode + "-" + type.getCode() + "-" + String.format("%02d", i);
+                int capacity = type == SectionType.DAMAGED_ZONE || type == SectionType.STAGING_ZONE ? 500 : 1500;
+                Section s = Section.ofDummy(warehouse, type.getTitle() + " " + i, capacity, type, code);
+                warehouse.addSectionCapacity(capacity);
+                sectionRepository.save(s);
+            }
         }
-
-        // STAGING_ZONE
-        Section staging = Section.ofDummy(warehouse, "입출고 완충구역", 500, SectionType.STAGING_ZONE,
-                wCode + "-" + SectionType.STAGING_ZONE.getCode() + "-01");
-        warehouse.addSectionCapacity(500);
-        sectionRepository.save(staging);
-
-        // DAMAGED_ZONE
-        Section damaged = Section.ofDummy(warehouse, "불량품 보관구역", 300, SectionType.DAMAGED_ZONE,
-                wCode + "-" + SectionType.DAMAGED_ZONE.getCode() + "-01");
-        warehouse.addSectionCapacity(300);
-        sectionRepository.save(damaged);
     }
 
     private void assignWarehouseManagers(List<Warehouse> warehouses, List<User> managers, User admin) {

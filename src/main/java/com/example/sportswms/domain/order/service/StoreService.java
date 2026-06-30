@@ -46,7 +46,7 @@ public class StoreService {
 
     public List<StockOrder> findMyWarehouseOrders(User user) {
 
-        List<WarehouseManagement> warehouseManagements = warehouseManagementRepository.findAllByUser(user);
+        List<WarehouseManagement> warehouseManagements = warehouseManagementRepository.findAllByUserWithWarehouse(user);
         List<Warehouse> warehouses = warehouseManagements.stream()
                 .map(WarehouseManagement::getWarehouse)
                 .collect(Collectors.toList());
@@ -55,13 +55,13 @@ public class StoreService {
             return List.of();
         }
 
-        return stockOrderRepository.findAllByWarehouseIn(warehouses);
+        return stockOrderRepository.findAllByWarehouseInWithWarehouse(warehouses);
     }
 
     public List<StockOrderDetail> findOrderDetailsByStockOrderId(Long stockOrderId) {
         StockOrder stockOrder = stockOrderRepository.findById(stockOrderId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("order.invalid")));
-        return stockOrderDetailRepository.findAllByStockOrder(stockOrder);
+        return stockOrderDetailRepository.findAllByStockOrderWithStoreAndSku(stockOrder);
     }
 
     public List<Store> getAllStores() { return storeRepository.findAll(); }
@@ -71,7 +71,9 @@ public class StoreService {
                 .map(sm -> sm.getStore())
                 .toList();
     }
-    public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAll(); }    public List<Store> getAssignedStoresByUserId(Long userId) {
+    public List<StoreManagement> getAllStoreManagements() { return storeManagementRepository.findAllWithStoreAndUser(); }
+
+    public List<Store> getAssignedStoresByUserId(Long userId) {
         return storeManagementRepository.findByUserId(userId).stream()
                 .map(StoreManagement::getStore)
                 .toList();
@@ -82,11 +84,11 @@ public class StoreService {
         if (assignedStores.isEmpty()) {
             return List.of();
         }
-        return stockOrderDetailRepository.findByStoreIn(assignedStores);
+        return stockOrderDetailRepository.findByStoreInWithSku(assignedStores);
     }
     
     public List<StockOrderDetail> getAllOrderDetails() {
-        return stockOrderDetailRepository.findAll();
+        return stockOrderDetailRepository.findAllWithStoreAndSku();
     }
 
     @Transactional
@@ -146,7 +148,7 @@ public class StoreService {
 
     @Transactional
     public void cancelOrder(String orderGroupId, User requestUser) {
-        List<StockOrderDetail> details = stockOrderDetailRepository.findAllByOrderGroupId(orderGroupId);
+        List<StockOrderDetail> details = stockOrderDetailRepository.findAllByOrderGroupIdWithStoreAndSku(orderGroupId);
 
         if (details.isEmpty()) {
             throw new IllegalArgumentException(getMessage("order.invalid"));

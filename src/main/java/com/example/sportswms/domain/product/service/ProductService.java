@@ -33,7 +33,7 @@ public class ProductService {
     private final CategoryOptionMappingRepository categoryOptionMappingRepository;
 
     public List<ProductSKU> getAllSKUs() {
-        return productSKURepository.findAll();
+        return productSKURepository.findAllWithProductBrandCategory();
     }
 
     public List<OptionGroup> getAllOptionGroups() {
@@ -41,7 +41,7 @@ public class ProductService {
     }
 
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findAllWithBrandAndCategory();
     }
 
     public List<Brand> getAllBrands() {
