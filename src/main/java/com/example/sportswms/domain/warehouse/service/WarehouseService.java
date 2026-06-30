@@ -2,9 +2,9 @@ package com.example.sportswms.domain.warehouse.service;
 
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.user.repository.UserRepository;
-import com.example.sportswms.domain.warehouse.dto.SectionCreateRequestDTO;
-import com.example.sportswms.domain.warehouse.dto.WarehouseAssignRequestDTO;
-import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.SectionCreateRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.WarehouseAssignRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.WarehouseCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;

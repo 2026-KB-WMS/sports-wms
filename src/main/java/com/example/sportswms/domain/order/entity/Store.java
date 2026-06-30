@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.order.entity;
 
-import com.example.sportswms.domain.order.dto.StoreRegisterRequestDTO;
+import com.example.sportswms.domain.order.api.dto.StoreRegisterRequestDTO;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

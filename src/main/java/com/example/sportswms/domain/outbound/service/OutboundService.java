@@ -12,7 +12,7 @@ import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
 import com.example.sportswms.domain.outbound.entity.Outbound;
 import com.example.sportswms.domain.outbound.entity.OutboundDetail;
 import com.example.sportswms.domain.outbound.entity.OutboundStatus;
-import com.example.sportswms.domain.outbound.dto.OutboundDetailViewDTO;
+import com.example.sportswms.domain.outbound.api.dto.OutboundDetailViewDTO;
 import com.example.sportswms.domain.outbound.repository.OutboundDetailRepository;
 import com.example.sportswms.domain.outbound.repository.OutboundRepository;
 import com.example.sportswms.domain.product.entity.ProductSKU;

@@ -1,4 +1,4 @@
-package com.example.sportswms.domain.order.dto;
+package com.example.sportswms.domain.order.api.dto;
 
 import com.example.sportswms.domain.order.entity.StoreManagementType;
 import jakarta.validation.constraints.NotNull;

@@ -1,8 +1,8 @@
 package com.example.sportswms.domain.inbound.service;
 
-import com.example.sportswms.domain.inbound.dto.InboundDetailViewDTO;
-import com.example.sportswms.domain.inbound.dto.InboundItemRequestDTO;
-import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
+import com.example.sportswms.domain.inbound.api.dto.InboundDetailViewDTO;
+import com.example.sportswms.domain.inbound.api.dto.InboundItemRequestDTO;
+import com.example.sportswms.domain.inbound.api.dto.InboundRequestDTO;
 import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundDetail;
 import com.example.sportswms.domain.inbound.entity.InboundStatus;

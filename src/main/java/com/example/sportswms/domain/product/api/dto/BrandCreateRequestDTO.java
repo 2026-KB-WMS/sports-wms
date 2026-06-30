@@ -1,4 +1,4 @@
-package com.example.sportswms.domain.product.dto;
+package com.example.sportswms.domain.product.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 

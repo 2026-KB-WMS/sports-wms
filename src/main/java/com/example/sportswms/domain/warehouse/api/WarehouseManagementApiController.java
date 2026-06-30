@@ -1,9 +1,9 @@
 package com.example.sportswms.domain.warehouse.api;
 
 import com.example.sportswms.domain.warehouse.api.dto.WarehouseResponse;
-import com.example.sportswms.domain.warehouse.dto.SectionCreateRequestDTO;
-import com.example.sportswms.domain.warehouse.dto.WarehouseAssignRequestDTO;
-import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.SectionCreateRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.WarehouseAssignRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.WarehouseCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.service.WarehouseService;
 import com.example.sportswms.global.security.CustomUserDetails;
 import jakarta.validation.Valid;

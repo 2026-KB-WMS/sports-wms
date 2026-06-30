@@ -1,8 +1,8 @@
 package com.example.sportswms.domain.product.service;
 
-import com.example.sportswms.domain.product.dto.BrandCreateRequestDTO;
-import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
-import com.example.sportswms.domain.product.dto.SKUCreateRequestDTO;
+import com.example.sportswms.domain.product.api.dto.BrandCreateRequestDTO;
+import com.example.sportswms.domain.product.api.dto.ProductCreateRequestDTO;
+import com.example.sportswms.domain.product.api.dto.SKUCreateRequestDTO;
 import com.example.sportswms.domain.product.entity.*;
 import com.example.sportswms.domain.product.repository.*;
 import lombok.RequiredArgsConstructor;

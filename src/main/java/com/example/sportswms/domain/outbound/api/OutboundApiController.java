@@ -1,7 +1,7 @@
 package com.example.sportswms.domain.outbound.api;
 
 import com.example.sportswms.domain.outbound.api.dto.OutboundResponse;
-import com.example.sportswms.domain.outbound.dto.OutboundDetailViewDTO;
+import com.example.sportswms.domain.outbound.api.dto.OutboundDetailViewDTO;
 import com.example.sportswms.domain.outbound.entity.Outbound;
 import com.example.sportswms.domain.outbound.entity.OutboundDetail;
 import com.example.sportswms.domain.outbound.service.OutboundService;
