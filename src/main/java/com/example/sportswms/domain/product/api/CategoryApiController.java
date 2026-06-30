@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.product.api;
 
-import com.example.sportswms.domain.product.dto.OptionGroupResponseDTO;
+import com.example.sportswms.domain.product.api.dto.OptionGroupResponseDTO;
 import com.example.sportswms.domain.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

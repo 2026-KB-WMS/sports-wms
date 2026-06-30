@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.product.entity;
 
-import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
+import com.example.sportswms.domain.product.api.dto.ProductCreateRequestDTO;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;

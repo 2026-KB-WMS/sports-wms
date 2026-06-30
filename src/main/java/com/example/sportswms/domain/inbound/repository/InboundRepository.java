@@ -10,8 +10,10 @@ import java.util.List;
 
 public interface InboundRepository extends JpaRepository<Inbound, Long> {
 
-    // 창고 관리자: WarehouseManagement를 조인해 본인 창고 입고 조회
-    @Query("SELECT i FROM Inbound i " +
+    @Query("SELECT i FROM Inbound i JOIN FETCH i.warehouse")
+    List<Inbound> findAllWithWarehouse();
+
+    @Query("SELECT i FROM Inbound i JOIN FETCH i.warehouse " +
            "JOIN WarehouseManagement wm ON wm.warehouse = i.warehouse " +
            "WHERE wm.user = :user")
     List<Inbound> findAllByWarehouseManager(@Param("user") User user);

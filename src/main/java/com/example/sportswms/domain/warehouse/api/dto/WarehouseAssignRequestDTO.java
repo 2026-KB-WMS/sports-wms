@@ -1,4 +1,4 @@
-package com.example.sportswms.domain.warehouse.dto;
+package com.example.sportswms.domain.warehouse.api.dto;
 
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagementType;
 import jakarta.validation.constraints.NotNull;

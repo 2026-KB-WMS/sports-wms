@@ -1,10 +1,10 @@
 package com.example.sportswms.domain.order.api;
 
 import com.example.sportswms.domain.order.api.dto.OrderResponse;
-import com.example.sportswms.domain.order.dto.AssignOrderRequestDTO;
-import com.example.sportswms.domain.order.dto.OrderRequestDTO;
-import com.example.sportswms.domain.order.dto.StoreAssignRequestDTO;
-import com.example.sportswms.domain.order.dto.StoreRegisterRequestDTO;
+import com.example.sportswms.domain.order.api.dto.AssignOrderRequestDTO;
+import com.example.sportswms.domain.order.api.dto.OrderRequestDTO;
+import com.example.sportswms.domain.order.api.dto.StoreAssignRequestDTO;
+import com.example.sportswms.domain.order.api.dto.StoreRegisterRequestDTO;
 import com.example.sportswms.domain.order.entity.StockOrder;
 import com.example.sportswms.domain.order.service.StoreService;
 import com.example.sportswms.global.security.CustomUserDetails;

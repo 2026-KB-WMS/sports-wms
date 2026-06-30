@@ -1,8 +1,8 @@
 package com.example.sportswms.domain.inbound.service;
 
-import com.example.sportswms.domain.inbound.dto.InboundDetailViewDTO;
-import com.example.sportswms.domain.inbound.dto.InboundItemRequestDTO;
-import com.example.sportswms.domain.inbound.dto.InboundRequestDTO;
+import com.example.sportswms.domain.inbound.api.dto.InboundDetailViewDTO;
+import com.example.sportswms.domain.inbound.api.dto.InboundItemRequestDTO;
+import com.example.sportswms.domain.inbound.api.dto.InboundRequestDTO;
 import com.example.sportswms.domain.inbound.entity.Inbound;
 import com.example.sportswms.domain.inbound.entity.InboundDetail;
 import com.example.sportswms.domain.inbound.entity.InboundStatus;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
@@ -43,7 +44,7 @@ public class InboundService {
     private final InventoryService inventoryService;
     private final WarehouseManagementRepository warehouseManagementRepository;
 
-    public List<Inbound> getAllInbounds() { return inboundRepository.findAll(); }
+    public List<Inbound> getAllInbounds() { return inboundRepository.findAllWithWarehouse(); }
 
     public List<Inbound> findMyWarehousesInbounds(User user) {
         return inboundRepository.findAllByWarehouseManager(user);
@@ -55,7 +56,7 @@ public class InboundService {
         if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
             validateWarehouseAccess(inbound.getWarehouse(), user);
         }
-        return inboundDetailRepository.findByInboundId(inboundId);
+        return inboundDetailRepository.findByInboundIdWithSku(inboundId);
     }
 
     public Inbound getInbound(Long inboundId) {
@@ -70,25 +71,38 @@ public class InboundService {
 
     // 정상품 구역 드롭다운 — DAMAGED_ZONE 제외
     public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse) {
-        return sectionRepository.findAllByWarehouse(warehouse).stream()
+        List<Section> sections = sectionRepository.findAllByWarehouse(warehouse).stream()
                 .filter(s -> s.getSectionType() != SectionType.DAMAGED_ZONE)
-                .map(this::toSectionOptionDTO)
                 .toList();
+        return toSectionOptionDTOs(sections);
     }
 
     // 불량품 구역 드롭다운 — DAMAGED_ZONE만
     public List<InboundDetailViewDTO.SectionOptionDTO> getDefectSections(Warehouse warehouse) {
-        return sectionRepository.findAllByWarehouseAndSectionType(warehouse, SectionType.DAMAGED_ZONE).stream()
-                .map(this::toSectionOptionDTO)
-                .toList();
+        List<Section> sections = sectionRepository.findAllByWarehouseAndSectionType(warehouse, SectionType.DAMAGED_ZONE);
+        return toSectionOptionDTOs(sections);
     }
 
-    private InboundDetailViewDTO.SectionOptionDTO toSectionOptionDTO(Section section) {
-        int pendingQuantity = inboundDetailRepository.sumQuantityBySectionAndInboundStatus(
-                section, InboundStatus.INSPECTING);
-        int effectiveRemaining = section.getRemainingCapacity() - pendingQuantity;
-        return new InboundDetailViewDTO.SectionOptionDTO(
-                section.getId(), section.getName(), section.getSectionCode(), effectiveRemaining);
+    // 여러 구역의 pending 합계를 한 번의 GROUP BY 쿼리로 조회 (N+1 해결)
+    private List<InboundDetailViewDTO.SectionOptionDTO> toSectionOptionDTOs(List<Section> sections) {
+        if (sections.isEmpty()) return List.of();
+
+        Map<Long, Integer> pendingBySectionId = inboundDetailRepository
+                .sumQuantityBySectionsAndInboundStatus(sections, InboundStatus.INSPECTING)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> ((Number) row[1]).intValue()
+                ));
+
+        return sections.stream()
+                .map(section -> {
+                    int pendingQuantity = pendingBySectionId.getOrDefault(section.getId(), 0);
+                    int effectiveRemaining = section.getRemainingCapacity() - pendingQuantity;
+                    return new InboundDetailViewDTO.SectionOptionDTO(
+                            section.getId(), section.getName(), section.getSectionCode(), effectiveRemaining);
+                })
+                .toList();
     }
 
     @Transactional

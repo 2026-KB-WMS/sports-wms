@@ -2,9 +2,9 @@ package com.example.sportswms.domain.warehouse.service;
 
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.user.repository.UserRepository;
-import com.example.sportswms.domain.warehouse.dto.SectionCreateRequestDTO;
-import com.example.sportswms.domain.warehouse.dto.WarehouseAssignRequestDTO;
-import com.example.sportswms.domain.warehouse.dto.WarehouseCreateRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.SectionCreateRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.WarehouseAssignRequestDTO;
+import com.example.sportswms.domain.warehouse.api.dto.WarehouseCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
@@ -35,11 +35,11 @@ public class WarehouseService {
     private final WarehouseManagementRepository warehouseManagementRepository;
 
     public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
-    public List<Section> getAllSections() { return sectionRepository.findAll(); }
-    public List<WarehouseManagement> getAllWarehouseManagements() { return warehouseManagementRepository.findAll(); }
+    public List<Section> getAllSections() { return sectionRepository.findAllWithWarehouse(); }
+    public List<WarehouseManagement> getAllWarehouseManagements() { return warehouseManagementRepository.findAllWithWarehouseAndUser(); }
 
     public List<Warehouse> findMyWarehouses(User user) {
-        return warehouseManagementRepository.findAllByUser(user).stream()
+        return warehouseManagementRepository.findAllByUserWithWarehouse(user).stream()
                 .map(WarehouseManagement::getWarehouse)
                 .collect(Collectors.toList());
     }

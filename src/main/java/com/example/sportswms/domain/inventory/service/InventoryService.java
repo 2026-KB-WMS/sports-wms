@@ -38,7 +38,7 @@ public class InventoryService {
                 warehouseRepository.getReferenceById(warehouseId));
     }
 
-    public List<ProductSKU> getAllSKUs() { return productSKURepository.findAll(); }
+    public List<ProductSKU> getAllSKUs() { return productSKURepository.findAllWithProductBrandCategory(); }
 
     public List<Inventory> getInventories(Long warehouseId, Long sectionId, Long skuId) {
         return inventoryRepository.findAllByFilter(warehouseId, sectionId, skuId);

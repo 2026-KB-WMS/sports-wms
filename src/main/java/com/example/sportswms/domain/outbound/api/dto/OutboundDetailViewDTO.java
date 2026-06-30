@@ -1,4 +1,4 @@
-package com.example.sportswms.domain.outbound.dto;
+package com.example.sportswms.domain.outbound.api.dto;
 
 import com.example.sportswms.domain.outbound.entity.OutboundDetail;
 

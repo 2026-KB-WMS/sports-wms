@@ -1,9 +1,9 @@
 package com.example.sportswms.domain.product.api;
 
 import com.example.sportswms.domain.product.api.dto.ProductResponse;
-import com.example.sportswms.domain.product.dto.BrandCreateRequestDTO;
-import com.example.sportswms.domain.product.dto.ProductCreateRequestDTO;
-import com.example.sportswms.domain.product.dto.SKUCreateRequestDTO;
+import com.example.sportswms.domain.product.api.dto.BrandCreateRequestDTO;
+import com.example.sportswms.domain.product.api.dto.ProductCreateRequestDTO;
+import com.example.sportswms.domain.product.api.dto.SKUCreateRequestDTO;
 import com.example.sportswms.domain.product.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

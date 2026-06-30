@@ -1,7 +1,7 @@
 package com.example.sportswms.domain.warehouse.api;
 
 import com.example.sportswms.domain.inventory.service.InventoryService;
-import com.example.sportswms.domain.warehouse.dto.SectionResponseDTO;
+import com.example.sportswms.domain.warehouse.api.dto.SectionResponseDTO;
 import com.example.sportswms.domain.warehouse.entity.SectionType;
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagementType;
 import lombok.RequiredArgsConstructor;
