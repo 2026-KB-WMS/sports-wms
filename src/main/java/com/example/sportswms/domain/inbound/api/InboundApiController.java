@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.inbound.api;
 
-import com.example.sportswms.domain.inbound.api.dto.InboundResponse;
+import com.example.sportswms.domain.inbound.api.dto.InboundResponseDTO;
 import com.example.sportswms.domain.inbound.api.dto.InboundDetailViewDTO;
 import com.example.sportswms.domain.inbound.api.dto.InboundRequestDTO;
 import com.example.sportswms.domain.inbound.entity.Inbound;
@@ -25,25 +25,26 @@ public class InboundApiController {
     private final InboundService inboundService;
 
     @GetMapping
-    public ResponseEntity<List<InboundResponse.InboundDTO>> getInbounds(
+    public ResponseEntity<List<InboundResponseDTO.InboundDTO>> getInbounds(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        List<InboundResponse.InboundDTO> data = switch (user.getRole()) {
+
+        List<InboundResponseDTO.InboundDTO> data = switch (user.getRole()) {
             case ROLE_GENERAL_MANAGER -> inboundService.getAllInbounds().stream()
-                    .map(InboundResponse.InboundDTO::from).toList();
+                    .map(InboundResponseDTO.InboundDTO::from).toList();
             default -> inboundService.findMyWarehousesInbounds(user).stream()
-                    .map(InboundResponse.InboundDTO::from).toList();
+                    .map(InboundResponseDTO.InboundDTO::from).toList();
         };
         return ResponseEntity.ok(data);
     }
 
     @GetMapping("/{inboundId}/details")
-    public ResponseEntity<List<InboundResponse.InboundDetailDTO>> getInboundDetails(
+    public ResponseEntity<List<InboundResponseDTO.InboundDetailDTO>> getInboundDetails(
             @PathVariable Long inboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        List<InboundResponse.InboundDetailDTO> data =
+        List<InboundResponseDTO.InboundDetailDTO> data =
                 inboundService.getInboundDetails(inboundId, userDetails.getUser()).stream()
-                        .map(InboundResponse.InboundDetailDTO::from)
+                        .map(InboundResponseDTO.InboundDetailDTO::from)
                         .toList();
         return ResponseEntity.ok(data);
     }
@@ -65,98 +66,98 @@ public class InboundApiController {
     }
 
     @PostMapping
-    public ResponseEntity<InboundResponse.InboundDTO> createInbound(
+    public ResponseEntity<InboundResponseDTO.InboundDTO> createInbound(
             @Valid @RequestBody InboundRequestDTO dto,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(InboundResponse.InboundDTO.from(
+                .body(InboundResponseDTO.InboundDTO.from(
                         inboundService.createInbound(dto, userDetails.getUser())));
     }
 
     @PatchMapping("/{inboundId}/status")
-    public ResponseEntity<InboundResponse.InboundDTO> advanceStatus(
+    public ResponseEntity<InboundResponseDTO.InboundDTO> advanceStatus(
             @PathVariable Long inboundId,
             @RequestParam InboundStatus nextStatus) {
         inboundService.advanceInboundStatus(inboundId, nextStatus);
-        return ResponseEntity.ok(InboundResponse.InboundDTO.from(inboundService.getInbound(inboundId)));
+        return ResponseEntity.ok(InboundResponseDTO.InboundDTO.from(inboundService.getInbound(inboundId)));
     }
 
     @PatchMapping("/{inboundId}/inspect")
-    public ResponseEntity<InboundResponse.InboundDTO> startInspection(
+    public ResponseEntity<InboundResponseDTO.InboundDTO> startInspection(
             @PathVariable Long inboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.startInspection(inboundId, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDTO.from(inboundService.getInbound(inboundId)));
+        return ResponseEntity.ok(InboundResponseDTO.InboundDTO.from(inboundService.getInbound(inboundId)));
     }
 
     @PatchMapping("/{inboundId}/details/{detailId}/defect")
-    public ResponseEntity<InboundResponse.InboundDetailDTO> recordDefect(
+    public ResponseEntity<InboundResponseDTO.InboundDetailDTO> recordDefect(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @RequestParam int defectQuantity,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.recordDefect(detailId, defectQuantity, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDetailDTO.from(
+        return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
     }
 
     @PatchMapping("/{inboundId}/details/{detailId}/defect/reset")
-    public ResponseEntity<InboundResponse.InboundDetailDTO> resetDefect(
+    public ResponseEntity<InboundResponseDTO.InboundDetailDTO> resetDefect(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.resetDefect(detailId, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDetailDTO.from(
+        return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
     }
 
     @PatchMapping("/{inboundId}/details/{detailId}/section")
-    public ResponseEntity<InboundResponse.InboundDetailDTO> assignSection(
+    public ResponseEntity<InboundResponseDTO.InboundDetailDTO> assignSection(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @RequestParam Long sectionId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.assignSection(detailId, sectionId, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDetailDTO.from(
+        return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
     }
 
     @PatchMapping("/{inboundId}/details/{detailId}/section/clear")
-    public ResponseEntity<InboundResponse.InboundDetailDTO> clearSection(
+    public ResponseEntity<InboundResponseDTO.InboundDetailDTO> clearSection(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.clearSection(detailId, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDetailDTO.from(
+        return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
     }
 
     @PatchMapping("/{inboundId}/details/{detailId}/defect-section")
-    public ResponseEntity<InboundResponse.InboundDetailDTO> assignDefectSection(
+    public ResponseEntity<InboundResponseDTO.InboundDetailDTO> assignDefectSection(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @RequestParam Long sectionId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.assignDefectSection(detailId, sectionId, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDetailDTO.from(
+        return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
     }
 
     @PatchMapping("/{inboundId}/details/{detailId}/defect-section/clear")
-    public ResponseEntity<InboundResponse.InboundDetailDTO> clearDefectSection(
+    public ResponseEntity<InboundResponseDTO.InboundDetailDTO> clearDefectSection(
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.clearDefectSection(detailId, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDetailDTO.from(
+        return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
     }
 
     @PatchMapping("/{inboundId}/complete")
-    public ResponseEntity<InboundResponse.InboundDTO> completeInbound(
+    public ResponseEntity<InboundResponseDTO.InboundDTO> completeInbound(
             @PathVariable Long inboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         inboundService.completeInbound(inboundId, userDetails.getUser());
-        return ResponseEntity.ok(InboundResponse.InboundDTO.from(inboundService.getInbound(inboundId)));
+        return ResponseEntity.ok(InboundResponseDTO.InboundDTO.from(inboundService.getInbound(inboundId)));
     }
 }

@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.order.api;
 
-import com.example.sportswms.domain.order.api.dto.OrderResponse;
+import com.example.sportswms.domain.order.api.dto.OrderResponseDTO;
 import com.example.sportswms.domain.order.api.dto.AssignOrderRequestDTO;
 import com.example.sportswms.domain.order.api.dto.OrderRequestDTO;
 import com.example.sportswms.domain.order.api.dto.StoreAssignRequestDTO;
@@ -27,57 +27,57 @@ public class OrderApiController {
     private final StoreService storeService;
 
     @GetMapping("/details")
-    public ResponseEntity<List<OrderResponse.StockOrderDetailDTO>> getAllOrderDetails() {
+    public ResponseEntity<List<OrderResponseDTO.StockOrderDetailDTO>> getAllOrderDetails() {
         return ResponseEntity.ok(
                 storeService.getAllOrderDetails().stream()
-                        .map(OrderResponse.StockOrderDetailDTO::from)
+                        .map(OrderResponseDTO.StockOrderDetailDTO::from)
                         .toList());
     }
 
     @GetMapping("/warehouse")
-    public ResponseEntity<List<OrderResponse.StockOrderDTO>> getMyWarehouseOrders(
+    public ResponseEntity<List<OrderResponseDTO.StockOrderDTO>> getMyWarehouseOrders(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 storeService.findMyWarehouseOrders(userDetails.getUser()).stream()
-                        .map(OrderResponse.StockOrderDTO::from)
+                        .map(OrderResponseDTO.StockOrderDTO::from)
                         .toList());
     }
 
     @GetMapping("/warehouse/{stockOrderId}/details")
-    public ResponseEntity<List<OrderResponse.StockOrderDetailDTO>> getWarehouseOrderDetails(
+    public ResponseEntity<List<OrderResponseDTO.StockOrderDetailDTO>> getWarehouseOrderDetails(
             @PathVariable Long stockOrderId) {
         return ResponseEntity.ok(
                 storeService.findOrderDetailsByStockOrderId(stockOrderId).stream()
-                        .map(OrderResponse.StockOrderDetailDTO::from)
+                        .map(OrderResponseDTO.StockOrderDetailDTO::from)
                         .toList());
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<OrderResponse.StockOrderDetailDTO>> getMyOrderDetails(
+    public ResponseEntity<List<OrderResponseDTO.StockOrderDetailDTO>> getMyOrderDetails(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 storeService.getOrderDetailsForAssignedStores(userDetails.getUser().getId()).stream()
-                        .map(OrderResponse.StockOrderDetailDTO::from)
+                        .map(OrderResponseDTO.StockOrderDetailDTO::from)
                         .toList());
     }
 
     @PostMapping
-    public ResponseEntity<List<OrderResponse.StockOrderDetailDTO>> submitOrder(
+    public ResponseEntity<List<OrderResponseDTO.StockOrderDetailDTO>> submitOrder(
             @Valid @RequestBody OrderRequestDTO dto,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 storeService.createStoreOrderRequest(dto.storeId(), dto.items(), userDetails.getUser()).stream()
-                        .map(OrderResponse.StockOrderDetailDTO::from)
+                        .map(OrderResponseDTO.StockOrderDetailDTO::from)
                         .toList());
     }
 
     @PostMapping("/assign")
-    public ResponseEntity<List<OrderResponse.StockOrderDetailDTO>> assignOrderToWarehouse(
+    public ResponseEntity<List<OrderResponseDTO.StockOrderDetailDTO>> assignOrderToWarehouse(
             @Valid @RequestBody AssignOrderRequestDTO dto) {
         StockOrder stockOrder = storeService.assignOrdersToWarehouse(dto);
         return ResponseEntity.ok(
                 storeService.findOrderDetailsByStockOrderId(stockOrder.getId()).stream()
-                        .map(OrderResponse.StockOrderDetailDTO::from)
+                        .map(OrderResponseDTO.StockOrderDetailDTO::from)
                         .toList());
     }
 
@@ -98,41 +98,41 @@ public class OrderApiController {
     }
 
     @GetMapping("/stores/my")
-    public ResponseEntity<List<OrderResponse.StoreDTO>> getMyStores(
+    public ResponseEntity<List<OrderResponseDTO.StoreDTO>> getMyStores(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 storeService.getMyStores(userDetails.getUser()).stream()
-                        .map(OrderResponse.StoreDTO::from)
+                        .map(OrderResponseDTO.StoreDTO::from)
                         .toList());
     }
 
     @GetMapping("/stores")
-    public ResponseEntity<List<OrderResponse.StoreDTO>> getAllStores() {
+    public ResponseEntity<List<OrderResponseDTO.StoreDTO>> getAllStores() {
         return ResponseEntity.ok(
                 storeService.getAllStores().stream()
-                        .map(OrderResponse.StoreDTO::from)
+                        .map(OrderResponseDTO.StoreDTO::from)
                         .toList());
     }
 
     @GetMapping("/stores/managers")
-    public ResponseEntity<List<OrderResponse.StoreManagerDTO>> getAllStoreManagers() {
+    public ResponseEntity<List<OrderResponseDTO.StoreManagerDTO>> getAllStoreManagers() {
         return ResponseEntity.ok(
                 storeService.getAllStoreManagements().stream()
-                        .map(OrderResponse.StoreManagerDTO::from)
+                        .map(OrderResponseDTO.StoreManagerDTO::from)
                         .toList());
     }
 
     @PostMapping("/stores")
-    public ResponseEntity<OrderResponse.StoreDTO> registerStore(
+    public ResponseEntity<OrderResponseDTO.StoreDTO> registerStore(
             @Valid @RequestBody StoreRegisterRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OrderResponse.StoreDTO.from(storeService.registerStore(dto)));
+                .body(OrderResponseDTO.StoreDTO.from(storeService.registerStore(dto)));
     }
 
     @PostMapping("/stores/assign")
-    public ResponseEntity<OrderResponse.StoreManagerDTO> assignStoreToUser(
+    public ResponseEntity<OrderResponseDTO.StoreManagerDTO> assignStoreToUser(
             @Valid @RequestBody StoreAssignRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(OrderResponse.StoreManagerDTO.from(storeService.assignStoreToUser(dto)));
+                .body(OrderResponseDTO.StoreManagerDTO.from(storeService.assignStoreToUser(dto)));
     }
 }

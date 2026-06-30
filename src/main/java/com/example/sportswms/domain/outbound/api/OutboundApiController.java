@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.outbound.api;
 
-import com.example.sportswms.domain.outbound.api.dto.OutboundResponse;
+import com.example.sportswms.domain.outbound.api.dto.OutboundResponseDTO;
 import com.example.sportswms.domain.outbound.api.dto.OutboundDetailViewDTO;
 import com.example.sportswms.domain.outbound.entity.Outbound;
 import com.example.sportswms.domain.outbound.entity.OutboundDetail;
@@ -22,27 +22,27 @@ public class OutboundApiController {
     private final OutboundService outboundService;
 
     @GetMapping
-    public ResponseEntity<List<OutboundResponse.OutboundDTO>> getOutbounds(
+    public ResponseEntity<List<OutboundResponseDTO.OutboundDTO>> getOutbounds(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         User user = userDetails.getUser();
-        List<OutboundResponse.OutboundDTO> data = switch (user.getRole()) {
+        List<OutboundResponseDTO.OutboundDTO> data = switch (user.getRole()) {
             case ROLE_GENERAL_MANAGER -> outboundService.getAllOutbounds().stream()
-                    .map(OutboundResponse.OutboundDTO::from).toList();
+                    .map(OutboundResponseDTO.OutboundDTO::from).toList();
             case ROLE_WAREHOUSE_MANAGER -> outboundService.findMyWarehousesOutbounds(user).stream()
-                    .map(OutboundResponse.OutboundDTO::from).toList();
+                    .map(OutboundResponseDTO.OutboundDTO::from).toList();
             default -> outboundService.findMyStoreOutbounds(user).stream()
-                    .map(OutboundResponse.OutboundDTO::from).toList();
+                    .map(OutboundResponseDTO.OutboundDTO::from).toList();
         };
         return ResponseEntity.ok(data);
     }
 
     @GetMapping("/{outboundId}/details")
-    public ResponseEntity<List<OutboundResponse.OutboundDetailDTO>> getOutboundDetails(
+    public ResponseEntity<List<OutboundResponseDTO.OutboundDetailDTO>> getOutboundDetails(
             @PathVariable Long outboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        List<OutboundResponse.OutboundDetailDTO> data =
+        List<OutboundResponseDTO.OutboundDetailDTO> data =
                 outboundService.getOutboundDetails(outboundId, userDetails.getUser()).stream()
-                        .map(OutboundResponse.OutboundDetailDTO::from)
+                        .map(OutboundResponseDTO.OutboundDetailDTO::from)
                         .toList();
         return ResponseEntity.ok(data);
     }
@@ -61,61 +61,61 @@ public class OutboundApiController {
     }
 
     @PatchMapping("/{outboundId}/details/{detailId}/section")
-    public ResponseEntity<OutboundResponse.OutboundDTO> assignSection(
+    public ResponseEntity<OutboundResponseDTO.OutboundDTO> assignSection(
             @PathVariable Long outboundId,
             @PathVariable Long detailId,
             @RequestParam Long sectionId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         outboundService.assignSection(detailId, sectionId, userDetails.getUser());
-        return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
+        return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 
     @PatchMapping("/{outboundId}/details/{detailId}/section/clear")
-    public ResponseEntity<OutboundResponse.OutboundDTO> clearSection(
+    public ResponseEntity<OutboundResponseDTO.OutboundDTO> clearSection(
             @PathVariable Long outboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         outboundService.clearSection(detailId, userDetails.getUser());
-        return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
+        return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 
     @PatchMapping("/{outboundId}/approve")
-    public ResponseEntity<OutboundResponse.OutboundDTO> approveOutbound(
+    public ResponseEntity<OutboundResponseDTO.OutboundDTO> approveOutbound(
             @PathVariable Long outboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         outboundService.approveOutbound(outboundId, userDetails.getUser());
-        return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
+        return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 
     @PatchMapping("/{outboundId}/picking/start")
-    public ResponseEntity<OutboundResponse.OutboundDTO> startPicking(
+    public ResponseEntity<OutboundResponseDTO.OutboundDTO> startPicking(
             @PathVariable Long outboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         outboundService.startPicking(outboundId, userDetails.getUser());
-        return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
+        return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 
     @PatchMapping("/{outboundId}/picking/complete")
-    public ResponseEntity<OutboundResponse.OutboundDTO> completePicking(
+    public ResponseEntity<OutboundResponseDTO.OutboundDTO> completePicking(
             @PathVariable Long outboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         outboundService.completePicking(outboundId, userDetails.getUser());
-        return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
+        return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 
     @PatchMapping("/{outboundId}/ship")
-    public ResponseEntity<OutboundResponse.OutboundDTO> shipOutbound(
+    public ResponseEntity<OutboundResponseDTO.OutboundDTO> shipOutbound(
             @PathVariable Long outboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         outboundService.shipOutbound(outboundId, userDetails.getUser());
-        return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
+        return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 
     @PatchMapping("/{outboundId}/deliver")
-    public ResponseEntity<OutboundResponse.OutboundDTO> deliverOutbound(
+    public ResponseEntity<OutboundResponseDTO.OutboundDTO> deliverOutbound(
             @PathVariable Long outboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         outboundService.deliverOutbound(outboundId, userDetails.getUser());
-        return ResponseEntity.ok(OutboundResponse.OutboundDTO.from(outboundService.getOutbound(outboundId)));
+        return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
 }

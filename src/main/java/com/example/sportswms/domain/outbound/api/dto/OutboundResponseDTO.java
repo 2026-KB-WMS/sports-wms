@@ -5,7 +5,7 @@ import com.example.sportswms.domain.outbound.entity.OutboundDetail;
 
 import java.time.LocalDateTime;
 
-public class OutboundResponse {
+public class OutboundResponseDTO {
 
     public record OutboundDTO(
             Long id,

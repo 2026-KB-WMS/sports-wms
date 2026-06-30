@@ -7,7 +7,7 @@ import com.example.sportswms.domain.order.entity.StoreManagement;
 
 import java.time.LocalDateTime;
 
-public class OrderResponse {
+public class OrderResponseDTO {
 
     public record StoreDTO(Long id, String name, String address, String callNum) {
         public static StoreDTO from(Store s) {

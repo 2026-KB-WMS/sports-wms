@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.product.api;
 
-import com.example.sportswms.domain.product.api.dto.ProductResponse;
+import com.example.sportswms.domain.product.api.dto.ProductResponseDTO;
 import com.example.sportswms.domain.product.api.dto.BrandCreateRequestDTO;
 import com.example.sportswms.domain.product.api.dto.ProductCreateRequestDTO;
 import com.example.sportswms.domain.product.api.dto.SKUCreateRequestDTO;
@@ -21,55 +21,55 @@ public class ProductManagementApiController {
     private final ProductService productService;
 
     @GetMapping("/brands")
-    public ResponseEntity<List<ProductResponse.BrandDTO>> getAllBrands() {
+    public ResponseEntity<List<ProductResponseDTO.BrandDTO>> getAllBrands() {
         return ResponseEntity.ok(
                 productService.getAllBrands().stream()
-                        .map(ProductResponse.BrandDTO::from)
+                        .map(ProductResponseDTO.BrandDTO::from)
                         .toList());
     }
 
     @GetMapping("/categories")
-    public ResponseEntity<List<ProductResponse.CategoryDTO>> getAllCategories() {
+    public ResponseEntity<List<ProductResponseDTO.CategoryDTO>> getAllCategories() {
         return ResponseEntity.ok(
                 productService.getAllCategories().stream()
-                        .map(ProductResponse.CategoryDTO::from)
+                        .map(ProductResponseDTO.CategoryDTO::from)
                         .toList());
     }
 
     @GetMapping
-    public ResponseEntity<List<ProductResponse.ProductDTO>> getAllProducts() {
+    public ResponseEntity<List<ProductResponseDTO.ProductDTO>> getAllProducts() {
         return ResponseEntity.ok(
                 productService.getAllProducts().stream()
-                        .map(ProductResponse.ProductDTO::from)
+                        .map(ProductResponseDTO.ProductDTO::from)
                         .toList());
     }
 
     @GetMapping("/skus")
-    public ResponseEntity<List<ProductResponse.SkuDTO>> getAllSkus() {
+    public ResponseEntity<List<ProductResponseDTO.SkuDTO>> getAllSkus() {
         return ResponseEntity.ok(
                 productService.getAllSKUs().stream()
-                        .map(ProductResponse.SkuDTO::from)
+                        .map(ProductResponseDTO.SkuDTO::from)
                         .toList());
     }
 
     @PostMapping("/brands")
-    public ResponseEntity<ProductResponse.BrandDTO> createBrand(
+    public ResponseEntity<ProductResponseDTO.BrandDTO> createBrand(
             @Valid @RequestBody BrandCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ProductResponse.BrandDTO.from(productService.createBrand(dto)));
+                .body(ProductResponseDTO.BrandDTO.from(productService.createBrand(dto)));
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse.ProductDTO> createProduct(
+    public ResponseEntity<ProductResponseDTO.ProductDTO> createProduct(
             @Valid @RequestBody ProductCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ProductResponse.ProductDTO.from(productService.createProduct(dto)));
+                .body(ProductResponseDTO.ProductDTO.from(productService.createProduct(dto)));
     }
 
     @PostMapping("/skus")
-    public ResponseEntity<ProductResponse.SkuDTO> createSku(
+    public ResponseEntity<ProductResponseDTO.SkuDTO> createSku(
             @Valid @RequestBody SKUCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ProductResponse.SkuDTO.from(productService.createSKU(dto)));
+                .body(ProductResponseDTO.SkuDTO.from(productService.createSKU(dto)));
     }
 }

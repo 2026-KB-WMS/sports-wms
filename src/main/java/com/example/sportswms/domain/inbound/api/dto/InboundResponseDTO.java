@@ -6,7 +6,7 @@ import com.example.sportswms.domain.inbound.entity.InboundStatus;
 
 import java.time.LocalDateTime;
 
-public class InboundResponse {
+public class InboundResponseDTO {
 
     public record InboundDTO(
             Long id,

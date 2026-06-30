@@ -5,7 +5,7 @@ import com.example.sportswms.domain.inventory.entity.InventoryTransaction;
 
 import java.time.LocalDateTime;
 
-public class InventoryResponse {
+public class InventoryResponseDTO {
 
     public record InventoryDTO(
             Long id,

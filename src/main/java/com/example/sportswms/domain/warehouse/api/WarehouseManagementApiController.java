@@ -1,6 +1,6 @@
 package com.example.sportswms.domain.warehouse.api;
 
-import com.example.sportswms.domain.warehouse.api.dto.WarehouseResponse;
+import com.example.sportswms.domain.warehouse.api.dto.WarehouseResponseDTO;
 import com.example.sportswms.domain.warehouse.api.dto.SectionCreateRequestDTO;
 import com.example.sportswms.domain.warehouse.api.dto.WarehouseAssignRequestDTO;
 import com.example.sportswms.domain.warehouse.api.dto.WarehouseCreateRequestDTO;
@@ -23,42 +23,42 @@ public class WarehouseManagementApiController {
     private final WarehouseService warehouseService;
 
     @GetMapping("/my")
-    public ResponseEntity<List<WarehouseResponse.WarehouseDTO>> getMyWarehouses(
+    public ResponseEntity<List<WarehouseResponseDTO.WarehouseDTO>> getMyWarehouses(
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         return ResponseEntity.ok(
                 warehouseService.findMyWarehouses(userDetails.getUser()).stream()
-                        .map(WarehouseResponse.WarehouseDTO::from)
+                        .map(WarehouseResponseDTO.WarehouseDTO::from)
                         .toList());
     }
 
     @GetMapping
-    public ResponseEntity<List<WarehouseResponse.WarehouseDTO>> getAllWarehouses() {
+    public ResponseEntity<List<WarehouseResponseDTO.WarehouseDTO>> getAllWarehouses() {
         return ResponseEntity.ok(
                 warehouseService.getAllWarehouses().stream()
-                        .map(WarehouseResponse.WarehouseDTO::from)
+                        .map(WarehouseResponseDTO.WarehouseDTO::from)
                         .toList());
     }
 
     @GetMapping("/sections")
-    public ResponseEntity<List<WarehouseResponse.SectionDTO>> getAllSections() {
+    public ResponseEntity<List<WarehouseResponseDTO.SectionDTO>> getAllSections() {
         return ResponseEntity.ok(
                 warehouseService.getAllSections().stream()
-                        .map(WarehouseResponse.SectionDTO::from)
+                        .map(WarehouseResponseDTO.SectionDTO::from)
                         .toList());
     }
 
     @PostMapping
-    public ResponseEntity<WarehouseResponse.WarehouseDTO> createWarehouse(
+    public ResponseEntity<WarehouseResponseDTO.WarehouseDTO> createWarehouse(
             @Valid @RequestBody WarehouseCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(WarehouseResponse.WarehouseDTO.from(warehouseService.createWarehouse(dto)));
+                .body(WarehouseResponseDTO.WarehouseDTO.from(warehouseService.createWarehouse(dto)));
     }
 
     @PostMapping("/sections")
-    public ResponseEntity<WarehouseResponse.SectionDTO> createSection(
+    public ResponseEntity<WarehouseResponseDTO.SectionDTO> createSection(
             @Valid @RequestBody SectionCreateRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(WarehouseResponse.SectionDTO.from(warehouseService.createSection(dto)));
+                .body(WarehouseResponseDTO.SectionDTO.from(warehouseService.createSection(dto)));
     }
 
     @DeleteMapping("/sections/{sectionId}")
@@ -68,17 +68,17 @@ public class WarehouseManagementApiController {
     }
 
     @GetMapping("/managers")
-    public ResponseEntity<List<WarehouseResponse.WarehouseManagerDTO>> getAllManagers() {
+    public ResponseEntity<List<WarehouseResponseDTO.WarehouseManagerDTO>> getAllManagers() {
         return ResponseEntity.ok(
                 warehouseService.getAllWarehouseManagements().stream()
-                        .map(WarehouseResponse.WarehouseManagerDTO::from)
+                        .map(WarehouseResponseDTO.WarehouseManagerDTO::from)
                         .toList());
     }
 
     @PostMapping("/managers")
-    public ResponseEntity<WarehouseResponse.WarehouseManagerDTO> assignManager(
+    public ResponseEntity<WarehouseResponseDTO.WarehouseManagerDTO> assignManager(
             @Valid @RequestBody WarehouseAssignRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(WarehouseResponse.WarehouseManagerDTO.from(warehouseService.assignWarehouseManager(dto)));
+                .body(WarehouseResponseDTO.WarehouseManagerDTO.from(warehouseService.assignWarehouseManager(dto)));
     }
 }

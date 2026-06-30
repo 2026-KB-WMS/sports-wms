@@ -4,7 +4,7 @@ import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 
-public class WarehouseResponse {
+public class WarehouseResponseDTO {
 
     public record WarehouseDTO(
             Long id,

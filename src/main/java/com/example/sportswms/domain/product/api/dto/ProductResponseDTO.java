@@ -5,7 +5,7 @@ import com.example.sportswms.domain.product.entity.Category;
 import com.example.sportswms.domain.product.entity.Product;
 import com.example.sportswms.domain.product.entity.ProductSKU;
 
-public class ProductResponse {
+public class ProductResponseDTO {
 
     public record BrandDTO(Long id, String name, String code) {
         public static BrandDTO from(Brand b) {
