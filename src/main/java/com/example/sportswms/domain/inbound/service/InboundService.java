@@ -190,6 +190,10 @@ public class InboundService {
         Section newSection = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
 
+        if (newSection.getSectionType() == SectionType.DAMAGED_ZONE) {
+            throw new IllegalArgumentException(getMessage("inbound.section.damaged.not.allowed"));
+        }
+
         validateSectionBelongsToWarehouse(newSection, detail.getInbound().getWarehouse());
 
         int pendingQuantity = inboundDetailRepository.sumQuantityBySectionAndInboundStatus(

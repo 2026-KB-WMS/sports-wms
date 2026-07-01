@@ -141,6 +141,10 @@ public class OutboundService {
         Section section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
 
+        if (section.getSectionType() == SectionType.DAMAGED_ZONE) {
+            throw new IllegalArgumentException(getMessage("outbound.section.damaged.not.allowed"));
+        }
+
         if (!section.getWarehouse().getId().equals(outbound.getWarehouse().getId())) {
             throw new IllegalArgumentException(getMessage("outbound.section.unauthorized"));
         }
