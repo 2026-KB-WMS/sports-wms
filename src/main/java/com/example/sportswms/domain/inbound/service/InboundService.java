@@ -18,8 +18,8 @@ import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.SectionType;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
-import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
+import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,7 @@ public class InboundService {
     private final ProductSKURepository productSKURepository;
     private final SectionRepository sectionRepository;
     private final InventoryService inventoryService;
-    private final WarehouseManagementRepository warehouseManagementRepository;
+    private final AccessValidator accessValidator;
 
     public List<Inbound> getAllInbounds() { return inboundRepository.findAllWithWarehouse(); }
 
@@ -54,7 +54,7 @@ public class InboundService {
         Inbound inbound = inboundRepository.findById(inboundId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
         if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
-            validateWarehouseAccess(inbound.getWarehouse(), user);
+            accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
         }
         return inboundDetailRepository.findByInboundIdWithSku(inboundId);
     }
@@ -69,17 +69,34 @@ public class InboundService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.detail.invalid")));
     }
 
+    public void validateDetailBelongsToInbound(Long inboundId, Long detailId) {
+        InboundDetail detail = inboundDetailRepository.findById(detailId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.detail.invalid")));
+        if (!detail.getInbound().getId().equals(inboundId)) {
+            throw new IllegalArgumentException(getMessage("inbound.detail.invalid"));
+        }
+    }
+
     // 정상품 구역 드롭다운 — DAMAGED_ZONE 제외
-    public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse) {
-        List<Section> sections = sectionRepository.findAllByWarehouse(warehouse).stream()
+    public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Long inboundId, User user) {
+        Inbound inbound = getInbound(inboundId);
+        if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
+            accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
+        }
+        List<Section> sections = sectionRepository.findAllByWarehouse(inbound.getWarehouse()).stream()
                 .filter(s -> s.getSectionType() != SectionType.DAMAGED_ZONE)
                 .toList();
         return toSectionOptionDTOs(sections);
     }
 
     // 불량품 구역 드롭다운 — DAMAGED_ZONE만
-    public List<InboundDetailViewDTO.SectionOptionDTO> getDefectSections(Warehouse warehouse) {
-        List<Section> sections = sectionRepository.findAllByWarehouseAndSectionType(warehouse, SectionType.DAMAGED_ZONE);
+    public List<InboundDetailViewDTO.SectionOptionDTO> getDefectSections(Long inboundId, User user) {
+        Inbound inbound = getInbound(inboundId);
+        if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
+            accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
+        }
+        List<Section> sections = sectionRepository.findAllByWarehouseAndSectionType(
+                inbound.getWarehouse(), SectionType.DAMAGED_ZONE);
         return toSectionOptionDTOs(sections);
     }
 
@@ -110,7 +127,7 @@ public class InboundService {
         validateNoDuplicateSku(dto);
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
-        validateWarehouseAccess(warehouse, user);
+        accessValidator.validateWarehouseAccess(warehouse, user);
 
         Inbound inbound = Inbound.create(warehouse);
         inboundRepository.save(inbound);
@@ -146,7 +163,7 @@ public class InboundService {
     public void startInspection(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
-        validateWarehouseAccess(inbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
         inbound.startInspection();
     }
 
@@ -237,7 +254,7 @@ public class InboundService {
     public void completeInbound(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
-        validateWarehouseAccess(inbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
 
         List<InboundDetail> details = inboundDetailRepository.findByInboundId(inboundId);
 
@@ -257,13 +274,13 @@ public class InboundService {
             int defectQty    = d.getDefectQuantity();
 
             if (normalQty > 0) {
-                inventoryService.recordNewInventory(
+                inventoryService.recordInventory(
                         section, sku, TransactionType.STACKING_COMPLETE,
                         normalQty, getMessage("inbound.transaction.reason.complete", inboundId), user);
             }
 
             if (defectQty > 0) {
-                inventoryService.recordNewInventory(
+                inventoryService.recordInventory(
                         d.getDefectSection(), sku, TransactionType.DEFECT_INBOUND,
                         defectQty, getMessage("inbound.transaction.reason.defect", inboundId), user);
             }
@@ -279,19 +296,13 @@ public class InboundService {
         if (detail.getInbound().getStatus() != InboundStatus.INSPECTING) {
             throw new IllegalArgumentException(getMessage("inbound.status.not.allowed"));
         }
-        validateWarehouseAccess(detail.getInbound().getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(detail.getInbound().getWarehouse(), user);
         return detail;
     }
 
     private void validateSectionBelongsToWarehouse(Section section, Warehouse warehouse) {
         if (!section.getWarehouse().getId().equals(warehouse.getId())) {
             throw new IllegalArgumentException(getMessage("inbound.section.unauthorized"));
-        }
-    }
-
-    private void validateWarehouseAccess(Warehouse warehouse, User user) {
-        if (!warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user)) {
-            throw new IllegalArgumentException(getMessage("warehouse.unauthorized"));
         }
     }
 }

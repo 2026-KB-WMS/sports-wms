@@ -21,6 +21,7 @@ import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
+import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,7 @@ public class StoreService {
     private final WarehouseRepository warehouseRepository;
     private final WarehouseManagementRepository warehouseManagementRepository;
     private final OutboundService outboundService;
+    private final AccessValidator accessValidator;
 
     public List<StockOrder> findMyWarehouseOrders(User user) {
 
@@ -126,9 +128,7 @@ public class StoreService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
 
         // 본인에게 배정된 지점인지 검증
-        if (!storeManagementRepository.existsByStoreAndUser(store, user)) {
-            throw new IllegalArgumentException(getMessage("store.unauthorized"));
-        }
+        accessValidator.validateStoreAccess(store, user);
 
         String uniqueGroupId = "REQ-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
@@ -156,11 +156,7 @@ public class StoreService {
 
         // 본인 발주인지 확인
         Store store = details.get(0).getStore();
-        boolean isOwner = storeManagementRepository.findByUserId(requestUser.getId()).stream()
-                .anyMatch(sm -> sm.getStore().getId().equals(store.getId()));
-        if (!isOwner) {
-            throw new IllegalStateException(getMessage("order.cancel.unauthorized"));
-        }
+        accessValidator.validateStoreAccess(store, requestUser);
 
         // PENDING 상태인지 확인 (하나라도 PENDING이 아니면 취소 불가)
         boolean hasNonPending = details.stream()

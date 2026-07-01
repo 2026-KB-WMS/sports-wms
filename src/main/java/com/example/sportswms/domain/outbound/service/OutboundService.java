@@ -3,16 +3,15 @@ package com.example.sportswms.domain.outbound.service;
 import com.example.sportswms.domain.inventory.entity.TransactionType;
 import com.example.sportswms.domain.inventory.repository.InventoryRepository;
 import com.example.sportswms.domain.inventory.service.InventoryService;
+import com.example.sportswms.domain.order.entity.OrderDetailStatus;
 import com.example.sportswms.domain.order.entity.StockOrder;
 import com.example.sportswms.domain.order.entity.StockOrderDetail;
 import com.example.sportswms.domain.order.entity.Store;
-import com.example.sportswms.domain.order.repository.StoreManagementRepository;
-import com.example.sportswms.domain.order.entity.OrderDetailStatus;
 import com.example.sportswms.domain.order.repository.StockOrderDetailRepository;
+import com.example.sportswms.domain.outbound.api.dto.OutboundDetailViewDTO;
 import com.example.sportswms.domain.outbound.entity.Outbound;
 import com.example.sportswms.domain.outbound.entity.OutboundDetail;
 import com.example.sportswms.domain.outbound.entity.OutboundStatus;
-import com.example.sportswms.domain.outbound.api.dto.OutboundDetailViewDTO;
 import com.example.sportswms.domain.outbound.repository.OutboundDetailRepository;
 import com.example.sportswms.domain.outbound.repository.OutboundRepository;
 import com.example.sportswms.domain.product.entity.ProductSKU;
@@ -22,7 +21,7 @@ import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.SectionType;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
-import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
+import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,14 +43,27 @@ public class OutboundService {
     private final SectionRepository sectionRepository;
     private final InventoryRepository inventoryRepository;
     private final InventoryService inventoryService;
-    private final WarehouseManagementRepository warehouseManagementRepository;
-    private final StoreManagementRepository storeManagementRepository;
     private final StockOrderDetailRepository stockOrderDetailRepository;
+    private final AccessValidator accessValidator;
 
     public Outbound getOutbound(Long outboundId) {
         return outboundRepository.findById(outboundId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.invalid")));
     }
+
+    public OutboundDetail getOutboundDetail(Long detailId) {
+        return outboundDetailRepository.findById(detailId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.detail.invalid")));
+    }
+
+    public void validateDetailBelongsToOutbound(Long outboundId, Long detailId) {
+        OutboundDetail detail = outboundDetailRepository.findById(detailId)
+                .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.detail.invalid")));
+        if (!detail.getOutbound().getId().equals(outboundId)) {
+            throw new IllegalArgumentException(getMessage("outbound.detail.invalid"));
+        }
+    }
+
 
     // 본사관리자: 전체 출고 내역
     public List<Outbound> getAllOutbounds() {
@@ -71,40 +83,13 @@ public class OutboundService {
     public List<OutboundDetail> getOutboundDetails(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
         if (user.getRole() == Role.ROLE_WAREHOUSE_MANAGER) {
-            validateWarehouseAccess(outbound.getWarehouse(), user);
+            accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
         } else if (user.getRole() == Role.ROLE_USER) {
-            validateStoreAccess(outbound, user);
+            accessValidator.validateStoreAccess(outbound.getStore(), user);
         }
         return outboundDetailRepository.findByOutboundIdWithSku(outboundId);
     }
 
-    // 점주: 본인 지점의 특정 출고 상세 조회
-    public List<OutboundDetailViewDTO> getDeliveryDetailViews(Long outboundId, User user) {
-        Outbound outbound = getOutbound(outboundId);
-        validateStoreAccess(outbound, user);
-        return outboundDetailRepository.findByOutboundId(outboundId).stream()
-                .map(OutboundDetailViewDTO::ofForStore)
-                .toList();
-    }
-
-    // 출고 상세를 화면용 DTO로 변환. ASSIGNED 상태의 창고 관리자에게만 구역 배정 옵션 표시
-    public List<OutboundDetailViewDTO> getOutboundDetailViews(Long outboundId, User user) {
-        Outbound outbound = getOutbound(outboundId);
-        boolean isAssigning = outbound.getStatus() == OutboundStatus.ASSIGNED
-                && user.getRole() == Role.ROLE_WAREHOUSE_MANAGER;
-
-        return getOutboundDetails(outboundId, user).stream()
-                .map(detail -> {
-                    List<OutboundDetailViewDTO.SectionOptionDTO> sections =
-                            (isAssigning && detail.getSection() == null)
-                                    ? getAssignableSections(outbound.getWarehouse(), detail.getProductSKU())
-                                    : List.of();
-                    return OutboundDetailViewDTO.of(detail, isAssigning, sections);
-                })
-                .toList();
-    }
-
-    // 출고 구역 배정 드롭다운에 보여줄, 해당 창고에서 SKU 가용 재고가 남아있는 구역 목록
     public List<OutboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse, ProductSKU sku) {
         return inventoryRepository.findAllByProductSKUAndSection_Warehouse(sku, warehouse).stream()
                 .filter(inventory -> inventory.getAvailableQuantity() > 0)
@@ -118,15 +103,8 @@ public class OutboundService {
                 .toList();
     }
 
-    /**
-     * 본사 관리자가 발주 상세를 창고에 위임(StockOrder)할 때, 동일 트랜잭션에서
-     * 대응하는 출고 요청(Outbound/OutboundDetail)을 함께 생성
-     * 지점(Store) 단위로 Outbound를 분리
-     * 이 시점에는 재고를 할당하지 않는다 (창고 관리자가 구역 배정 시 할당).
-     */
     @Transactional
     public void createOutboundFromStockOrder(Warehouse warehouse, StockOrder stockOrder, List<StockOrderDetail> stockOrderDetails) {
-        // store_id 기준으로 그룹핑, Store 엔티티도 함께 보관
         Map<Long, List<StockOrderDetail>> detailsByStoreId = stockOrderDetails.stream()
                 .collect(Collectors.groupingBy(detail -> detail.getStore().getId()));
 
@@ -158,7 +136,7 @@ public class OutboundService {
             throw new IllegalArgumentException(getMessage("outbound.status.not.allowed"));
         }
 
-        validateWarehouseAccess(outbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
 
         Section section = sectionRepository.findById(sectionId)
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
@@ -193,11 +171,9 @@ public class OutboundService {
             throw new IllegalArgumentException(getMessage("outbound.status.not.allowed"));
         }
 
-        validateWarehouseAccess(outbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
 
-        if (detail.getSection() == null) {
-            return;
-        }
+        if (detail.getSection() == null) return;
 
         inventoryRepository.findBySectionAndProductSKU(detail.getSection(), detail.getProductSKU())
                 .ifPresent(inv -> inv.deallocate(detail.getQuantity()));
@@ -209,7 +185,7 @@ public class OutboundService {
     @Transactional
     public void approveOutbound(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
-        validateWarehouseAccess(outbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
 
         List<OutboundDetail> details = outboundDetailRepository.findByOutboundId(outboundId);
         if (details.stream().anyMatch(d -> d.getSection() == null)) {
@@ -223,7 +199,7 @@ public class OutboundService {
     @Transactional
     public void startPicking(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
-        validateWarehouseAccess(outbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
         outbound.startPicking();
     }
 
@@ -237,10 +213,9 @@ public class OutboundService {
     @Transactional
     public void completePicking(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
-        validateWarehouseAccess(outbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
 
         List<OutboundDetail> details = outboundDetailRepository.findByOutboundId(outboundId);
-
         details.forEach(d -> inventoryService.recordInventory(
                 d.getSection(), d.getProductSKU(), TransactionType.SHIPMENT_COMPLETE,
                 -d.getQuantity(), "출고 피킹 완료 (출고 ID: " + outboundId + ")", user));
@@ -252,7 +227,7 @@ public class OutboundService {
     @Transactional
     public void shipOutbound(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
-        validateWarehouseAccess(outbound.getWarehouse(), user);
+        accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
 
         // 이 Outbound에 묶인 StockOrderDetail들을 DELIVERING으로 변경
         outboundDetailRepository.findByOutboundId(outboundId).stream()
@@ -268,7 +243,7 @@ public class OutboundService {
     @Transactional
     public void deliverOutbound(Long outboundId, User user) {
         Outbound outbound = getOutbound(outboundId);
-        validateStoreAccess(outbound, user);
+        accessValidator.validateStoreAccess(outbound.getStore(), user);
 
         outboundDetailRepository.findByOutboundId(outboundId).stream()
                 .map(OutboundDetail::getStockOrderDetail)
@@ -284,19 +259,5 @@ public class OutboundService {
                 });
 
         outbound.deliver();
-    }
-
-    private void validateWarehouseAccess(Warehouse warehouse, User user) {
-        boolean isMyWarehouse = warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user);
-        if (!isMyWarehouse) {
-            throw new IllegalArgumentException(getMessage("warehouse.unauthorized"));
-        }
-    }
-
-    private void validateStoreAccess(Outbound outbound, User user) {
-        boolean isMyStore = storeManagementRepository.existsByStoreAndUser(outbound.getStore(), user);
-        if (!isMyStore) {
-            throw new IllegalArgumentException(getMessage("store.unauthorized"));
-        }
     }
 }

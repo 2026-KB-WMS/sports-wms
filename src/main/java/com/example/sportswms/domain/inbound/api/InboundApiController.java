@@ -53,16 +53,14 @@ public class InboundApiController {
     public ResponseEntity<List<InboundDetailViewDTO.SectionOptionDTO>> getAssignableSections(
             @PathVariable Long inboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Inbound inbound = inboundService.getInbound(inboundId);
-        return ResponseEntity.ok(inboundService.getAssignableSections(inbound.getWarehouse()));
+        return ResponseEntity.ok(inboundService.getAssignableSections(inboundId, userDetails.getUser()));
     }
 
     @GetMapping("/{inboundId}/defect-sections")
     public ResponseEntity<List<InboundDetailViewDTO.SectionOptionDTO>> getDefectSections(
             @PathVariable Long inboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Inbound inbound = inboundService.getInbound(inboundId);
-        return ResponseEntity.ok(inboundService.getDefectSections(inbound.getWarehouse()));
+        return ResponseEntity.ok(inboundService.getDefectSections(inboundId, userDetails.getUser()));
     }
 
     @PostMapping
@@ -96,6 +94,7 @@ public class InboundApiController {
             @PathVariable Long detailId,
             @RequestParam int defectQuantity,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        inboundService.validateDetailBelongsToInbound(inboundId, detailId);
         inboundService.recordDefect(detailId, defectQuantity, userDetails.getUser());
         return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
@@ -106,6 +105,7 @@ public class InboundApiController {
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        inboundService.validateDetailBelongsToInbound(inboundId, detailId);
         inboundService.resetDefect(detailId, userDetails.getUser());
         return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
@@ -117,6 +117,7 @@ public class InboundApiController {
             @PathVariable Long detailId,
             @RequestParam Long sectionId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        inboundService.validateDetailBelongsToInbound(inboundId, detailId);
         inboundService.assignSection(detailId, sectionId, userDetails.getUser());
         return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
@@ -127,6 +128,7 @@ public class InboundApiController {
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        inboundService.validateDetailBelongsToInbound(inboundId, detailId);
         inboundService.clearSection(detailId, userDetails.getUser());
         return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
@@ -138,6 +140,7 @@ public class InboundApiController {
             @PathVariable Long detailId,
             @RequestParam Long sectionId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        inboundService.validateDetailBelongsToInbound(inboundId, detailId);
         inboundService.assignDefectSection(detailId, sectionId, userDetails.getUser());
         return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
@@ -148,6 +151,7 @@ public class InboundApiController {
             @PathVariable Long inboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        inboundService.validateDetailBelongsToInbound(inboundId, detailId);
         inboundService.clearDefectSection(detailId, userDetails.getUser());
         return ResponseEntity.ok(InboundResponseDTO.InboundDetailDTO.from(
                 inboundService.getInboundDetail(detailId)));
