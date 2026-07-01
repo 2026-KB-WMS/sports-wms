@@ -22,4 +22,18 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
     List<InventoryTransaction> findAllByFilter(@Param("warehouseId") Long warehouseId,
                                                @Param("sectionId") Long sectionId,
                                                @Param("skuId") Long skuId);
+
+    @Query("""
+            SELECT t FROM InventoryTransaction t
+            JOIN FETCH t.section s
+            JOIN FETCH s.warehouse w
+            JOIN FETCH t.productSKU
+            WHERE w.id IN :warehouseIds
+              AND (:sectionId IS NULL OR s.id = :sectionId)
+              AND (:skuId     IS NULL OR t.productSKU.id = :skuId)
+            ORDER BY t.createdAt DESC
+            """)
+    List<InventoryTransaction> findAllByWarehouseIds(@Param("warehouseIds") List<Long> warehouseIds,
+                                                     @Param("sectionId") Long sectionId,
+                                                     @Param("skuId") Long skuId);
 }

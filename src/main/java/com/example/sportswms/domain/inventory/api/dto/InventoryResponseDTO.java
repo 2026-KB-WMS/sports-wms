@@ -41,6 +41,8 @@ public class InventoryResponseDTO {
 
     public record TransactionDTO(
             Long id,
+            Long warehouseId,
+            String warehouseName,
             Long sectionId,
             String sectionName,
             Long skuId,
@@ -56,6 +58,8 @@ public class InventoryResponseDTO {
         public static TransactionDTO from(InventoryTransaction t) {
             return new TransactionDTO(
                     t.getId(),
+                    t.getSection().getWarehouse().getId(),
+                    t.getSection().getWarehouse().getName(),
                     t.getSection().getId(),
                     t.getSection().getName(),
                     t.getProductSKU().getId(),

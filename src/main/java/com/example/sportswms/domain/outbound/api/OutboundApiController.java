@@ -52,10 +52,9 @@ public class OutboundApiController {
             @PathVariable Long outboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        outboundService.validateDetailBelongsToOutbound(outboundId, detailId);
         Outbound outbound = outboundService.getOutbound(outboundId);
-        OutboundDetail detail = outboundService.getOutboundDetails(outboundId, userDetails.getUser())
-                .stream().filter(d -> d.getId().equals(detailId)).findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("출고 상세를 찾을 수 없습니다."));
+        OutboundDetail detail = outboundService.getOutboundDetail(detailId);
         return ResponseEntity.ok(
                 outboundService.getAssignableSections(outbound.getWarehouse(), detail.getProductSKU()));
     }
@@ -66,6 +65,7 @@ public class OutboundApiController {
             @PathVariable Long detailId,
             @RequestParam Long sectionId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        outboundService.validateDetailBelongsToOutbound(outboundId, detailId);
         outboundService.assignSection(detailId, sectionId, userDetails.getUser());
         return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }
@@ -75,6 +75,7 @@ public class OutboundApiController {
             @PathVariable Long outboundId,
             @PathVariable Long detailId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        outboundService.validateDetailBelongsToOutbound(outboundId, detailId);
         outboundService.clearSection(detailId, userDetails.getUser());
         return ResponseEntity.ok(OutboundResponseDTO.OutboundDTO.from(outboundService.getOutbound(outboundId)));
     }

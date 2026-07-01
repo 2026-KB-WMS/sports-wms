@@ -47,7 +47,7 @@
       <tbody>
         <tr v-for="t in transactions" :key="t.id">
           <td>{{ t.id }}</td><td>{{ formatDate(t.createdAt) }}</td>
-          <td>{{ t.sectionName }}</td><td>{{ t.sectionName }}</td><td>{{ t.skuName }}</td>
+          <td>{{ t.warehouseName }}</td><td>{{ t.sectionName }}</td><td>{{ t.skuName }}</td>
           <td>{{ t.transactionTypeTitle }}</td>
           <td>{{ t.beforeQuantity }} → {{ t.afterQuantity }} ({{ t.quantity }})</td>
           <td>{{ t.reason }}</td>
@@ -61,7 +61,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { http } from '@/api/http'
+import { useAuthStore } from '@/stores/auth'
 
+const auth = useAuthStore()
 const warehouses = ref([])
 const allSections = ref([])
 const skus = ref([])
@@ -98,13 +100,20 @@ async function loadInventory() {
 }
 
 onMounted(async () => {
+  const warehouseUrl = auth.isWarehouseManager ? '/api/warehouses/my' : '/api/warehouses'
   const [ws, ss, sk] = await Promise.all([
-    http.get('/api/warehouses'),
+    http.get(warehouseUrl),
     http.get('/api/warehouses/sections'),
     http.get('/api/products/skus'),
   ])
   warehouses.value = ws
-  allSections.value = ss
+  // 창고관리자는 자신의 창고에 속한 구역만 표시
+  if (auth.isWarehouseManager) {
+    const myWarehouseIds = ws.map(w => w.id)
+    allSections.value = ss.filter(s => myWarehouseIds.includes(s.warehouseId))
+  } else {
+    allSections.value = ss
+  }
   skus.value = sk
   await loadInventory()
 })

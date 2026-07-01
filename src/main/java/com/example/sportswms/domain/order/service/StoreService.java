@@ -21,6 +21,7 @@ import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
+import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,6 +44,7 @@ public class StoreService {
     private final WarehouseRepository warehouseRepository;
     private final WarehouseManagementRepository warehouseManagementRepository;
     private final OutboundService outboundService;
+    private final AccessValidator accessValidator;
 
     public List<StockOrder> findMyWarehouseOrders(User user) {
 
@@ -126,9 +128,7 @@ public class StoreService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
 
         // 본인에게 배정된 지점인지 검증
-        if (!storeManagementRepository.existsByStoreAndUser(store, user)) {
-            throw new IllegalArgumentException(getMessage("store.unauthorized"));
-        }
+        accessValidator.validateStoreAccess(store, user);
 
         String uniqueGroupId = "REQ-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
