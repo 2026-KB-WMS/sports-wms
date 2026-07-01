@@ -156,11 +156,7 @@ public class StoreService {
 
         // 본인 발주인지 확인
         Store store = details.get(0).getStore();
-        boolean isOwner = storeManagementRepository.findByUserId(requestUser.getId()).stream()
-                .anyMatch(sm -> sm.getStore().getId().equals(store.getId()));
-        if (!isOwner) {
-            throw new IllegalStateException(getMessage("order.cancel.unauthorized"));
-        }
+        accessValidator.validateStoreAccess(store, requestUser);
 
         // PENDING 상태인지 확인 (하나라도 PENDING이 아니면 취소 불가)
         boolean hasNonPending = details.stream()

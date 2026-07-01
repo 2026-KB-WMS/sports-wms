@@ -78,16 +78,25 @@ public class InboundService {
     }
 
     // 정상품 구역 드롭다운 — DAMAGED_ZONE 제외
-    public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Warehouse warehouse) {
-        List<Section> sections = sectionRepository.findAllByWarehouse(warehouse).stream()
+    public List<InboundDetailViewDTO.SectionOptionDTO> getAssignableSections(Long inboundId, User user) {
+        Inbound inbound = getInbound(inboundId);
+        if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
+            accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
+        }
+        List<Section> sections = sectionRepository.findAllByWarehouse(inbound.getWarehouse()).stream()
                 .filter(s -> s.getSectionType() != SectionType.DAMAGED_ZONE)
                 .toList();
         return toSectionOptionDTOs(sections);
     }
 
     // 불량품 구역 드롭다운 — DAMAGED_ZONE만
-    public List<InboundDetailViewDTO.SectionOptionDTO> getDefectSections(Warehouse warehouse) {
-        List<Section> sections = sectionRepository.findAllByWarehouseAndSectionType(warehouse, SectionType.DAMAGED_ZONE);
+    public List<InboundDetailViewDTO.SectionOptionDTO> getDefectSections(Long inboundId, User user) {
+        Inbound inbound = getInbound(inboundId);
+        if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
+            accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
+        }
+        List<Section> sections = sectionRepository.findAllByWarehouseAndSectionType(
+                inbound.getWarehouse(), SectionType.DAMAGED_ZONE);
         return toSectionOptionDTOs(sections);
     }
 

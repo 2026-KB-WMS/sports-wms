@@ -64,6 +64,13 @@ public class GlobalExceptionHandler {
                 .body(Map.of("message", MessageUtils.getMessage("validation.optimistic.lock")));
     }
 
+    /** 창고/지점 접근 권한 없음 → 403 Forbidden */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(Map.of("message", e.getMessage()));
+    }
+
     /** 그 외 예상치 못한 예외 → 500 */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleException(Exception e) {

@@ -53,16 +53,14 @@ public class InboundApiController {
     public ResponseEntity<List<InboundDetailViewDTO.SectionOptionDTO>> getAssignableSections(
             @PathVariable Long inboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Inbound inbound = inboundService.getInbound(inboundId);
-        return ResponseEntity.ok(inboundService.getAssignableSections(inbound.getWarehouse()));
+        return ResponseEntity.ok(inboundService.getAssignableSections(inboundId, userDetails.getUser()));
     }
 
     @GetMapping("/{inboundId}/defect-sections")
     public ResponseEntity<List<InboundDetailViewDTO.SectionOptionDTO>> getDefectSections(
             @PathVariable Long inboundId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Inbound inbound = inboundService.getInbound(inboundId);
-        return ResponseEntity.ok(inboundService.getDefectSections(inbound.getWarehouse()));
+        return ResponseEntity.ok(inboundService.getDefectSections(inboundId, userDetails.getUser()));
     }
 
     @PostMapping
