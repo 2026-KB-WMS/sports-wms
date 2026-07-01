@@ -25,9 +25,7 @@ KB IT's Your Life 7기 25회차 사이드 프로젝트 (WMS 창고 관리 시스
 - MySQL 8.x
 
 ### Test
-- JUnit 5
-- H2 (테스트 환경)
-<hr>
+-
 
 ## 프로젝트 구조
 ```
@@ -242,7 +240,7 @@ loginId=admin&password=Test1234!
 
 ## 주요 구현 사항
 
-추루 기술 예정
+추후 기술 예정
 
 <hr>
 
