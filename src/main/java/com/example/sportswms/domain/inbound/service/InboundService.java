@@ -260,6 +260,11 @@ public class InboundService {
                 .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
         accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
 
+        // 상태 검증을 먼저 수행 — 재고 반영 전에 실패 -> 재고 중복 반영 방지
+        if (inbound.getStatus() != InboundStatus.INSPECTING) {
+            throw new IllegalArgumentException(getMessage("inbound.status.not.allowed"));
+        }
+
         List<InboundDetail> details = inboundDetailRepository.findByInboundId(inboundId);
 
         // 정상 구역 미배정 품목 확인
