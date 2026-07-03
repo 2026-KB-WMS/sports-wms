@@ -4,6 +4,8 @@ import com.example.sportswms.domain.inventory.entity.Inventory;
 import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -18,7 +20,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @Query("SELECT i FROM Inventory i JOIN FETCH i.section WHERE i.productSKU = :sku AND i.section.warehouse = :warehouse")
     List<Inventory> findAllByProductSKUAndSection_Warehouse(@Param("sku") ProductSKU productSKU, @Param("warehouse") Warehouse warehouse);
 
-    @Query("""
+    @Query(value = """
             SELECT i FROM Inventory i
             JOIN FETCH i.section s
             JOIN FETCH s.warehouse w
@@ -26,12 +28,21 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             WHERE (:warehouseId IS NULL OR w.id = :warehouseId)
               AND (:sectionId   IS NULL OR s.id = :sectionId)
               AND (:skuId       IS NULL OR i.productSKU.id = :skuId)
+            """,
+           countQuery = """
+            SELECT COUNT(i) FROM Inventory i
+            JOIN i.section s
+            JOIN s.warehouse w
+            WHERE (:warehouseId IS NULL OR w.id = :warehouseId)
+              AND (:sectionId   IS NULL OR s.id = :sectionId)
+              AND (:skuId       IS NULL OR i.productSKU.id = :skuId)
             """)
-    List<Inventory> findAllByFilter(@Param("warehouseId") Long warehouseId,
+    Page<Inventory> findAllByFilter(@Param("warehouseId") Long warehouseId,
                                     @Param("sectionId") Long sectionId,
-                                    @Param("skuId") Long skuId);
+                                    @Param("skuId") Long skuId,
+                                    Pageable pageable);
 
-    @Query("""
+    @Query(value = """
             SELECT i FROM Inventory i
             JOIN FETCH i.section s
             JOIN FETCH s.warehouse w
@@ -39,8 +50,17 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
             WHERE w.id IN :warehouseIds
               AND (:sectionId IS NULL OR s.id = :sectionId)
               AND (:skuId     IS NULL OR i.productSKU.id = :skuId)
+            """,
+           countQuery = """
+            SELECT COUNT(i) FROM Inventory i
+            JOIN i.section s
+            JOIN s.warehouse w
+            WHERE w.id IN :warehouseIds
+              AND (:sectionId IS NULL OR s.id = :sectionId)
+              AND (:skuId     IS NULL OR i.productSKU.id = :skuId)
             """)
-    List<Inventory> findAllByWarehouseIds(@Param("warehouseIds") List<Long> warehouseIds,
+    Page<Inventory> findAllByWarehouseIds(@Param("warehouseIds") List<Long> warehouseIds,
                                           @Param("sectionId") Long sectionId,
-                                          @Param("skuId") Long skuId);
+                                          @Param("skuId") Long skuId,
+                                          Pageable pageable);
 }

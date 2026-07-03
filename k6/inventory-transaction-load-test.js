@@ -68,7 +68,10 @@ export default function () {
     login();
   }
 
-  const query = WAREHOUSE_ID ? `?warehouseId=${WAREHOUSE_ID}` : '';
+  const PAGE = __ENV.PAGE || '0';
+  const SIZE = __ENV.SIZE || '50';
+  let query = `?page=${PAGE}&size=${SIZE}`;
+  if (WAREHOUSE_ID) query += `&warehouseId=${WAREHOUSE_ID}`;
   const url = `${BASE_URL}/api/inventory/transactions${query}`;
 
   const start = Date.now();
