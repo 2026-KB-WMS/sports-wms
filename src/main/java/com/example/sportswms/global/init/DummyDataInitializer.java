@@ -81,10 +81,10 @@ public class DummyDataInitializer implements ApplicationRunner {
         log.info("[DummyDataInitializer] 더미 데이터 삽입 시작.");
 
         User admin = createAdmin();
-        List<User> warehouseManagers = createWarehouseManagers(5);
-        List<User> storeOwners = createStoreOwners(10);
+        List<User> warehouseManagers = createWarehouseManagers(50); // 창고 10개 x 5명
+        List<User> storeOwners = createStoreOwners(20);             // 지점 10개 x 2명
 
-        List<Warehouse> warehouses = createWarehouses(5);
+        List<Warehouse> warehouses = createWarehouses(10);
         assignWarehouseManagers(warehouses, warehouseManagers, admin);
 
         List<Store> stores = createStores(10);
@@ -142,8 +142,16 @@ public class DummyDataInitializer implements ApplicationRunner {
     // ── 창고 / 구역 ────────────────────────────────────────────────────────────
 
     private List<Warehouse> createWarehouses(int count) {
-        String[] names = {"서울 동부 물류센터", "경기 북부 물류센터", "인천 항만 물류센터", "부산 남부 물류센터", "대전 중부 물류센터"};
-        String[] addresses = {"서울시 송파구 올림픽로 300", "경기도 의정부시 호국로 1000", "인천시 중구 항동 200", "부산시 사하구 낙동대로 500", "대전시 유성구 대학로 300"};
+        String[] names = {
+                "서울 동부 물류센터", "경기 북부 물류센터", "인천 항만 물류센터", "부산 남부 물류센터", "대전 중부 물류센터",
+                "광주 서부 물류센터", "대구 동부 물류센터", "울산 산업 물류센터", "수원 경기 물류센터", "청주 충북 물류센터"
+        };
+        String[] addresses = {
+                "서울시 송파구 올림픽로 300", "경기도 의정부시 호국로 1000", "인천시 중구 항동 200",
+                "부산시 사하구 낙동대로 500", "대전시 유성구 대학로 300",
+                "광주시 서구 상무대로 100", "대구시 동구 아양로 200", "울산시 남구 삼산로 300",
+                "경기도 수원시 영통구 광교로 400", "충북 청주시 흥덕구 가경로 500"
+        };
 
         List<Warehouse> warehouses = new ArrayList<>();
         for (int i = 0; i < count; i++) {
@@ -173,9 +181,23 @@ public class DummyDataInitializer implements ApplicationRunner {
     }
 
     private void assignWarehouseManagers(List<Warehouse> warehouses, List<User> managers, User admin) {
-        for (int i = 0; i < warehouses.size() && i < managers.size(); i++) {
-            WarehouseManagement wm = WarehouseManagement.of(warehouses.get(i), managers.get(i), WarehouseManagementType.MASTER);
-            warehouseManagementRepository.save(wm);
+        // 창고당 5명씩 배정: 첫 번째는 MASTER, 나머지는 순서대로 INBOUND_WORKER / OUTBOUND_WORKER / INVENTORY_MANAGER 순환
+        WarehouseManagementType[] memberTypes = {
+                WarehouseManagementType.INBOUND_WORKER,
+                WarehouseManagementType.OUTBOUND_WORKER,
+                WarehouseManagementType.INVENTORY_MANAGER
+        };
+        int managersPerWarehouse = 5;
+        for (int i = 0; i < warehouses.size(); i++) {
+            for (int j = 0; j < managersPerWarehouse; j++) {
+                int managerIdx = i * managersPerWarehouse + j;
+                if (managerIdx >= managers.size()) break;
+                WarehouseManagementType type = (j == 0)
+                        ? WarehouseManagementType.MASTER
+                        : memberTypes[(j - 1) % memberTypes.length];
+                WarehouseManagement wm = WarehouseManagement.of(warehouses.get(i), managers.get(managerIdx), type);
+                warehouseManagementRepository.save(wm);
+            }
         }
     }
 
@@ -196,9 +218,16 @@ public class DummyDataInitializer implements ApplicationRunner {
     }
 
     private void assignStoreOwners(List<Store> stores, List<User> owners) {
-        for (int i = 0; i < stores.size() && i < owners.size(); i++) {
-            StoreManagement sm = StoreManagement.of(stores.get(i), owners.get(i), StoreManagementType.OWNER);
-            storeManagementRepository.save(sm);
+        // 지점당 2명씩 배정: 첫 번째는 OWNER, 두 번째는 STORE_MANAGER
+        int ownersPerStore = 2;
+        for (int i = 0; i < stores.size(); i++) {
+            for (int j = 0; j < ownersPerStore; j++) {
+                int ownerIdx = i * ownersPerStore + j;
+                if (ownerIdx >= owners.size()) break;
+                StoreManagementType type = (j == 0) ? StoreManagementType.OWNER : StoreManagementType.STORE_MANAGER;
+                StoreManagement sm = StoreManagement.of(stores.get(i), owners.get(ownerIdx), type);
+                storeManagementRepository.save(sm);
+            }
         }
     }
 
@@ -361,8 +390,8 @@ public class DummyDataInitializer implements ApplicationRunner {
 
         if (skus.isEmpty() || stores.isEmpty() || warehouses.isEmpty()) return;
 
-        // 발주 20건 생성
-        for (int i = 0; i < 20; i++) {
+        // 발주 200건 생성
+        for (int i = 0; i < 200; i++) {
             Warehouse warehouse = warehouses.get(i % warehouses.size());
             Store store = stores.get(i % stores.size());
 
@@ -385,8 +414,8 @@ public class DummyDataInitializer implements ApplicationRunner {
             }
         }
 
-        // 입고 20건 생성
-        for (int i = 0; i < 20; i++) {
+        // 입고 200건 생성
+        for (int i = 0; i < 200; i++) {
             Warehouse warehouse = warehouses.get(i % warehouses.size());
 
             Inbound inbound = inboundRepository.save(Inbound.create(warehouse));
@@ -399,6 +428,6 @@ public class DummyDataInitializer implements ApplicationRunner {
             }
         }
 
-        log.info("[DummyDataInitializer] 발주 20건, 입고 20건, 출고 20건 생성 완료.");
+        log.info("[DummyDataInitializer] 발주 200건, 입고 200건, 출고 200건 생성 완료.");
     }
 }

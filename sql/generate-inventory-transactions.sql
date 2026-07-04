@@ -19,7 +19,7 @@ USE dummyDB;
 SET SESSION cte_max_recursion_depth = 1000000;
 
 -- 생성할 row 수 (필요에 맞게 조정: 처음엔 10만 정도로 테스트 후 늘리는 걸 추천)
-SET @row_count = 500000;
+SET @row_count = 100000;
 
 -- ---------------------------------------------------------------------
 -- 1. 참조용 PK 목록에 순번(rn) 부여 (기존 Section / ProductSKU / User 재사용)
