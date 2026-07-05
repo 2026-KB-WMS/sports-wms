@@ -53,6 +53,7 @@ public class DummyDataInitializer implements ApplicationRunner {
     private final ProductRepository productRepository;
     private final ProductSKURepository productSKURepository;
     private final OptionGroupRepository optionGroupRepository;
+    private final ProductSpecRepository productSpecRepository;
     private final OptionValueRepository optionValueRepository;
     private final CategoryRepository categoryRepository;
     private final CategoryOptionMappingRepository categoryOptionMappingRepository;
@@ -261,6 +262,9 @@ public class DummyDataInitializer implements ApplicationRunner {
         List<OptionValue> weights = optionValueRepository.findByOptionGroupName("무게");
         List<OptionValue> grips = optionValueRepository.findByOptionGroupName("그립 사이즈");
         List<OptionValue> colors = optionValueRepository.findByOptionGroupName("색상");
+        // 라켓 SPEC 옵션값 (샤프트 경도, 라켓 밸런스) — 상품(Product) 단위로 임의 매핑
+        List<OptionValue> flexValues = optionValueRepository.findByOptionGroupName("샤프트 경도");
+        List<OptionValue> balanceValues = optionValueRepository.findByOptionGroupName("라켓 밸런스");
 
         // 라켓 상품 & SKU (브랜드별 2개 상품, 각 4 SKU)
         String[][] racketNames = {
@@ -279,6 +283,14 @@ public class DummyDataInitializer implements ApplicationRunner {
             Product product = productRepository.save(
                     Product.ofDummy(racketNames[i][0], code, brand, 150000 + (i * 10000), racketCategory));
 
+            // 라켓 SPEC 매핑: 샤프트 경도 + 라켓 밸런스 (상품마다 임의 배정)
+            if (!flexValues.isEmpty()) {
+                productSpecRepository.save(ProductSpec.of(product, flexValues.get(i % flexValues.size())));
+            }
+            if (!balanceValues.isEmpty()) {
+                productSpecRepository.save(ProductSpec.of(product, balanceValues.get(i % balanceValues.size())));
+            }
+
             // SKU: 무게 x 그립 조합
             for (OptionValue w : weights.subList(0, 2)) {
                 for (OptionValue g : grips.subList(0, 2)) {
@@ -295,6 +307,8 @@ public class DummyDataInitializer implements ApplicationRunner {
         // 셔틀콕 상품 & SKU
         if (shuttleCategory != null) {
             List<OptionValue> speeds = optionValueRepository.findByOptionGroupName("셔틀콕 속도");
+            // 셔틀콕 SPEC 옵션값 (셔틀콕 타입) — 상품(Product) 단위로 임의 매핑
+            List<OptionValue> shuttleTypeValues = optionValueRepository.findByOptionGroupName("셔틀콕 타입");
             String[][] shuttleNames = {
                     {"AS-9", "AS9"}, {"Mavis 600", "MV600"}, {"AS-30", "AS30"}
             };
@@ -305,6 +319,12 @@ public class DummyDataInitializer implements ApplicationRunner {
 
                 Product product = productRepository.save(
                         Product.ofDummy(shuttleNames[i][0], code, brand, 20000 + (i * 5000), shuttleCategory));
+
+                // 셔틀콕 SPEC 매핑: 셔틀콕 타입 (상품마다 임의 배정)
+                if (!shuttleTypeValues.isEmpty()) {
+                    productSpecRepository.save(
+                            ProductSpec.of(product, shuttleTypeValues.get(i % shuttleTypeValues.size())));
+                }
 
                 for (OptionValue speed : speeds.subList(0, 3)) {
                     String skuCode = code + "-" + speed.getCode();

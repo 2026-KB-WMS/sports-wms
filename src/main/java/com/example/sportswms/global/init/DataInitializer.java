@@ -57,6 +57,11 @@ public class DataInitializer implements ApplicationRunner {
         flex.addOptionValue("Medium", "MD");
         flex.addOptionValue("Flexible", "FL");
 
+        OptionGroup balance = OptionGroup.of("라켓 밸런스");
+        balance.addOptionValue("헤드헤비", "HH");
+        balance.addOptionValue("이븐밸런스", "EB");
+        balance.addOptionValue("헤드라이트", "HL");
+
         OptionGroup shuttleType = OptionGroup.of("셔틀콕 타입");
         shuttleType.addOptionValue("천연 깃털", "NAT");
         shuttleType.addOptionValue("합성 깃털", "SYN");
@@ -105,7 +110,7 @@ public class DataInitializer implements ApplicationRunner {
         bagSize.addOptionValue("투어백 (9~12자루)", "BAG-L");
 
         optionGroupRepository.saveAll(List.of(
-                weight, gripSize, flex,
+                weight, gripSize, flex, balance,
                 shuttleType, shuttleSpeed,
                 shoeSize,
                 clothingSize,
@@ -134,6 +139,7 @@ public class DataInitializer implements ApplicationRunner {
                 CategoryOptionMapping.ofSku(racket, gripSize),
                 CategoryOptionMapping.ofSku(racket, color),
                 CategoryOptionMapping.ofSpec(racket, flex),
+                CategoryOptionMapping.ofSpec(racket, balance),
 
                 // 셔틀콕: 타입 → SPEC / 속도 → SKU
                 CategoryOptionMapping.ofSpec(shuttle, shuttleType),
