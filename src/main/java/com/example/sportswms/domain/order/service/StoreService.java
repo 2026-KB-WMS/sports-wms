@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
@@ -130,13 +131,23 @@ public class StoreService {
         // 본인에게 배정된 지점인지 검증
         accessValidator.validateStoreAccess(store, user);
 
+        // SKU 조회를 아이템마다 개별 쿼리(N+1) 대신 IN 절로 한 번에 조회
+        List<Long> skuIds = items.stream().map(OrderItemRequestDTO::skuId).toList();
+        Map<Long, ProductSKU> skuMap = productSKURepository.findAllById(skuIds).stream()
+                .collect(java.util.stream.Collectors.toMap(ProductSKU::getId, sku -> sku));
+
+        // 요청에 포함된 skuId 중 존재하지 않는 것이 있으면 예외
+        skuIds.forEach(skuId -> {
+            if (!skuMap.containsKey(skuId)) {
+                throw new IllegalArgumentException(getMessage("sku.invalid"));
+            }
+        });
+
         String uniqueGroupId = "REQ-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
-        List<StockOrderDetail> details = items.stream().map(itemDto -> {
-            ProductSKU sku = productSKURepository.findById(itemDto.skuId())
-                    .orElseThrow(() -> new IllegalArgumentException(getMessage("sku.invalid")));
-            return StockOrderDetail.from(store, uniqueGroupId, sku, itemDto);
-        }).toList();
+        List<StockOrderDetail> details = items.stream()
+                .map(itemDto -> StockOrderDetail.from(store, uniqueGroupId, skuMap.get(itemDto.skuId()), itemDto))
+                .toList();
 
         return stockOrderDetailRepository.saveAll(details);
     }

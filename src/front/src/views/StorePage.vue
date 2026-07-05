@@ -15,16 +15,21 @@
           </tbody>
         </table>
 
-        <h2>지점 담당자 배정 현황</h2>
+        <h2 style="margin-top:20px;">지점 담당자 배정 현황</h2>
         <table>
           <thead><tr><th>지점명</th><th>담당자</th><th>권한</th></tr></thead>
           <tbody>
-            <tr v-for="m in managers" :key="m.id">
+            <tr v-for="m in pagedManagers" :key="m.id">
               <td>{{ m.storeName }}</td><td>{{ m.userName }}</td><td>{{ m.managementTypeTitle }}</td>
             </tr>
-            <tr v-if="!managers.length"><td colspan="3" style="text-align:center;">배정된 담당자가 없습니다.</td></tr>
+            <tr v-if="!pagedManagers.length"><td colspan="3" style="text-align:center;">배정된 담당자가 없습니다.</td></tr>
           </tbody>
         </table>
+        <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin:8px 0 24px;">
+          <button class="btn" :disabled="managerPage === 0" @click="managerPage--">◀</button>
+          <span>{{ managerPage + 1 }} / {{ managerTotalPages }}</span>
+          <button class="btn" :disabled="managerPage >= managerTotalPages - 1" @click="managerPage++">▶</button>
+        </div>
       </div>
 
       <div style="width:360px;">
@@ -62,8 +67,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { http } from '@/api/http'
+
+const PAGE_SIZE = 15
 
 const stores = ref([])
 const managers = ref([])
@@ -73,6 +80,13 @@ const storeError = ref('')
 const assignError = ref('')
 const storeForm = ref({ name: '', address: '', callNum: '' })
 const assignForm = ref({ storeId: '', userId: '', storeManagementType: '' })
+
+const managerPage = ref(0)
+const managerTotalPages = computed(() => Math.max(1, Math.ceil(managers.value.length / PAGE_SIZE)))
+const pagedManagers = computed(() => {
+  const start = managerPage.value * PAGE_SIZE
+  return managers.value.slice(start, start + PAGE_SIZE)
+})
 
 async function load() {
   const [ss, mg, mt] = await Promise.all([

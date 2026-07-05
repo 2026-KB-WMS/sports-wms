@@ -219,6 +219,11 @@ public class OutboundService {
         Outbound outbound = getOutbound(outboundId);
         accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
 
+        // 상태 검증을 먼저 수행 — 재고 차감 전에 실패 -> 재고 중복 반영 방지
+        if (outbound.getStatus() != OutboundStatus.PICKING) {
+            throw new IllegalArgumentException(getMessage("outbound.status.not.allowed"));
+        }
+
         List<OutboundDetail> details = outboundDetailRepository.findByOutboundId(outboundId);
         details.forEach(d -> inventoryService.recordInventory(
                 d.getSection(), d.getProductSKU(), TransactionType.SHIPMENT_COMPLETE,

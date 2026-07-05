@@ -8,18 +8,21 @@ import com.example.sportswms.domain.inventory.repository.InventoryRepository;
 import com.example.sportswms.domain.inventory.repository.InventoryTransactionRepository;
 import com.example.sportswms.domain.product.entity.ProductSKU;
 import com.example.sportswms.domain.product.repository.ProductSKURepository;
-    import com.example.sportswms.domain.user.entity.Role;
+import com.example.sportswms.domain.user.entity.Role;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.warehouse.entity.Section;
-import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.example.sportswms.global.util.MessageUtils.getMessage;
@@ -42,34 +45,59 @@ public class InventoryService {
                 warehouseRepository.getReferenceById(warehouseId));
     }
 
-    public List<Inventory> getInventories(Long warehouseId, Long sectionId, Long skuId, User user) {
+    public Page<Inventory> getInventories(Long warehouseId, Long sectionId, Long skuId,
+                                           User user, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
         if (user.getRole() == Role.ROLE_WAREHOUSE_MANAGER) {
             if (warehouseId != null) {
                 accessValidator.validateWarehouseAccessById(warehouseId, user);
             } else {
-                // warehouseId 미지정 시 담당 창고 전체로 제한 — 전체 조회 방지
                 List<Long> myWarehouseIds = warehouseManagementRepository.findAllByUser(user).stream()
                         .map(wm -> wm.getWarehouse().getId())
                         .toList();
-                return inventoryRepository.findAllByWarehouseIds(myWarehouseIds, sectionId, skuId);
+                return inventoryRepository.findAllByWarehouseIds(myWarehouseIds, sectionId, skuId, pageable);
             }
         }
-        return inventoryRepository.findAllByFilter(warehouseId, sectionId, skuId);
+        return inventoryRepository.findAllByFilter(warehouseId, sectionId, skuId, pageable);
     }
 
-    public List<InventoryTransaction> getTransactions(Long warehouseId, Long sectionId, Long skuId, User user) {
+    /**
+     * 커서 기반 페이지네이션으로 재고 변동 기록 조회
+     * cursorCreatedAt, cursorId: 이전 페이지 마지막 레코드 기준 (첫 페이지는 null)
+     * size + 1개를 조회해서 다음 페이지 존재 여부(hasNext)를 판단
+     */
+    public CursorResult<InventoryTransaction> getTransactions(
+            Long warehouseId, Long sectionId, Long skuId,
+            User user, LocalDateTime cursorCreatedAt, Long cursorId, int size) {
+
+        org.springframework.data.domain.Pageable pageable =
+                PageRequest.of(0, size + 1); // +1 로 hasNext 판단
+
+        List<InventoryTransaction> rows;
         if (user.getRole() == Role.ROLE_WAREHOUSE_MANAGER) {
             if (warehouseId != null) {
                 accessValidator.validateWarehouseAccessById(warehouseId, user);
+                rows = inventoryTransactionRepository.findByFilterWithCursor(
+                        warehouseId, sectionId, skuId, cursorCreatedAt, cursorId, pageable);
             } else {
                 List<Long> myWarehouseIds = warehouseManagementRepository.findAllByUser(user).stream()
                         .map(wm -> wm.getWarehouse().getId())
                         .toList();
-                return inventoryTransactionRepository.findAllByWarehouseIds(myWarehouseIds, sectionId, skuId);
+                rows = inventoryTransactionRepository.findByWarehouseIdsWithCursor(
+                        myWarehouseIds, sectionId, skuId, cursorCreatedAt, cursorId, pageable);
             }
+        } else {
+            rows = inventoryTransactionRepository.findByFilterWithCursor(
+                    warehouseId, sectionId, skuId, cursorCreatedAt, cursorId, pageable);
         }
-        return inventoryTransactionRepository.findAllByFilter(warehouseId, sectionId, skuId);
+
+        boolean hasNext = rows.size() > size;
+        List<InventoryTransaction> content = hasNext ? rows.subList(0, size) : rows;
+        return new CursorResult<>(content, hasNext);
     }
+
+    public record CursorResult<T>(List<T> content, boolean hasNext) {}
 
     /**
      * 재고 변경 + 트랜잭션 기록을 한 번에 처리.
