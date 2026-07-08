@@ -56,4 +56,28 @@ public interface InventoryTransactionRepository extends JpaRepository<InventoryT
             @Param("cursorCreatedAt") LocalDateTime cursorCreatedAt,
             @Param("cursorId") Long cursorId,
             org.springframework.data.domain.Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(t) FROM InventoryTransaction t
+            JOIN t.section s
+            JOIN s.warehouse w
+            WHERE (:warehouseId IS NULL OR w.id = :warehouseId)
+              AND (:sectionId   IS NULL OR s.id = :sectionId)
+              AND (:skuId       IS NULL OR t.productSKU.id = :skuId)
+            """)
+    long countByFilter(@Param("warehouseId") Long warehouseId,
+                       @Param("sectionId") Long sectionId,
+                       @Param("skuId") Long skuId);
+
+    @Query("""
+            SELECT COUNT(t) FROM InventoryTransaction t
+            JOIN t.section s
+            JOIN s.warehouse w
+            WHERE w.id IN :warehouseIds
+              AND (:sectionId IS NULL OR s.id = :sectionId)
+              AND (:skuId     IS NULL OR t.productSKU.id = :skuId)
+            """)
+    long countByWarehouseIds(@Param("warehouseIds") List<Long> warehouseIds,
+                              @Param("sectionId") Long sectionId,
+                              @Param("skuId") Long skuId);
 }

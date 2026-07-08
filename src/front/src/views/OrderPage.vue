@@ -37,7 +37,6 @@
 
     <!-- 본사 관리자: 창고 위임 -->
     <template v-if="auth.isGeneralManager">
-      <h2>전체 지점 발주 내역</h2>
       <div style="border:1px solid #ccc; padding:15px; margin-bottom:20px; border-radius:4px;">
         <h3>창고 위임</h3>
         <div class="form-group">
@@ -52,6 +51,11 @@
     </template>
 
     <!-- 발주 내역 테이블 -->
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+      <h2 v-if="auth.isGeneralManager" style="margin:0;">전체 지점 발주 내역</h2>
+      <h2 v-else style="margin:0;">내 발주 내역</h2>
+      <span style="font-size:0.85rem; color:#666;">{{ orderPage + 1 }} / {{ orderTotalPages }}</span>
+    </div>
     <table>
       <thead>
         <tr>
@@ -79,6 +83,11 @@
         </tr>
       </tbody>
     </table>
+    <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin:12px 0;">
+      <button class="btn" :disabled="orderPage === 0" @click="orderPage--; loadOrders()">◀</button>
+      <span>{{ orderPage + 1 }} / {{ orderTotalPages }}</span>
+      <button class="btn" :disabled="orderPage >= orderTotalPages - 1" @click="orderPage++; loadOrders()">▶</button>
+    </div>
   </div>
 </template>
 
@@ -86,6 +95,8 @@
 import { ref, onMounted } from 'vue'
 import { http } from '@/api/http'
 import { useAuthStore } from '@/stores/auth'
+
+const PAGE_SIZE = 20
 
 const auth = useAuthStore()
 const orderDetails = ref([])
@@ -95,6 +106,9 @@ const warehouses = ref([])
 const selectedIds = ref([])
 const assignWarehouseId = ref('')
 const error = ref('')
+
+const orderPage = ref(0)
+const orderTotalPages = ref(1)
 
 const orderForm = ref({ storeId: '', items: [] })
 const newItem = ref({ skuId: '', quantity: 1, memo: '' })
@@ -112,12 +126,17 @@ function toggleAll(e) {
     : []
 }
 
+async function loadOrders() {
+  const url = auth.isGeneralManager
+    ? `/api/orders/details?page=${orderPage.value}&size=${PAGE_SIZE}`
+    : `/api/orders/my?page=${orderPage.value}&size=${PAGE_SIZE}`
+  const data = await http.get(url)
+  orderDetails.value = data.content ?? data
+  orderTotalPages.value = data.totalPages ?? 1
+}
+
 async function load() {
-  const [details, ws] = await Promise.all([
-    auth.isGeneralManager ? http.get('/api/orders/details') : http.get('/api/orders/my'),
-    auth.isGeneralManager ? http.get('/api/warehouses') : Promise.resolve([]),
-  ])
-  orderDetails.value = details
+  const ws = auth.isGeneralManager ? await http.get('/api/warehouses') : []
   warehouses.value = ws
 
   if (auth.isUser) {
@@ -125,6 +144,8 @@ async function load() {
     stores.value = ss
     skus.value = sk
   }
+
+  await loadOrders()
 }
 
 async function submitOrder() {
@@ -133,7 +154,8 @@ async function submitOrder() {
   try {
     await http.post('/api/orders', orderForm.value)
     orderForm.value = { storeId: '', items: [] }
-    await load()
+    orderPage.value = 0
+    await loadOrders()
   } catch (e) { error.value = e.message }
 }
 
@@ -144,7 +166,7 @@ async function assignOrders() {
   try {
     await http.post('/api/orders/assign', { warehouseId: assignWarehouseId.value, orderDetailIds: selectedIds.value })
     selectedIds.value = []
-    await load()
+    await loadOrders()
   } catch (e) { error.value = e.message }
 }
 
@@ -152,7 +174,7 @@ async function cancelOrder(groupId) {
   if (!confirm(`발주 그룹 ${groupId} 전체를 취소하시겠습니까?`)) return
   try {
     await http.delete('/api/orders/' + groupId)
-    await load()
+    await loadOrders()
   } catch (e) { error.value = e.message }
 }
 

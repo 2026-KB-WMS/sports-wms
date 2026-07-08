@@ -54,7 +54,7 @@
     <!-- 재고 변동 기록 -->
     <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
       <h2 style="margin:0;">재고 변동 기록</h2>
-      <span style="font-size:0.85rem; color:#666;">{{ txCurrentIdx + 1 }} 페이지</span>
+      <span style="font-size:0.85rem; color:#666;">{{ txCurrentIdx + 1 }} / {{ txTotalPages }}</span>
     </div>
     <table>
       <thead><tr><th>ID</th><th>일시</th><th>창고</th><th>구역</th><th>SKU</th><th>유형</th><th>변동</th><th>사유</th></tr></thead>
@@ -72,7 +72,7 @@
     <!-- 커서 기반 네비게이션 -->
     <div style="display:flex; justify-content:center; align-items:center; gap:12px; margin:12px 0;">
       <button class="btn" :disabled="txCurrentIdx === 0" @click="txPrev()">◀</button>
-      <span>{{ txCurrentIdx + 1 }} 페이지</span>
+      <span>{{ txCurrentIdx + 1 }} / {{ txTotalPages }}</span>
       <button class="btn" :disabled="!txHasNext" @click="txNext()">▶</button>
     </div>
   </div>
@@ -98,11 +98,10 @@ const invPage = ref(0)
 const invTotalPages = ref(1)
 
 // 재고 변동 기록 커서 기반 페이지네이션 상태
-// cursorStack: 각 페이지 진입 시 사용한 커서를 쌓아둠 (뒤로 가기용)
-// cursorStack[0] = 첫 페이지 (커서 없음), cursorStack[n] = n번째 페이지 커서
 const txCursorStack = ref([{ cursorCreatedAt: null, cursorId: null }])
 const txCurrentIdx = ref(0)
 const txHasNext = ref(false)
+const txTotalPages = ref(1)
 
 const filteredSections = computed(() =>
   filter.value.warehouseId
@@ -119,6 +118,7 @@ function resetFilter() {
   txCursorStack.value = [{ cursorCreatedAt: null, cursorId: null }]
   txCurrentIdx.value = 0
   loadInventory()
+  loadTxCount()
   loadTransactions()
 }
 
@@ -127,6 +127,7 @@ function onFilterSearch() {
   txCursorStack.value = [{ cursorCreatedAt: null, cursorId: null }]
   txCurrentIdx.value = 0
   loadInventory()
+  loadTxCount()
   loadTransactions()
 }
 
@@ -145,6 +146,15 @@ async function loadInventory() {
   // Page 응답: { content: [...], totalPages: N, ... }
   inventories.value = data.content ?? data
   invTotalPages.value = data.totalPages ?? 1
+}
+
+async function loadTxCount() {
+  const p = new URLSearchParams()
+  if (filter.value.warehouseId) p.append('warehouseId', filter.value.warehouseId)
+  if (filter.value.sectionId)   p.append('sectionId',   filter.value.sectionId)
+  if (filter.value.skuId)       p.append('skuId',       filter.value.skuId)
+  const data = await http.get('/api/inventory/transactions/count?' + p.toString())
+  txTotalPages.value = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
 }
 
 async function loadTransactions() {
@@ -197,6 +207,6 @@ onMounted(async () => {
     allSections.value = ss
   }
   skus.value = sk
-  await Promise.all([loadInventory(), loadTransactions()])
+  await Promise.all([loadInventory(), loadTxCount(), loadTransactions()])
 })
 </script>

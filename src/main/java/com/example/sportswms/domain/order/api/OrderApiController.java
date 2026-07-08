@@ -27,11 +27,15 @@ public class OrderApiController {
     private final StoreService storeService;
 
     @GetMapping("/details")
-    public ResponseEntity<List<OrderResponseDTO.StockOrderDetailDTO>> getAllOrderDetails() {
-        return ResponseEntity.ok(
-                storeService.getAllOrderDetails().stream()
-                        .map(OrderResponseDTO.StockOrderDetailDTO::from)
-                        .toList());
+    public ResponseEntity<Map<String, Object>> getAllOrderDetails(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(Map.of(
+                "content", storeService.getAllOrderDetails(page, size).stream()
+                        .map(OrderResponseDTO.StockOrderDetailDTO::from).toList(),
+                "totalElements", storeService.countAllOrderDetails(),
+                "totalPages", (int) Math.ceil((double) storeService.countAllOrderDetails() / size)
+        ));
     }
 
     @GetMapping("/warehouse")
@@ -53,12 +57,17 @@ public class OrderApiController {
     }
 
     @GetMapping("/my")
-    public ResponseEntity<List<OrderResponseDTO.StockOrderDetailDTO>> getMyOrderDetails(
+    public ResponseEntity<Map<String, Object>> getMyOrderDetails(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return ResponseEntity.ok(
-                storeService.getOrderDetailsForAssignedStores(userDetails.getUser().getId()).stream()
-                        .map(OrderResponseDTO.StockOrderDetailDTO::from)
-                        .toList());
+        Long userId = userDetails.getUser().getId();
+        return ResponseEntity.ok(Map.of(
+                "content", storeService.getOrderDetailsForAssignedStores(userId, page, size).stream()
+                        .map(OrderResponseDTO.StockOrderDetailDTO::from).toList(),
+                "totalElements", storeService.countOrderDetailsForAssignedStores(userId),
+                "totalPages", (int) Math.ceil((double) storeService.countOrderDetailsForAssignedStores(userId) / size)
+        ));
     }
 
     @PostMapping

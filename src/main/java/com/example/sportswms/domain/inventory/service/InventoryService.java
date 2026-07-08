@@ -99,6 +99,20 @@ public class InventoryService {
 
     public record CursorResult<T>(List<T> content, boolean hasNext) {}
 
+    public long countTransactions(Long warehouseId, Long sectionId, Long skuId, User user) {
+        if (user.getRole() == Role.ROLE_WAREHOUSE_MANAGER) {
+            if (warehouseId != null) {
+                accessValidator.validateWarehouseAccessById(warehouseId, user);
+            } else {
+                List<Long> myWarehouseIds = warehouseManagementRepository.findAllByUser(user).stream()
+                        .map(wm -> wm.getWarehouse().getId())
+                        .toList();
+                return inventoryTransactionRepository.countByWarehouseIds(myWarehouseIds, sectionId, skuId);
+            }
+        }
+        return inventoryTransactionRepository.countByFilter(warehouseId, sectionId, skuId);
+    }
+
     /**
      * 재고 변경 + 트랜잭션 기록을 한 번에 처리.
      * quantity 양수: 입고 (재고 없으면 신규 생성)

@@ -82,16 +82,27 @@ public class StoreService {
                 .toList();
     }
 
-    public List<StockOrderDetail> getOrderDetailsForAssignedStores(Long userId) {
+    public List<StockOrderDetail> getOrderDetailsForAssignedStores(Long userId, int page, int size) {
         List<Store> assignedStores = getAssignedStoresByUserId(userId);
-        if (assignedStores.isEmpty()) {
-            return List.of();
-        }
-        return stockOrderDetailRepository.findByStoreInWithSku(assignedStores);
+        if (assignedStores.isEmpty()) return List.of();
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return stockOrderDetailRepository.findByStoreInWithSku(assignedStores, pageable).getContent();
     }
-    
-    public List<StockOrderDetail> getAllOrderDetails() {
-        return stockOrderDetailRepository.findAllWithStoreAndSku();
+
+    public long countOrderDetailsForAssignedStores(Long userId) {
+        List<Store> assignedStores = getAssignedStoresByUserId(userId);
+        if (assignedStores.isEmpty()) return 0;
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 1);
+        return stockOrderDetailRepository.findByStoreInWithSku(assignedStores, pageable).getTotalElements();
+    }
+
+    public List<StockOrderDetail> getAllOrderDetails(int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        return stockOrderDetailRepository.findAllWithStoreAndSku(pageable).getContent();
+    }
+
+    public long countAllOrderDetails() {
+        return stockOrderDetailRepository.count();
     }
 
     @Transactional

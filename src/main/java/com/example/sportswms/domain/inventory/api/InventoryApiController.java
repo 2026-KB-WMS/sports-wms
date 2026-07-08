@@ -38,6 +38,16 @@ public class InventoryApiController {
                         .map(InventoryResponseDTO.InventoryDTO::from));
     }
 
+    @GetMapping("/transactions/count")
+    public ResponseEntity<Map<String, Object>> countTransactions(
+            @RequestParam(required = false) Long warehouseId,
+            @RequestParam(required = false) Long sectionId,
+            @RequestParam(required = false) Long skuId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        long total = inventoryService.countTransactions(warehouseId, sectionId, skuId, userDetails.getUser());
+        return ResponseEntity.ok(Map.of("total", total));
+    }
+
     @GetMapping("/transactions")
     public ResponseEntity<Map<String, Object>> getTransactions(
             @RequestParam(required = false) Long warehouseId,
