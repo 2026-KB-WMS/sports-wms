@@ -6,8 +6,12 @@ public record StoreRegisterRequestDTO(
         @NotBlank(message = "{store.name.required}")
         String name,
 
+        String postcode,
+
         @NotBlank(message = "{store.address.required}")
         String address,
+
+        String detailAddress,
 
         @NotBlank(message = "{store.phoneNum.required}")
         String callNum

@@ -36,7 +36,14 @@
         <h2>신규 지점 등록</h2>
         <p v-if="storeError" class="error">{{ storeError }}</p>
         <div class="form-group"><label>지점명</label><input v-model="storeForm.name" /></div>
-        <div class="form-group"><label>주소</label><input v-model="storeForm.address" /></div>
+        <div class="form-group"><label>우편번호</label>
+          <div style="display:flex; gap:8px;">
+            <input v-model="storeForm.postcode" readonly style="width:100px;" />
+            <button class="btn" @click="openDaumPostcode">주소 검색</button>
+          </div>
+        </div>
+        <div class="form-group"><label>주소</label><input v-model="storeForm.address" readonly /></div>
+        <div class="form-group"><label>상세주소</label><input v-model="storeForm.detailAddress" /></div>
         <div class="form-group"><label>전화번호</label><input v-model="storeForm.callNum" /></div>
         <button class="btn btn-primary" @click="createStore">지점 등록</button>
 
@@ -78,7 +85,7 @@ const users = ref([])
 const managementTypes = ref([])
 const storeError = ref('')
 const assignError = ref('')
-const storeForm = ref({ name: '', address: '', callNum: '' })
+const storeForm = ref({ name: '', postcode: '', address: '', detailAddress: '', callNum: '' })
 const assignForm = ref({ storeId: '', userId: '', storeManagementType: '' })
 
 const managerPage = ref(0)
@@ -104,9 +111,18 @@ async function createStore() {
   storeError.value = ''
   try {
     await http.post('/api/orders/stores', storeForm.value)
-    storeForm.value = { name: '', address: '', callNum: '' }
+    storeForm.value = { name: '', postcode: '', address: '', detailAddress: '', callNum: '' }
     await load()
   } catch (e) { storeError.value = e.message }
+}
+
+function openDaumPostcode() {
+  new window.daum.Postcode({
+    oncomplete(data) {
+      storeForm.value.postcode = data.zonecode
+      storeForm.value.address = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress
+    }
+  }).open()
 }
 
 async function assignStore() {

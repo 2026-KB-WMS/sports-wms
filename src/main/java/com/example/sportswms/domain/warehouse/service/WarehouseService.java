@@ -13,6 +13,7 @@ import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepo
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
 import com.example.sportswms.global.exception.warehouse.WarehouseConflictException;
 import com.example.sportswms.global.exception.warehouse.WarehouseNotFoundException;
+import com.example.sportswms.global.geocoding.GeocodingClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class WarehouseService {
     private final SectionRepository sectionRepository;
     private final UserRepository userRepository;
     private final WarehouseManagementRepository warehouseManagementRepository;
+    private final GeocodingClient geocodingClient;
 
     public List<Warehouse> getAllWarehouses() { return warehouseRepository.findAll(); }
     public List<Section> getAllSections() { return sectionRepository.findAllWithWarehouse(); }
@@ -45,6 +47,15 @@ public class WarehouseService {
     @Transactional
     public Warehouse createWarehouse(WarehouseCreateRequestDTO dto) {
         Warehouse warehouse = Warehouse.from(dto);
+
+        // 지오코딩은 다음 우편번호 API가 반환한 원본 주소(dto.address())로 수행한다.
+        // 합쳐진 fullAddress(우편번호/상세주소 포함)를 넘기면 매칭률이 떨어질 수 있다.
+        geocodingClient.geocode(dto.address()).ifPresentOrElse(
+                coord -> warehouse.updateCoordinate(coord.latitude(), coord.longitude()),
+                () -> log.warn("창고 주소 좌표 변환 실패 - warehouseName: {}, address: {}",
+                        warehouse.getName(), dto.address())
+        );
+
         return warehouseRepository.save(warehouse);
     }
 

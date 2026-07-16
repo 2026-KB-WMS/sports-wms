@@ -33,6 +33,13 @@ public class Warehouse {
     @Column(name = "current_section_capacity", nullable = false)
     private int currentSectionCapacity;
 
+    // 지오코딩 결과. 주소 매칭 실패 시 null일 수 있으며, 이 경우 자동 배정 후보에서 제외한다.
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     @OneToMany(mappedBy = "warehouse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Section> sections = new ArrayList<>();
 
@@ -69,5 +76,10 @@ public class Warehouse {
 
     public void deleteSectionCapacity(int capacityToDelete) {
         this.currentSectionCapacity = this.currentSectionCapacity - capacityToDelete;
+    }
+
+    public void updateCoordinate(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 }

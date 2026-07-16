@@ -25,8 +25,10 @@ import com.example.sportswms.global.exception.store.StoreConflictException;
 import com.example.sportswms.global.exception.store.StoreInvalidStatusException;
 import com.example.sportswms.global.exception.store.StoreNotFoundException;
 import com.example.sportswms.global.exception.store.StoreValidationException;
+import com.example.sportswms.global.geocoding.GeocodingClient;
 import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -48,6 +51,7 @@ public class StoreService {
     private final WarehouseManagementRepository warehouseManagementRepository;
     private final OutboundService outboundService;
     private final AccessValidator accessValidator;
+    private final GeocodingClient geocodingClient;
 
     public List<StockOrder> findMyWarehouseOrders(User user) {
 
@@ -167,7 +171,16 @@ public class StoreService {
 
     @Transactional
     public Store registerStore(StoreRegisterRequestDTO dto) {
-        return storeRepository.save(Store.from(dto));
+        Store store = Store.from(dto);
+
+        // 지오코딩은 다음 우편번호 API가 반환한 원본 주소(dto.address())로 수행한다.
+        geocodingClient.geocode(dto.address()).ifPresentOrElse(
+                coord -> store.updateCoordinate(coord.latitude(), coord.longitude()),
+                () -> log.warn("지점 주소 좌표 변환 실패 - storeName: {}, address: {}",
+                        store.getName(), dto.address())
+        );
+
+        return storeRepository.save(store);
     }
 
     @Transactional
