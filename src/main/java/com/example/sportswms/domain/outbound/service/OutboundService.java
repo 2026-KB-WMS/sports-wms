@@ -21,6 +21,9 @@ import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.entity.SectionType;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
+import com.example.sportswms.global.exception.outbound.OutboundInvalidStatusException;
+import com.example.sportswms.global.exception.outbound.OutboundNotFoundException;
+import com.example.sportswms.global.exception.outbound.OutboundValidationException;
 import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Slf4j
 @Service
@@ -48,19 +49,19 @@ public class OutboundService {
 
     public Outbound getOutbound(Long outboundId) {
         return outboundRepository.findById(outboundId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.invalid")));
+                .orElseThrow(OutboundNotFoundException::outbound);
     }
 
     public OutboundDetail getOutboundDetail(Long detailId) {
         return outboundDetailRepository.findById(detailId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.detail.invalid")));
+                .orElseThrow(OutboundNotFoundException::detail);
     }
 
     public void validateDetailBelongsToOutbound(Long outboundId, Long detailId) {
         OutboundDetail detail = outboundDetailRepository.findById(detailId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.detail.invalid")));
+                .orElseThrow(OutboundNotFoundException::detail);
         if (!detail.getOutbound().getId().equals(outboundId)) {
-            throw new IllegalArgumentException(getMessage("outbound.detail.invalid"));
+            throw OutboundNotFoundException.detail();
         }
     }
 
@@ -129,24 +130,24 @@ public class OutboundService {
     @Transactional
     public void assignSection(Long outboundDetailId, Long sectionId, User user) {
         OutboundDetail detail = outboundDetailRepository.findById(outboundDetailId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.detail.invalid")));
+                .orElseThrow(OutboundNotFoundException::detail);
 
         Outbound outbound = detail.getOutbound();
         if (outbound.getStatus() != OutboundStatus.ASSIGNED) {
-            throw new IllegalArgumentException(getMessage("outbound.status.not.allowed"));
+            throw OutboundInvalidStatusException.statusNotAllowed();
         }
 
         accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
 
         Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
+                .orElseThrow(OutboundNotFoundException::section);
 
         if (section.getSectionType() == SectionType.DAMAGED_ZONE) {
-            throw new IllegalArgumentException(getMessage("outbound.section.damaged.not.allowed"));
+            throw OutboundValidationException.damagedSectionNotAllowed();
         }
 
         if (!section.getWarehouse().getId().equals(outbound.getWarehouse().getId())) {
-            throw new IllegalArgumentException(getMessage("outbound.section.unauthorized"));
+            throw OutboundValidationException.sectionUnauthorized();
         }
 
         // 재배정이면 기존 구역의 재고 할당을 먼저 되돌린다.
@@ -157,8 +158,7 @@ public class OutboundService {
 
         // 새 구역의 가용 재고를 확인하고 할당
         inventoryRepository.findBySectionAndProductSKU(section, detail.getProductSKU())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        getMessage("outbound.inventory.insufficient", 0, detail.getQuantity())))
+                .orElseThrow(() -> OutboundValidationException.inventoryInsufficient(0, detail.getQuantity()))
                 .allocate(detail.getQuantity());
 
         detail.assignSection(section);
@@ -168,11 +168,11 @@ public class OutboundService {
     @Transactional
     public void clearSection(Long outboundDetailId, User user) {
         OutboundDetail detail = outboundDetailRepository.findById(outboundDetailId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("outbound.detail.invalid")));
+                .orElseThrow(OutboundNotFoundException::detail);
 
         Outbound outbound = detail.getOutbound();
         if (outbound.getStatus() != OutboundStatus.ASSIGNED) {
-            throw new IllegalArgumentException(getMessage("outbound.status.not.allowed"));
+            throw OutboundInvalidStatusException.statusNotAllowed();
         }
 
         accessValidator.validateWarehouseAccess(outbound.getWarehouse(), user);
@@ -193,7 +193,7 @@ public class OutboundService {
 
         List<OutboundDetail> details = outboundDetailRepository.findByOutboundId(outboundId);
         if (details.stream().anyMatch(d -> d.getSection() == null)) {
-            throw new IllegalArgumentException(getMessage("outbound.section.unassigned"));
+            throw OutboundValidationException.sectionUnassigned();
         }
 
         outbound.approve();
@@ -221,7 +221,7 @@ public class OutboundService {
 
         // 상태 검증을 먼저 수행 — 재고 차감 전에 실패 -> 재고 중복 반영 방지
         if (outbound.getStatus() != OutboundStatus.PICKING) {
-            throw new IllegalArgumentException(getMessage("outbound.status.not.allowed"));
+            throw OutboundInvalidStatusException.statusNotAllowed();
         }
 
         List<OutboundDetail> details = outboundDetailRepository.findByOutboundId(outboundId);

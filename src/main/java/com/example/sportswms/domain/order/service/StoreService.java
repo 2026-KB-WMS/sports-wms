@@ -21,6 +21,10 @@ import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
+import com.example.sportswms.global.exception.store.StoreConflictException;
+import com.example.sportswms.global.exception.store.StoreInvalidStatusException;
+import com.example.sportswms.global.exception.store.StoreNotFoundException;
+import com.example.sportswms.global.exception.store.StoreValidationException;
 import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,8 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
-import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Service
 @RequiredArgsConstructor
@@ -63,7 +65,7 @@ public class StoreService {
 
     public List<StockOrderDetail> findOrderDetailsByStockOrderId(Long stockOrderId) {
         StockOrder stockOrder = stockOrderRepository.findById(stockOrderId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("order.invalid")));
+                .orElseThrow(StoreNotFoundException::order);
         return stockOrderDetailRepository.findAllByStockOrderWithStoreAndSku(stockOrder);
     }
 
@@ -108,18 +110,18 @@ public class StoreService {
     @Transactional
     public StockOrder assignOrdersToWarehouse(AssignOrderRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouse.invalid")));
+                .orElseThrow(StoreNotFoundException::warehouse);
 
         List<StockOrderDetail> detailsToAssign = stockOrderDetailRepository.findAllById(dto.orderDetailIds());
 
         if (detailsToAssign.isEmpty()) {
-            throw new IllegalArgumentException(getMessage("order.detail.selected"));
+            throw StoreValidationException.detailNotSelected();
         }
 
         // 이미 다른 StockOrder에 할당된 요청인지 확인
         boolean alreadyAssigned = detailsToAssign.stream().anyMatch(detail -> detail.getStockOrder() != null);
         if (alreadyAssigned) {
-            throw new IllegalStateException(getMessage("order.detail.assigned"));
+            throw StoreConflictException.orderDetailAlreadyAssigned();
         }
 
         StockOrder stockOrder = StockOrder.create(warehouse);
@@ -137,7 +139,7 @@ public class StoreService {
     @Transactional
     public List<StockOrderDetail> createStoreOrderRequest(Long storeId, List<OrderItemRequestDTO> items, User user) {
         Store store = storeRepository.findById(storeId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
+                .orElseThrow(StoreNotFoundException::store);
 
         // 본인에게 배정된 지점인지 검증
         accessValidator.validateStoreAccess(store, user);
@@ -150,7 +152,7 @@ public class StoreService {
         // 요청에 포함된 skuId 중 존재하지 않는 것이 있으면 예외
         skuIds.forEach(skuId -> {
             if (!skuMap.containsKey(skuId)) {
-                throw new IllegalArgumentException(getMessage("sku.invalid"));
+                throw StoreValidationException.skuInvalid();
             }
         });
 
@@ -173,7 +175,7 @@ public class StoreService {
         List<StockOrderDetail> details = stockOrderDetailRepository.findAllByOrderGroupIdWithStoreAndSku(orderGroupId);
 
         if (details.isEmpty()) {
-            throw new IllegalArgumentException(getMessage("order.invalid"));
+            throw StoreNotFoundException.order();
         }
 
         // 본인 발주인지 확인
@@ -184,7 +186,7 @@ public class StoreService {
         boolean hasNonPending = details.stream()
                 .anyMatch(d -> d.getStatus() != OrderDetailStatus.PENDING);
         if (hasNonPending) {
-            throw new IllegalStateException(getMessage("order.cancel.not.allowed"));
+            throw StoreInvalidStatusException.cancelNotAllowed();
         }
 
         details.forEach(StockOrderDetail::cancel);
@@ -193,11 +195,11 @@ public class StoreService {
     @Transactional
     public StoreManagement assignStoreToUser(StoreAssignRequestDTO dto) {
         Store store = storeRepository.findById(dto.storeId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("store.invalid")));
+                .orElseThrow(StoreNotFoundException::store);
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("user.invalid")));
+                .orElseThrow(StoreNotFoundException::user);
         if (storeManagementRepository.existsByStoreAndUser(store, user)) {
-            throw new IllegalStateException(getMessage("store.user.assigned"));
+            throw StoreConflictException.userAlreadyAssigned();
         }
         StoreManagement storeManagement = StoreManagement.of(store, user, dto.storeManagementType());
         return storeManagementRepository.save(storeManagement);

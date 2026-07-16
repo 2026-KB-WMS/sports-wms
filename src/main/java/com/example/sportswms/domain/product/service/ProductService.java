@@ -5,6 +5,8 @@ import com.example.sportswms.domain.product.api.dto.ProductCreateRequestDTO;
 import com.example.sportswms.domain.product.api.dto.SKUCreateRequestDTO;
 import com.example.sportswms.domain.product.entity.*;
 import com.example.sportswms.domain.product.repository.*;
+import com.example.sportswms.global.exception.product.ProductNotFoundException;
+import com.example.sportswms.global.exception.product.ProductValidationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,8 +16,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Slf4j
 @Service
@@ -55,7 +55,7 @@ public class ProductService {
     /** 카테고리의 SKU 타입 옵션그룹 반환 — SKU 등록 폼 렌더링용 */
     public List<OptionGroup> getSkuOptionGroupsByProductId(Long productId) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("product.invalid")));
+                .orElseThrow(ProductNotFoundException::product);
         return categoryOptionMappingRepository.findOptionGroupsByCategoryIdAndType(
                 product.getCategory().getId(), CategoryOptionMappingType.SKU);
     }
@@ -74,9 +74,9 @@ public class ProductService {
     @Transactional
     public Product createProduct(ProductCreateRequestDTO dto) {
         Brand brand = brandRepository.findById(dto.brandId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("brand.invalid")));
+                .orElseThrow(ProductNotFoundException::brand);
         Category category = categoryRepository.findById(dto.categoryId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("product.category.required")));
+                .orElseThrow(ProductNotFoundException::category);
 
         Product product = productRepository.save(Product.of(dto, brand, category));
 
@@ -92,7 +92,7 @@ public class ProductService {
             boolean allCovered = requiredSpecGroups.stream()
                     .allMatch(g -> selectedGroupIds.contains(g.getId()));
             if (!allCovered) {
-                throw new IllegalArgumentException(getMessage("product.spec.incomplete"));
+                throw ProductValidationException.specIncomplete();
             }
 
             List<ProductSpec> specs = specValues.stream()
@@ -107,11 +107,11 @@ public class ProductService {
     @Transactional
     public ProductSKU createSKU(SKUCreateRequestDTO dto) {
         Product product = productRepository.findById(dto.productId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("product.invalid")));
+                .orElseThrow(ProductNotFoundException::product);
 
         List<OptionValue> optionValues = optionValueRepository.findAllById(dto.optionValueIds());
         if (optionValues.size() != dto.optionValueIds().size()) {
-            throw new IllegalArgumentException(getMessage("option.invalid"));
+            throw ProductValidationException.optionInvalid();
         }
 
         List<OptionGroup> requiredSkuGroups = categoryOptionMappingRepository
@@ -122,7 +122,7 @@ public class ProductService {
         boolean allGroupsCovered = requiredSkuGroups.stream()
                 .allMatch(g -> selectedGroupIds.contains(g.getId()));
         if (!allGroupsCovered) {
-            throw new IllegalArgumentException(getMessage("sku.option.group.incomplete"));
+            throw ProductValidationException.skuOptionGroupIncomplete();
         }
 
         String skuName = generateSKUName(product, optionValues);

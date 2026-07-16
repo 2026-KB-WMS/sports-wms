@@ -17,7 +17,14 @@ import java.util.Map;
 @RestControllerAdvice(basePackages = "com.example.sportswms.domain")
 public class GlobalExceptionHandler {
 
-    /** 비즈니스 규칙 위반 → 400 */
+    /** 도메인 비즈니스 예외 (UserException, ProductException 등) → 예외별 getHttpStatus() 사용 (404/409/400) */
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Map<String, String>> handleBusinessException(BusinessException e) {
+        return ResponseEntity.status(e.getHttpStatus())
+                .body(Map.of("message", e.getMessage()));
+    }
+
+    /** 아직 커스텀 예외로 마이그레이션되지 않은 비즈니스 규칙 위반 → 400 */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest()

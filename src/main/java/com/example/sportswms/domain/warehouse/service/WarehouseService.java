@@ -11,6 +11,8 @@ import com.example.sportswms.domain.warehouse.entity.WarehouseManagement;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
+import com.example.sportswms.global.exception.warehouse.WarehouseConflictException;
+import com.example.sportswms.global.exception.warehouse.WarehouseNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,8 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Slf4j
 @Service
@@ -51,10 +51,10 @@ public class WarehouseService {
     @Transactional
     public Section createSection(SectionCreateRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
+                .orElseThrow(WarehouseNotFoundException::warehouse);
 
         if (sectionRepository.existsByNameAndWarehouse(dto.name(), warehouse)) {
-            throw new IllegalArgumentException(getMessage("section.name.duplicate"));
+            throw WarehouseConflictException.sectionNameDuplicate();
         }
 
         warehouse.addSectionCapacity(dto.totalCapacity());
@@ -70,11 +70,11 @@ public class WarehouseService {
     @Transactional
     public WarehouseManagement assignWarehouseManager(WarehouseAssignRequestDTO dto) {
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
+                .orElseThrow(WarehouseNotFoundException::warehouse);
         User user = userRepository.findById(dto.userId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("userId.invalid")));
+                .orElseThrow(WarehouseNotFoundException::user);
         if (warehouseManagementRepository.existsByWarehouseAndUser(warehouse, user)) {
-            throw new IllegalStateException(getMessage("management.assignment.duplicate"));
+            throw WarehouseConflictException.managerAlreadyAssigned();
         }
         WarehouseManagement warehouseManagement = WarehouseManagement.of(warehouse, user, dto.managementType());
         return warehouseManagementRepository.save(warehouseManagement);
@@ -83,10 +83,10 @@ public class WarehouseService {
     @Transactional
     public void deleteSection(Long sectionId) {
         Section section = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("section.id.invalid")));
+                .orElseThrow(WarehouseNotFoundException::section);
 
         if (section.getCurrentUsage() > 0) {
-            throw new IllegalStateException(getMessage("section.delete.in.use"));
+            throw WarehouseConflictException.sectionInUse();
         }
 
         Warehouse warehouse = section.getWarehouse();
