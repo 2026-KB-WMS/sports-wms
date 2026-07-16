@@ -14,6 +14,7 @@ import com.example.sportswms.domain.warehouse.entity.Section;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseManagementRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
+import com.example.sportswms.global.exception.inventory.InventoryNotFoundException;
 import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,8 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
-import static com.example.sportswms.global.util.MessageUtils.getMessage;
 
 @Service
 @RequiredArgsConstructor
@@ -126,7 +125,7 @@ public class InventoryService {
 
         if (inventory == null) {
             if (quantity < 0) {
-                throw new IllegalArgumentException(getMessage("inventory.not.found"));
+                throw new InventoryNotFoundException();
             }
             inventory = Inventory.create(section, sku, 0);
             inventoryRepository.save(inventory);

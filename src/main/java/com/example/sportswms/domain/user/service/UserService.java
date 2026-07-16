@@ -3,6 +3,7 @@ package com.example.sportswms.domain.user.service;
 import com.example.sportswms.domain.user.dto.SignUpRequestDTO;
 import com.example.sportswms.domain.user.entity.User;
 import com.example.sportswms.domain.user.repository.UserRepository;
+import com.example.sportswms.global.exception.user.UserConflictException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
@@ -38,7 +39,7 @@ public class UserService {
         boolean isDuplicate = userRepository.existsByLoginId(loginId);
         if (isDuplicate) {
             log.error(getMessage("user.loginId.duplicate", loginId));
-            throw new IllegalArgumentException(getMessage("user.loginId.duplicate", loginId));
+            throw UserConflictException.loginIdDuplicate(loginId);
         }
     }
 
@@ -46,7 +47,7 @@ public class UserService {
         boolean isDuplicate = userRepository.existsByEmail(email);
         if (isDuplicate) {
             log.error(getMessage("user.email.duplicate", email));
-            throw new IllegalArgumentException(getMessage("user.email.duplicate", email));
+            throw UserConflictException.emailDuplicate(email);
         }
     }
 }

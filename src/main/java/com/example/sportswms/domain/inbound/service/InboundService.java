@@ -19,6 +19,9 @@ import com.example.sportswms.domain.warehouse.entity.SectionType;
 import com.example.sportswms.domain.warehouse.entity.Warehouse;
 import com.example.sportswms.domain.warehouse.repository.SectionRepository;
 import com.example.sportswms.domain.warehouse.repository.WarehouseRepository;
+import com.example.sportswms.global.exception.inbound.InboundInvalidStatusException;
+import com.example.sportswms.global.exception.inbound.InboundNotFoundException;
+import com.example.sportswms.global.exception.inbound.InboundValidationException;
 import com.example.sportswms.global.security.AccessValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +55,7 @@ public class InboundService {
 
     public List<InboundDetail> getInboundDetails(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+                .orElseThrow(InboundNotFoundException::inbound);
         if (user.getRole() != Role.ROLE_GENERAL_MANAGER) {
             accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
         }
@@ -61,19 +64,19 @@ public class InboundService {
 
     public Inbound getInbound(Long inboundId) {
         return inboundRepository.findById(inboundId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+                .orElseThrow(InboundNotFoundException::inbound);
     }
 
     public InboundDetail getInboundDetail(Long inboundDetailId) {
         return inboundDetailRepository.findById(inboundDetailId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.detail.invalid")));
+                .orElseThrow(InboundNotFoundException::detail);
     }
 
     public void validateDetailBelongsToInbound(Long inboundId, Long detailId) {
         InboundDetail detail = inboundDetailRepository.findById(detailId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.detail.invalid")));
+                .orElseThrow(InboundNotFoundException::detail);
         if (!detail.getInbound().getId().equals(inboundId)) {
-            throw new IllegalArgumentException(getMessage("inbound.detail.invalid"));
+            throw InboundNotFoundException.detail();
         }
     }
 
@@ -126,7 +129,7 @@ public class InboundService {
     public Inbound createInbound(InboundRequestDTO dto, User user) {
         validateNoDuplicateSku(dto);
         Warehouse warehouse = warehouseRepository.findById(dto.warehouseId())
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("warehouseId.invalid")));
+                .orElseThrow(InboundNotFoundException::warehouse);
         accessValidator.validateWarehouseAccess(warehouse, user);
 
         Inbound inbound = Inbound.create(warehouse);
@@ -134,7 +137,7 @@ public class InboundService {
 
         List<InboundDetail> details = dto.items().stream().map(itemDto -> {
             ProductSKU sku = productSKURepository.findById(itemDto.skuId())
-                    .orElseThrow(() -> new IllegalArgumentException(getMessage("sku.invalid")));
+                    .orElseThrow(InboundNotFoundException::sku);
             return InboundDetail.create(inbound, sku, itemDto.quantity());
         }).collect(Collectors.toList());
 
@@ -148,21 +151,21 @@ public class InboundService {
                 .distinct()
                 .count();
         if (distinctSkuCount < dto.items().size()) {
-            throw new IllegalArgumentException(getMessage("inbound.sku.duplicate"));
+            throw InboundValidationException.skuDuplicate();
         }
     }
 
     @Transactional
     public void advanceInboundStatus(Long inboundId, InboundStatus nextStatus) {
         Inbound inbound = inboundRepository.findById(inboundId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+                .orElseThrow(InboundNotFoundException::inbound);
         inbound.advanceStatus(nextStatus);
     }
 
     @Transactional
     public void startInspection(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+                .orElseThrow(InboundNotFoundException::inbound);
         accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
         inbound.startInspection();
     }
@@ -184,14 +187,14 @@ public class InboundService {
         InboundDetail detail = getInspectingDetail(inboundDetailId, user);
 
         if (!detail.isDefectRecorded()) {
-            throw new IllegalStateException(getMessage("inbound.defect.assign.after.recorded"));
+            throw InboundInvalidStatusException.defectNotRecorded();
         }
 
         Section newSection = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
+                .orElseThrow(InboundNotFoundException::section);
 
         if (newSection.getSectionType() == SectionType.DAMAGED_ZONE) {
-            throw new IllegalArgumentException(getMessage("inbound.section.damaged.not.allowed"));
+            throw InboundValidationException.damagedSectionNotAllowed();
         }
 
         validateSectionBelongsToWarehouse(newSection, detail.getInbound().getWarehouse());
@@ -204,8 +207,7 @@ public class InboundService {
 
         int effectiveRemaining = newSection.getRemainingCapacity() - pendingQuantity;
         if (effectiveRemaining < detail.getNormalQuantity()) {
-            throw new IllegalArgumentException(
-                    getMessage("inbound.section.capacity.exceeded", effectiveRemaining, detail.getNormalQuantity()));
+            throw InboundValidationException.capacityExceeded(effectiveRemaining, detail.getNormalQuantity());
         }
 
         detail.assignSection(newSection);
@@ -222,14 +224,14 @@ public class InboundService {
         InboundDetail detail = getInspectingDetail(inboundDetailId, user);
 
         if (detail.getDefectQuantity() <= 0) {
-            throw new IllegalArgumentException(getMessage("inbound.defect.section.no.defect"));
+            throw InboundValidationException.noDefectRecorded();
         }
 
         Section defectSection = sectionRepository.findById(sectionId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("sectionId.invalid")));
+                .orElseThrow(InboundNotFoundException::section);
 
         if (defectSection.getSectionType() != SectionType.DAMAGED_ZONE) {
-            throw new IllegalArgumentException(getMessage("inbound.defect.section.type.invalid"));
+            throw InboundValidationException.defectSectionTypeInvalid();
         }
         validateSectionBelongsToWarehouse(defectSection, detail.getInbound().getWarehouse());
 
@@ -241,8 +243,7 @@ public class InboundService {
 
         int effectiveRemaining = defectSection.getRemainingCapacity() - pendingQuantity;
         if (effectiveRemaining < detail.getDefectQuantity()) {
-            throw new IllegalArgumentException(
-                    getMessage("inbound.section.capacity.exceeded", effectiveRemaining, detail.getDefectQuantity()));
+            throw InboundValidationException.capacityExceeded(effectiveRemaining, detail.getDefectQuantity());
         }
 
         detail.assignDefectSection(defectSection);
@@ -257,23 +258,23 @@ public class InboundService {
     @Transactional
     public void completeInbound(Long inboundId, User user) {
         Inbound inbound = inboundRepository.findById(inboundId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.invalid")));
+                .orElseThrow(InboundNotFoundException::inbound);
         accessValidator.validateWarehouseAccess(inbound.getWarehouse(), user);
 
         // 상태 검증을 먼저 수행 — 재고 반영 전에 실패 -> 재고 중복 반영 방지
         if (inbound.getStatus() != InboundStatus.INSPECTING) {
-            throw new IllegalArgumentException(getMessage("inbound.status.not.allowed"));
+            throw InboundInvalidStatusException.notInspecting();
         }
 
         List<InboundDetail> details = inboundDetailRepository.findByInboundId(inboundId);
 
         // 정상 구역 미배정 품목 확인
         if (details.stream().anyMatch(d -> d.getSection() == null)) {
-            throw new IllegalArgumentException(getMessage("inbound.section.unassigned"));
+            throw InboundValidationException.sectionUnassigned();
         }
         // 불량 수량 있는데 불량 구역 미배정 품목 확인
         if (details.stream().anyMatch(InboundDetail::needsDefectSection)) {
-            throw new IllegalArgumentException(getMessage("inbound.defect.section.unassigned"));
+            throw InboundValidationException.defectSectionUnassigned();
         }
 
         details.forEach(d -> {
@@ -301,9 +302,9 @@ public class InboundService {
     // 공통: INSPECTING 상태 검증 + 창고 권한 검증 후 InboundDetail 반환
     private InboundDetail getInspectingDetail(Long inboundDetailId, User user) {
         InboundDetail detail = inboundDetailRepository.findById(inboundDetailId)
-                .orElseThrow(() -> new IllegalArgumentException(getMessage("inbound.detail.invalid")));
+                .orElseThrow(InboundNotFoundException::detail);
         if (detail.getInbound().getStatus() != InboundStatus.INSPECTING) {
-            throw new IllegalArgumentException(getMessage("inbound.status.not.allowed"));
+            throw InboundInvalidStatusException.notInspecting();
         }
         accessValidator.validateWarehouseAccess(detail.getInbound().getWarehouse(), user);
         return detail;
@@ -311,7 +312,7 @@ public class InboundService {
 
     private void validateSectionBelongsToWarehouse(Section section, Warehouse warehouse) {
         if (!section.getWarehouse().getId().equals(warehouse.getId())) {
-            throw new IllegalArgumentException(getMessage("inbound.section.unauthorized"));
+            throw InboundValidationException.sectionUnauthorized();
         }
     }
 }
